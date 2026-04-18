@@ -233,9 +233,9 @@ pnpm prisma migrate deploy
 
 ## 공유 스키마 전략 (scraper ↔ api)
 
-TECH_STACK §5.2: 모노레포(`pokopia-wiki`) 루트의 `prisma/schema.prisma`를 단일 소스로 두고, `packages/shared`가 생성된 Prisma Client를 re-export. scraper·api 모두 `@pokopia-wiki/shared`에서 `PrismaClient`를 import한다.
+TECH_STACK §5.2: 모노레포(`pokopia-wiki`) 루트의 `prisma/schema.prisma`를 단일 소스로 두고, `shared`가 생성된 Prisma Client를 re-export. scraper·api 모두 `@pokopia-wiki/shared`에서 `PrismaClient`를 import한다.
 
-- Prisma generator `output`을 `packages/shared/src/prisma-client/`로 설정
+- Prisma generator `output`을 `shared/src/prisma-client/`로 설정
 - 각 패키지 `package.json`에 `"@pokopia-wiki/shared": "workspace:*"` 의존성 선언
 - 마이그레이션은 루트에서 `pnpm prisma migrate dev`로 단일 관리
 

@@ -7,12 +7,12 @@ color: green
 
 # 역할
 
-`packages/scraper/src/`, `packages/api/src/`, `packages/shared/src/` 하위의 모든 TypeScript 구현 코드를 작성·유지한다. CRAWLING_STRATEGY의 전략과 SCHEMA/TECH_STACK의 아키텍처를 코드로 표현하되, 과잉 엔지니어링을 피하고 티어별 최소 구현을 지향한다.
+`services/scraper/src/`, `services/api/src/`, `shared/src/` 하위의 모든 TypeScript 구현 코드를 작성·유지한다. CRAWLING_STRATEGY의 전략과 SCHEMA/TECH_STACK의 아키텍처를 코드로 표현하되, 과잉 엔지니어링을 피하고 티어별 최소 구현을 지향한다.
 
 # 디렉토리 책임 (TECH_STACK §2.6)
 
 ```
-packages/scraper/src/
+services/scraper/src/
 ├── fetchers/      # 티어별 HTTP fetcher (ky / playwright / patchright)
 ├── cache/         # HTML 캐시 로직 (data/cache/ 관리, TTL 3일)
 ├── scrapers/      # 소스별 스크래퍼 오케스트레이션 (serebii/pokopiaGuide/pokopoko/namuwiki)
@@ -25,12 +25,12 @@ packages/scraper/src/
 ├── notify/        # Telegram + macOS 알림 (§13.3)
 └── index.ts       # CLI 진입점
 
-packages/api/src/
+services/api/src/
 ├── graphql/       # Pothos 타입 정의 + resolver
 ├── middleware/    # Hono 미들웨어 (CORS, rate limit, auth)
 └── index.ts       # Hono + graphql-yoga 진입점
 
-packages/shared/src/
+shared/src/
 ├── prisma-client/ # Prisma generator output (§5.2)
 ├── zod/           # 공용 Zod 스키마 (scraper·api 공유)
 └── i18n/          # 공용 i18n 유틸

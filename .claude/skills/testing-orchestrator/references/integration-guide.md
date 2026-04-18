@@ -1,6 +1,6 @@
 # Integration Guide — 모노레포 + vitest + CI
 
-`packages/scraper`, `packages/api`, `packages/shared` 모노레포(TECH_STACK §2.6)에서 vitest 를 안정적으로 운영하기 위한 실전 가이드.
+`services/scraper`, `services/api`, `shared` 모노레포(TECH_STACK §2.6)에서 vitest 를 안정적으로 운영하기 위한 실전 가이드.
 
 ## 목차
 1. [모노레포 구조 가정](#모노레포-구조-가정)
@@ -22,25 +22,25 @@ pokopia-wiki/
 ├── vitest.workspace.ts       # vitest workspace 진입점
 ├── prisma/
 │   └── schema.prisma         # DB 스키마 단일 관리 (§5.2)
-└── packages/
-    ├── scraper/
-    │   ├── package.json      # @pokopia-wiki/scraper
-    │   ├── vitest.config.ts
-    │   ├── src/
-    │   ├── __fixtures__/
-    │   └── __tests__/        # (선택) 통합 테스트만
-    ├── api/
-    │   ├── package.json      # @pokopia-wiki/api
-    │   ├── vitest.config.ts
-    │   └── src/
-    └── shared/
-        ├── package.json      # @pokopia-wiki/shared (Prisma client re-export + 공용 헬퍼)
-        ├── vitest.config.ts
-        ├── src/
-        └── test/             # 공용 트랜잭션 헬퍼(withTx 등)
+├── services/
+│   ├── scraper/
+│   │   ├── package.json      # @pokopia-wiki/scraper
+│   │   ├── vitest.config.ts
+│   │   ├── src/
+│   │   ├── __fixtures__/
+│   │   └── __tests__/        # (선택) 통합 테스트만
+│   └── api/
+│       ├── package.json      # @pokopia-wiki/api
+│       ├── vitest.config.ts
+│       └── src/
+└── shared/
+    ├── package.json      # @pokopia-wiki/shared (Prisma client re-export + 공용 헬퍼)
+    ├── vitest.config.ts
+    ├── src/
+    └── test/             # 공용 트랜잭션 헬퍼(withTx 등)
 ```
 
-> TECH_STACK.md의 SSoT 구조를 따른다. Prisma Client는 `packages/shared`에서 re-export(§5.2)하므로 별도 `packages/db`를 두지 않는다.
+> TECH_STACK.md의 SSoT 구조를 따른다. Prisma Client는 `shared`에서 re-export(§5.2)하므로 별도 `db` 패키지를 두지 않는다.
 
 ---
 
@@ -52,15 +52,15 @@ pokopia-wiki/
 import { defineWorkspace } from 'vitest/config'
 
 export default defineWorkspace([
-  'apps/*',
-  'packages/*',
+  'services/*',
+  'shared',
 ])
 ```
 
 ### 패키지별 `vitest.config.ts`
 
 ```ts
-// packages/api/vitest.config.ts
+// services/api/vitest.config.ts
 import { defineConfig } from 'vitest/config'
 import tsconfigPaths from 'vite-tsconfig-paths'
 
@@ -119,7 +119,7 @@ pnpm vitest run \
 ### 단일 파일·패턴
 
 ```bash
-pnpm vitest run packages/api/src/pokemon
+pnpm vitest run services/api/src/pokemon
 pnpm vitest run -t 'returns 404'
 ```
 
@@ -198,7 +198,7 @@ jobs:
 {
   "compilerOptions": {
     "paths": {
-      "@pokopia-wiki/shared": ["./packages/shared/src/index.ts"],
+      "@pokopia-wiki/shared": ["./shared/src/index.ts"],
       "@/*": ["./src/*"]
     }
   }
@@ -210,7 +210,7 @@ vitest는 `vite-tsconfig-paths` 플러그인으로 인식.
 ### 환경변수
 
 ```ts
-// packages/api/test/setup.ts
+// services/api/test/setup.ts
 import { config } from 'dotenv'
 import { resolve } from 'node:path'
 
@@ -233,10 +233,10 @@ for (const key of required) {
 
 | 헬퍼 | 위치 |
 |------|------|
-| Prisma 트랜잭션 롤백 (`withTx`) | `packages/shared/test/with-tx.ts` |
-| Hono test app factory | `packages/api/test/create-test-app.ts` |
-| fixture loader | `packages/scraper/test/load-fixture.ts` |
-| 공통 fake 데이터 빌더 | `packages/shared/test/builders.ts` |
+| Prisma 트랜잭션 롤백 (`withTx`) | `shared/test/with-tx.ts` |
+| Hono test app factory | `services/api/test/create-test-app.ts` |
+| fixture loader | `services/scraper/test/load-fixture.ts` |
+| 공통 fake 데이터 빌더 | `shared/test/builders.ts` |
 
 각 패키지의 `test/` 디렉토리는 빌드 산출물에 포함하지 않도록 `tsconfig.build.json`의 `exclude`에 추가.
 
@@ -247,7 +247,7 @@ for (const key of required) {
 ### 단일 테스트 디버그
 
 ```bash
-pnpm vitest run packages/api/src/pokemon/pokemon.test.ts \
+pnpm vitest run services/api/src/pokemon/pokemon.test.ts \
   -t 'returns 404 for unknown id' \
   --no-threads
 ```

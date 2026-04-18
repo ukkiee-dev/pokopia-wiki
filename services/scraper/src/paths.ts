@@ -2,19 +2,19 @@
  * 레포 루트 기준 경로 헬퍼.
  *
  * 왜 필요한가: `pnpm --filter @pokopia-wiki/scraper <script>` 실행 시
- * pnpm 은 필터된 패키지(`packages/scraper/`) 를 cwd 로 사용한다. 그러나
+ * pnpm 은 필터된 패키지(`services/scraper/`) 를 cwd 로 사용한다. 그러나
  * `data/`, `docs/`, `.env.example` 등 프로젝트 자원은 모두 **repo root 기준**.
  * `path.resolve('data/...')` 는 cwd 에 의존하므로 잘못된 디렉토리에
  * 산출물이 쌓인다.
  *
  * 해결: 본 모듈이 `import.meta.url` 로 파일 위치를 알아내고, 거기서
- * repo root 를 추론한다 (`packages/scraper/src/paths.ts` → `../../..`).
+ * repo root 를 추론한다 (`services/scraper/src/paths.ts` → `../../..`).
  */
 
 import path from 'node:path';
 
 /**
- * 모노레포 루트 절대경로 (`packages/scraper/src/` 에서 3단 위).
+ * 모노레포 루트 절대경로 (`services/scraper/src/` 에서 3단 위).
  *
  * scraper 패키지 구조가 바뀌면 여기 상수도 함께 조정해야 한다.
  *

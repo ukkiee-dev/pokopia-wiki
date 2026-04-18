@@ -1,6 +1,6 @@
 # Hono 테스트 패턴
 
-`packages/api`에서 사용하는 Hono 통합·단위 테스트 패턴 모음. testing-tdd-guide 와 testing-augmenter 가 참조한다.
+`services/api`에서 사용하는 Hono 통합·단위 테스트 패턴 모음. testing-tdd-guide 와 testing-augmenter 가 참조한다.
 
 ## 목차
 1. [기본 원칙](#기본-원칙)

@@ -32,7 +32,7 @@ version: "1.0.0"
     └── 20260418/
 ```
 
-스크래퍼 패키지 (`packages/scraper`)에 두는 게 기본. API가 외부 호출하면 `packages/api/__fixtures__/`도 가능.
+스크래퍼 패키지 (`services/scraper`)에 두는 게 기본. API가 외부 호출하면 `services/api/__fixtures__/`도 가능.
 
 ## `.meta.json` 필수 필드
 

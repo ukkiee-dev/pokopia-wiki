@@ -62,7 +62,7 @@ pnpm vitest run \
 ### 단일 파일·패턴
 
 ```bash
-pnpm vitest run packages/api/src/pokemon --reporter=json
+pnpm vitest run services/api/src/pokemon --reporter=json
 ```
 
 > watch 모드 (`vitest` 단독) 절대 사용하지 않는다 — 결정적이지 않음.
@@ -130,24 +130,24 @@ pnpm vitest run --changed origin/main --coverage ...
 ## 실패 분류
 
 ### assertion_failure (4건, 같은 원인)
-- 파일: `packages/api/src/pokemon/pokemon.service.ts`
+- 파일: `services/api/src/pokemon/pokemon.service.ts`
 - 원인: `findById` 가 `null` 대신 `undefined` 반환
 - 영향 테스트: 4건
 - **권장 라우팅:** tdd-guide (구현 또는 spec 검토)
 
 ### setup_failure (2건, 같은 원인)
-- 파일: `packages/shared/test/setup.ts`
+- 파일: `shared/test/setup.ts`
 - 원인: `DATABASE_URL` 환경변수 누락
 - 영향 테스트: 20건이 같은 setup 사용 (모두 실패)
 - **권장 라우팅:** 사용자 (환경 설정)
 
 ### snapshot_drift (1건)
-- 파일: `packages/scraper/src/serebii/pokemon.test.ts`
+- 파일: `services/scraper/src/serebii/pokemon.test.ts`
 - 원인: parsed JSON snapshot 불일치
 - **권장 라우팅:** fixture-keeper (회귀 분류)
 
 ## flaky
-- `packages/api/src/pokemon/pokemon.controller.test.ts > pagination order`
+- `services/api/src/pokemon/pokemon.controller.test.ts > pagination order`
 - 3회 중 1회 실패
 - **추정 원인:** 정렬 안정성 부족 또는 동시성
 

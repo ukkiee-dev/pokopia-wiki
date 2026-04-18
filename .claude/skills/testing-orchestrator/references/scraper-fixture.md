@@ -1,6 +1,6 @@
 # 스크래퍼 Fixture 패턴
 
-`packages/scraper`의 fixture 캡처·마스킹·라이선스·diff 패턴. testing-fixture-keeper 와 augmenter 가 참조.
+`services/scraper`의 fixture 캡처·마스킹·라이선스·diff 패턴. testing-fixture-keeper 와 augmenter 가 참조.
 
 ## 목차
 1. [디렉토리 표준](#디렉토리-표준)
@@ -16,7 +16,7 @@
 ## 디렉토리 표준
 
 ```
-packages/scraper/__fixtures__/
+services/scraper/__fixtures__/
 ├── serebii/
 │   ├── pokemon/
 │   │   ├── 0001.html
@@ -48,7 +48,7 @@ packages/scraper/__fixtures__/
 스크래퍼 fetcher에 사이드이펙트로 fixture 저장 hook 삽입. 코드 수정 권고만, 직접 수정은 사용자 승인 후.
 
 ```ts
-// packages/scraper/src/fetcher/with-fixture-capture.ts
+// services/scraper/src/fetcher/with-fixture-capture.ts
 import { writeFile, mkdir } from 'node:fs/promises'
 import { dirname } from 'node:path'
 import { createHash } from 'node:crypto'
@@ -71,7 +71,7 @@ export async function captureFixture(
   opts: CaptureOpts,
 ) {
   const ext = inferExt(headers['content-type'])
-  const dir = `packages/scraper/__fixtures__/${opts.source}/${opts.category}`
+  const dir = `services/scraper/__fixtures__/${opts.source}/${opts.category}`
   await mkdir(dir, { recursive: true })
 
   const masked = applyMaskingRules(body)
@@ -100,7 +100,7 @@ export async function captureFixture(
 캡처 시점에 적용. 원본 보존하지 않음.
 
 ```ts
-// packages/scraper/src/fetcher/masking.ts
+// services/scraper/src/fetcher/masking.ts
 const MASK_RULES = [
   // 이메일
   { pattern: /[\w.+-]+@[\w-]+\.[\w.-]+/g, replacement: '[REDACTED:email]' },
@@ -237,7 +237,7 @@ import { readFileSync } from 'node:fs'
 import { describe, expect, test } from 'vitest'
 import { parsePokemonPage } from './parser'
 
-const FIXTURE_DIR = 'packages/scraper/__fixtures__/serebii/pokemon'
+const FIXTURE_DIR = 'services/scraper/__fixtures__/serebii/pokemon'
 
 test('extracts pokedex_no from 0001', () => {
   const html = readFileSync(`${FIXTURE_DIR}/0001.html`, 'utf-8')

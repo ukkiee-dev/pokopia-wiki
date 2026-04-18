@@ -128,7 +128,7 @@ app.get('/pokemon/:id', async (c) => {
 ```
 SendMessage(to: "runner", body: {
   intent: "tdd_cycle_check",
-  files: ["packages/api/src/pokemon/pokemon.test.ts"],
+  files: ["services/api/src/pokemon/pokemon.test.ts"],
   expect: "RED 또는 GREEN 분기 확인"
 })
 ```
@@ -158,19 +158,19 @@ GREEN 도달 후 다음 후보를 사용자에게 제시:
 
 ## 모노레포 컨텍스트별 셋업
 
-### Hono (`packages/api`)
-- 테스트 파일: `packages/api/src/{module}/{module}.test.ts`
-- vitest 설정: `packages/api/vitest.config.ts` (workspace 인식)
+### Hono (`services/api`)
+- 테스트 파일: `services/api/src/{module}/{module}.test.ts`
+- vitest 설정: `services/api/vitest.config.ts` (workspace 인식)
 - 통합 테스트는 `app.request()` 사용 (HTTP 서버 띄우지 않음)
 
-### Prisma (`packages/shared`)
-- 테스트 파일: 사용 측 패키지에 위치 (`packages/api/...`)
+### Prisma (`shared`)
+- 테스트 파일: 사용 측 패키지에 위치 (`services/api/...`)
 - 격리 패턴: `references/prisma-isolation.md` 참조 (트랜잭션 롤백)
 - migration된 테스트 DB 필요 (postgres docker 또는 testcontainers)
 
-### Scraper (`packages/scraper`)
-- 테스트 파일: `packages/scraper/src/{source}/{parser}.test.ts`
-- fixture는 `packages/scraper/__fixtures__/{source}/`
+### Scraper (`services/scraper`)
+- 테스트 파일: `services/scraper/src/{source}/{parser}.test.ts`
+- fixture는 `services/scraper/__fixtures__/{source}/`
 - live HTTP 금지
 
 자세한 패턴은 `testing-orchestrator/references/{hono-patterns,prisma-isolation,scraper-fixture}.md`.

@@ -2404,7 +2404,7 @@ async function runPreflight(persona: BrowserPersona) {
 `data/logs/`는 외장 SSD 로 백업되므로 토큰/쿠키/PII 가 그대로 넘어가면 백업 미디어 유출 시 위험. 모든 로그 기록은 아래 마스킹을 거친다.
 
 ```typescript
-// packages/shared/src/logging/redact.ts
+// shared/src/logging/redact.ts
 const TOKEN_PATTERNS: Array<[RegExp, string]> = [
   // Telegram API URL — `https://api.telegram.org/bot<TOKEN>/...` 경로 토큰 마스킹.
   // URL 안의 `bot1234567:ABC...` 는 `bot` 과 digit 사이에 \b 가 없어 아래
@@ -2683,7 +2683,7 @@ export class RobotsChecker {
 > IDE 의 strikethrough 로 노출된다. 신규 스키마는 반드시 4 API 로 작성.
 
 ```typescript
-// packages/shared/src/validators/schemas/_base.ts
+// shared/src/validators/schemas/_base.ts
 import { z } from 'zod'
 
 // ── 공통: 출처 메타데이터 ─────────────────────────
@@ -2708,7 +2708,7 @@ export const SourceMetadataSchema = z.object({
 export type SourceMetadata = z.infer<typeof SourceMetadataSchema>
 
 // ── 엔티티 스키마는 공통 메타데이터를 extend(shape) ──────
-// packages/shared/src/validators/schemas/pokemon.ts
+// shared/src/validators/schemas/pokemon.ts
 export const PokemonSchema = z
   .object({
     pokedexNo: z.number().int().positive(),
@@ -2718,7 +2718,7 @@ export const PokemonSchema = z
   })
   .extend(SourceMetadataSchema.shape)
 
-// packages/shared/src/validators/schemas/item.ts
+// shared/src/validators/schemas/item.ts
 export const ItemSchema = z
   .object({
     nameEn: z.string().min(1),
@@ -2789,7 +2789,7 @@ export const SOURCE_DEFAULTS: Record<
 **주입 헬퍼 (v3.3: `scrapedAt` 옵셔널):**
 
 ```typescript
-// packages/shared/src/validators/metadata.ts
+// shared/src/validators/metadata.ts
 import { SOURCE_DEFAULTS } from '../config/source-metadata'
 import type { SourceMetadata, SourceSite } from './schemas/_base'
 

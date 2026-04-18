@@ -4,8 +4,8 @@ on:
   push:
     branches: [main]
     paths:
-      - 'packages/api/**'
-      - 'packages/shared/**'
+      - 'services/**'
+      - 'shared/**'
       - 'prisma/**'
       - 'pnpm-workspace.yaml'
       - 'pnpm-lock.yaml'
@@ -31,8 +31,9 @@ jobs:
         env:
           APP_NAME: ${{ github.event.repository.name }}
         run: |
+          # 모노레포 프로젝트는 manifests/apps/<app>/kustomization.yaml 루트 존재
           STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
-            "https://api.github.com/repos/ukkiee-dev/homelab/contents/manifests/apps/${APP_NAME}/deployment.yaml")
+            "https://api.github.com/repos/ukkiee-dev/homelab/contents/manifests/apps/${APP_NAME}/kustomization.yaml")
           EXISTS=$([ "$STATUS" = "200" ] && echo "true" || echo "false")
           echo "exists=$EXISTS" >> $GITHUB_OUTPUT
           if [ "$EXISTS" = "false" ]; then
@@ -48,14 +49,14 @@ jobs:
         if: steps.setup-check.outputs.exists == 'true'
         uses: mikefarah/yq@v4
 
-      - name: Parse packages/api/.app-config.yml
+      - name: Parse services/api/.app-config.yml
         if: steps.setup-check.outputs.exists == 'true'
         id: parse
         run: |
           set -euo pipefail
-          HEALTH=$(yq '.health // ""' packages/api/.app-config.yml)
-          ICON=$(yq '.icon // ""' packages/api/.app-config.yml)
-          DESCRIPTION=$(yq '.description // ""' packages/api/.app-config.yml)
+          HEALTH=$(yq '.health // ""' services/api/.app-config.yml)
+          ICON=$(yq '.icon // ""' services/api/.app-config.yml)
+          DESCRIPTION=$(yq '.description // ""' services/api/.app-config.yml)
 
           echo "health=$HEALTH"           >> $GITHUB_OUTPUT
           echo "icon=$ICON"               >> $GITHUB_OUTPUT
@@ -72,7 +73,7 @@ jobs:
           elif ! git cat-file -e "$BEFORE" 2>/dev/null; then
             CHANGED=1
           else
-            CHANGED=$(git diff "$BEFORE" HEAD --name-only | grep -c 'packages/api/.app-config.yml' || true)
+            CHANGED=$(git diff "$BEFORE" HEAD --name-only | grep -c 'services/api/.app-config.yml' || true)
           fi
           echo "changed=$([[ $CHANGED -gt 0 ]] && echo true || echo false)" >> $GITHUB_OUTPUT
 
@@ -91,15 +92,17 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      - run: pnpm --filter @pokopia-wiki/api --filter @pokopia-wiki/shared lint
+      - run: pnpm lint
 
       - run: pnpm format:check
 
-      - run: pnpm --filter @pokopia-wiki/api --filter @pokopia-wiki/shared type-check
+      - run: pnpm type-check
 
-      - run: pnpm --filter @pokopia-wiki/api --filter @pokopia-wiki/shared test:run
+      - run: pnpm test
 
   # ── Job 3: 빌드 & GHCR 푸시 ─────────────────────────────────
+  # F안 강제: homelab composite action이 services/<service>/Dockerfile 경로와
+  # <app>-<service> 이미지 이름 규약을 강제한다.
   build:
     needs: [config, quality]
     if: needs.config.outputs.setup-done == 'true'
@@ -107,51 +110,48 @@ jobs:
     permissions:
       contents: read
       packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        # scraper도 배포 대상이나 Dockerfile 아직 미작성 — 준비되면 [api, scraper]로 확장
+        service: [api]
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Login to GHCR
-        uses: docker/login-action@v3
+      - uses: ukkiee-dev/homelab/.github/actions/build-and-push@main
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build & Push
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: packages/api/Dockerfile
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: |
-            ghcr.io/ukkiee-dev/${{ needs.config.outputs.app-name }}:latest
-            ghcr.io/ukkiee-dev/${{ needs.config.outputs.app-name }}:${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          app-name:     ${{ needs.config.outputs.app-name }}
+          service:      ${{ matrix.service }}
+          image-tag:    ${{ github.sha }}
+          platforms:    linux/amd64,linux/arm64
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Notify failure (Telegram)
         if: failure()
         env:
           APP_NAME: ${{ needs.config.outputs.app-name }}
+          SERVICE: ${{ matrix.service }}
           TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TG_CHAT: ${{ secrets.TELEGRAM_CHAT_ID }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           curl -s -X POST "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" \
             -d chat_id="${TG_CHAT}" \
-            -d text="❌ 빌드 실패: ${APP_NAME}%0A${RUN_URL}"
+            -d text="❌ 빌드 실패: ${APP_NAME}/${SERVICE}%0A${RUN_URL}"
 
   # ── Job 4: 이미지 태그 갱신 → ArgoCD 배포 ───────────────────
   update-manifest:
     needs: [config, build]
+    if: needs.config.outputs.setup-done == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        service: [api]
     uses: ukkiee-dev/homelab/.github/workflows/_update-image.yml@main
     with:
       app-name:  ${{ needs.config.outputs.app-name }}
+      service:   ${{ matrix.service }}
       image-tag: ${{ github.sha }}
     secrets:
       APP_ID:              ${{ secrets.HOMELAB_APP_ID }}
@@ -166,6 +166,7 @@ jobs:
     uses: ukkiee-dev/homelab/.github/workflows/_sync-app-config.yml@main
     with:
       app-name:    ${{ needs.config.outputs.app-name }}
+      service:     api
       health:      ${{ needs.config.outputs.health }}
       icon:        ${{ needs.config.outputs.icon }}
       description: ${{ needs.config.outputs.description }}

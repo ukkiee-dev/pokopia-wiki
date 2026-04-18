@@ -92,7 +92,7 @@ version: "1.0.0"
 후보 리스트를 다음 형식으로 제출:
 
 ```markdown
-# 보강 후보 — packages/api/src/pokemon/pokemon.service.ts
+# 보강 후보 — services/api/src/pokemon/pokemon.service.ts
 
 | # | 카테고리 | 케이스 | 우선순위 |
 |---|---------|--------|---------|
@@ -145,7 +145,7 @@ test('throws PRISMA_P2002 on duplicate source_slug', async () => {
 ```markdown
 # Augment Log
 
-## 대상: packages/api/src/pokemon/pokemon.service.ts
+## 대상: services/api/src/pokemon/pokemon.service.ts
 
 ## 후보 발굴: 12개
 ## 사용자 승인: 5개 (must 3 + high 2)

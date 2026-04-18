@@ -4,13 +4,13 @@ RUN corepack enable
 
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml tsconfig.base.json ./
 COPY prisma ./prisma
-COPY packages/shared/package.json ./packages/shared/
-COPY packages/api/package.json ./packages/api/
+COPY shared/package.json ./shared/
+COPY services/api/package.json ./services/api/
 
 RUN pnpm install --frozen-lockfile
 
-COPY packages/shared ./packages/shared
-COPY packages/api ./packages/api
+COPY shared ./shared
+COPY services/api ./services/api
 
 RUN pnpm --filter @pokopia-wiki/api build
 RUN pnpm deploy --filter=@pokopia-wiki/api --prod /prod-out

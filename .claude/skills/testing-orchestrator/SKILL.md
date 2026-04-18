@@ -39,7 +39,7 @@ version: "1.0.0"
 2. 모호하면 1개 질문으로 확정 (강행 금지):
    - "신규 기능을 만들 건가요(TDD), 기존 코드를 보강하나요(augment), 회귀를 잡나요(regression)?"
 3. 모노레포 영향 범위 파악:
-   - `packages/scraper`, `packages/api`, `packages/shared`(Prisma), `packages/shared`
+   - `services/scraper`, `services/api`, `shared`(Prisma), `shared`
    - 한 작업이 여러 패키지에 걸치면 패키지별로 분할
 
 ### Phase 2: 작업 디렉토리 준비
@@ -234,8 +234,8 @@ flowchart TB
 
 ### 정상 흐름 (시나리오 E — 복합)
 
-1. 사용자: "packages/api에 GET /pokemon/:id 라우트 추가하면서 기존 service 엣지 케이스도 보강하고 회귀까지 봐줘"
-2. orchestrator가 시나리오 E로 분류, 모노레포 범위 = `packages/api` + `packages/shared`
+1. 사용자: "services/api에 GET /pokemon/:id 라우트 추가하면서 기존 service 엣지 케이스도 보강하고 회귀까지 봐줘"
+2. orchestrator가 시나리오 E로 분류, 모노레포 범위 = `services/api` + `shared`
 3. TeamCreate로 4명 팀 구성, 작업 4개 등록
 4. tdd-guide가 RED 테스트 작성 → 사용자 검토 → 사용자 구현 (병렬로 augmenter는 service 보강 진행)
 5. fixture-keeper가 회귀 비교, drift 1건 발견 → 사용자 갱신 승인
