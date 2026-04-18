@@ -22,10 +22,15 @@
   },
   "dependencies": {
     "@pokopia-wiki/shared": "workspace:*",
+    "dotenv": "^17.4.2",
+    "ky": "^2.0.1",
+    "robots-parser": "^3.0.1",
     "zod": "^4.3.6"
   },
   "devDependencies": {
     "@types/node": "^24.12.2",
+    "@types/node-cron": "^3.0.11",
+    "@types/proper-lockfile": "^4.1.4",
     "tsx": "^4.21.0",
     "typescript": "^6.0.3",
     "vitest": "^4.1.4"
