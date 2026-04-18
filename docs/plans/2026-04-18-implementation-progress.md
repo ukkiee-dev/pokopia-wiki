@@ -4,7 +4,7 @@
 > 새 세션을 시작할 때는 (1) 이 문서의 "다음에 할 일", (2) 로드맵 해당 Phase, (3) `_workspace/` 잔여물 순서로 읽는다.
 >
 > **최종 갱신:** 2026-04-19
-> **현재 Phase:** Phase 1 (Prisma 스키마) — 감사 대기
+> **현재 Phase:** Phase 1 (Prisma 스키마) — ✅ 완료 (루프 1 감사 통과)
 > **총 Phase 수:** 17개 (Phase 0 ~ Phase 16)
 
 ---
@@ -14,7 +14,7 @@
 | Phase                           | 상태       | 시작       | 완료       | 감사 | 비고                                                 |
 | ------------------------------- | ---------- | ---------- | ---------- | ---- | ---------------------------------------------------- |
 | 0 — 모노레포 스캐폴딩           | ✅ 완료    | 2026-04-18 | 2026-04-18 | ⏳   | 전체 CI 로컬 시뮬레이션 ALL GREEN. 감사는 별도 세션. |
-| 1 — Prisma 스키마               | 🟡 감사 대기 | 2026-04-19 | 2026-04-19 | ⏳   | 로컬 Docker PG 17, 85 모델 + 25 ENUM, 10 도메인 파일 분리 |
+| 1 — Prisma 스키마               | ✅ 완료    | 2026-04-19 | 2026-04-19 | ✅   | 루프 1 PASS (DC-001 resolved). 85 모델 + 25 ENUM, 10 도메인 파일 분리, Prisma 7.7.0 |
 | 2 — 공통 검증·메타데이터        | ⏳ 대기    | —          | —    | —    | —                    |
 | 3 — Preflight 하네스            | ⏳ 대기    | —          | —    | —    | Telegram/Chrome 필요 |
 | 4 — Fetcher 인프라              | ⏳ 대기    | —          | —    | —    | —                    |
@@ -235,9 +235,26 @@
 - `packages/shared/src/index.ts` (`PrismaClient` + `Prisma` + type re-export)
 - `package.json` (prisma/@prisma/client 7.7.0 + dotenv + postinstall hook), `packages/shared/package.json` (@prisma/client 7.7.0), `.oxlintrc.jsonc`, `.gitignore` 업데이트
 
-**Phase 1 커밋:** `990e39f` `feat(schema): add Prisma 7.7 schema with 85 entities across 10 domain files (§2.1-§2.27)` (23 files changed, +4624 / -94).
+**Phase 1 커밋:**
+- `990e39f` `feat(schema): add Prisma 7.7 schema with 85 entities across 10 domain files (§2.1-§2.27)` (23 files, +4624 / -94) — 초기 전사
+- 루프 1 수정 커밋 (`fix(schema): LostRelic 감정 필드 추가`) — LostRelic 2 필드 + 마이그레이션 `20260418161151_add_lost_relic_appraisal`
 
-**Phase 1 감사 (완료 후):** `pokopia-phase-review-harness` 프로파일 `schema` → `pokopia-schema-architect` + `codereview-style-auditor` + `pokopia-doc-consistency`. 위 7개 불일치 항목 검토 필수.
+**Phase 1 감사 (루프 1, PASS):**
+
+- **하네스:** `pokopia-phase-review-harness` (프로파일 `schema`). 감사자 3명: `pokopia-doc-consistency`, `codereview-architecture`, `codereview-style`.
+- **루프 0 (2026-04-18 15:46 UTC):** VERDICT=LOOP_REQUIRED. Critical 1건(DC-001: `LostRelic` 모델에 `appraisal_result_item_id`/`appraisal_cost` 2개 필드 누락 — SCHEMA.md §2.20 5필드 정의 중 2개 미구현). Warning 18건, Info 21건.
+- **루프백 수정:** `loopback_directive.md` 지시에 따라 `prisma/schema/item.prisma`의 `LostRelic` 모델에 2 필드 + `appraisalResultItem` 관계(`@relation("LostRelicAppraisalResult", onDelete: SetNull)`) 추가, `Item` 모델에 역관계 2건(`lostRelicExt @relation("LostRelicItem")`, `lostRelicAppraisalResultFor`) 추가, 마이그레이션 `20260418161151_add_lost_relic_appraisal` 생성·적용.
+- **루프 1 (2026-04-18 16:12 UTC):** VERDICT=**PASS**. DC-001 `resolved`, 신규 Critical 0건. 신규 Warning 3건(DC-101/ARCH-103/STYLE-101 — 동일 주제 3각도 교차: "관계명·onDelete 정책이 SSoT에 미기술"), Info 4건. 기존 Warning 18 + Info 21은 `unresolved`(사용자 방침으로 의도적 보류 → 별도 세션 처리).
+- **감사 산출물:** `_workspace/audit/phase-1/20260418-1546/` + `_workspace/audit/phase-1/20260418-1612/` (`.gitignore`로 제외됨).
+
+**Phase 1 후속 작업 (별도 세션 권장 순위):**
+
+1. **X-6 신규(DC-101/ARCH-103/STYLE-101):** SCHEMA.md §1 또는 §2.20에 관계명·onDelete 정책 규칙 명시 → 3건 일괄 resolved
+2. **X-2 `SeashorFlower` 오타:** 원본 확인 후 SCHEMA 정정 (ENUM rename 마이그레이션 수반)
+3. **DC-002/003/005/006/007/008:** SCHEMA 정정 + 로드맵 stale 수정(`pokopia-doc-consistency`)
+4. **STYLE-001/002:** i18n 네이밍 일괄 통일(full 권장)
+5. **ARCH-003:** Phase 2 착수 시 `@prisma/adapter-pg` factory 구현 — **Phase 2 필수 진입 조건**
+6. **STYLE-011:** prisma-lint 도구 도입 검토(별도 chore)
 
 ---
 
