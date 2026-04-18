@@ -14,8 +14,8 @@
     "resolveJsonModule": true,
     "types": ["node"],
     "skipLibCheck": true,
-    "sourceMap": true
-  },
-  "include": ["src"],
-  "exclude": ["node_modules", "dist"]
+    "sourceMap": true,
+    "composite": false,
+    "declaration": true
+  }
 }

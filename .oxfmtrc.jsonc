@@ -17,9 +17,15 @@
   // 포맷팅 제외 — 배포/인프라 파일은 손대지 않음
   "ignorePatterns": [
     ".github/**", // GitHub Actions workflow
-    ".app-config.yml", // ArgoCD 연동용 앱 설정
+    "**/.app-config.yml", // ArgoCD 연동용 앱 설정 (모노레포 이동 후 packages/api에 위치)
     "pnpm-lock.yaml", // pnpm 생성물
-    "Dockerfile",
+    "**/Dockerfile",
     ".dockerignore",
+    "**/*.md", // .vscode/settings.json에서 markdown은 prettier 담당으로 위임
+    ".claude/**", // 에이전트/스킬 정의 (md + 보조 파일, 수동 관리)
+    "docs/**", // 기획/로드맵 문서 (수동 관리)
+    "**/dist/**",
+    "**/node_modules/**",
+    "packages/shared/src/prisma-client/**", // Prisma 생성물
   ],
 }

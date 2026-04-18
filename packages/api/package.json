@@ -1,0 +1,38 @@
+{
+  "name": "@pokopia-wiki/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "imports": {
+    "#*": "./src/*.ts"
+  },
+  "scripts": {
+    "dev": "tsx watch --env-file-if-exists=../../.env src/main.ts",
+    "build": "tsdown",
+    "start": "node --env-file-if-exists=../../.env dist/main.js",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
+    "format": "oxfmt",
+    "format:check": "oxfmt --check",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.19.14",
+    "@hono/zod-validator": "^0.7.6",
+    "@pokopia-wiki/shared": "workspace:*",
+    "awilix": "^13.0.3",
+    "hono": "^4.12.14",
+    "hono-pino": "^0.10.3",
+    "pino": "^10.3.1",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^24.12.2",
+    "tsdown": "^0.21.9",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.4"
+  }
+}

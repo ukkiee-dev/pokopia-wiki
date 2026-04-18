@@ -1,8 +1,14 @@
-node_modules
-dist
+**/node_modules
+**/dist
 .git
 .github
 .gitignore
+.vscode
 *.md
 .env*
-.app-config.yml
+!.env.example
+**/.app-config.yml
+data/
+_workspace/
+packages/scraper
+docs

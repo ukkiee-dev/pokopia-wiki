@@ -3,6 +3,15 @@ name: CI/CD
 on:
   push:
     branches: [main]
+    paths:
+      - 'packages/api/**'
+      - 'packages/shared/**'
+      - 'prisma/**'
+      - 'pnpm-workspace.yaml'
+      - 'pnpm-lock.yaml'
+      - 'package.json'
+      - 'tsconfig.base.json'
+      - '.github/workflows/ci.yml'
 
 jobs:
   # ── Job 1: 설정 파싱 ─────────────────────────────────────────
@@ -39,14 +48,14 @@ jobs:
         if: steps.setup-check.outputs.exists == 'true'
         uses: mikefarah/yq@v4
 
-      - name: Parse .app-config.yml
+      - name: Parse packages/api/.app-config.yml
         if: steps.setup-check.outputs.exists == 'true'
         id: parse
         run: |
           set -euo pipefail
-          HEALTH=$(yq '.health // ""' .app-config.yml)
-          ICON=$(yq '.icon // ""' .app-config.yml)
-          DESCRIPTION=$(yq '.description // ""' .app-config.yml)
+          HEALTH=$(yq '.health // ""' packages/api/.app-config.yml)
+          ICON=$(yq '.icon // ""' packages/api/.app-config.yml)
+          DESCRIPTION=$(yq '.description // ""' packages/api/.app-config.yml)
 
           echo "health=$HEALTH"           >> $GITHUB_OUTPUT
           echo "icon=$ICON"               >> $GITHUB_OUTPUT
@@ -63,7 +72,7 @@ jobs:
           elif ! git cat-file -e "$BEFORE" 2>/dev/null; then
             CHANGED=1
           else
-            CHANGED=$(git diff "$BEFORE" HEAD --name-only | grep -c '.app-config.yml' || true)
+            CHANGED=$(git diff "$BEFORE" HEAD --name-only | grep -c 'packages/api/.app-config.yml' || true)
           fi
           echo "changed=$([[ $CHANGED -gt 0 ]] && echo true || echo false)" >> $GITHUB_OUTPUT
 
@@ -82,11 +91,13 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      - run: pnpm lint
+      - run: pnpm --filter @pokopia-wiki/api --filter @pokopia-wiki/shared lint
 
       - run: pnpm format:check
 
-      - run: pnpm type-check
+      - run: pnpm --filter @pokopia-wiki/api --filter @pokopia-wiki/shared type-check
+
+      - run: pnpm --filter @pokopia-wiki/api --filter @pokopia-wiki/shared test:run
 
   # ── Job 3: 빌드 & GHCR 푸시 ─────────────────────────────────
   build:
@@ -114,6 +125,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
+          file: packages/api/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |

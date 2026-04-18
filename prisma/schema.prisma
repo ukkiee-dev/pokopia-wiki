@@ -1,0 +1,13 @@
+// Pokopia Wiki — Prisma 스키마
+// Phase 0: generator + datasource만 선언한 빈 껍데기.
+// Phase 1에서 SCHEMA.md §2.1~§2.27 (70+ 엔티티)를 순차 전사한다.
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../packages/shared/src/prisma-client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
