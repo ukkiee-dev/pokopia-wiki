@@ -1,7 +1,8 @@
-# Pokopia Scraper — Crawling Strategy v3.2
+# Pokopia Scraper — Crawling Strategy v3.3
 
 > 개정 이력
 > - 2026-04-17: 개정 이력 섹션 신설. §29.2 백업 스크립트 경로(`SRC`, crontab 예시)의 `pokopia-scraper` → `pokopia-wiki`로 갱신 — 모노레포 루트 디렉토리명 변경 반영. 사이트명(`PokopiaGuide`)·DB명(`pokopia`)·Zod ENUM(`pokopiaGuide`)·외장 SSD 백업 디렉토리(`pokopia-backup`)·별도 레포(`pokopia-web`)는 별개 식별자이므로 유지.
+> - 2026-04-19: v3.3. Phase 2 감사 Warning 반영 — (1) §22.3 `TOKEN_PATTERNS` 확장(Bearer base64 padding, Basic auth, OAuth/OIDC JSON body, Cookie 키 집합 확장 + `\b` 단어 경계, `redactObject` BigInt/순환 참조 fallback). (2) §27.1 zod 4 API로 예시 갱신(`.extend(B.shape)`·`z.url()`·`z.iso.datetime()`). (3) §27.4 `buildSourceMetadata`에 `scrapedAt?: string` 옵셔널 도입 + "1엔티티 1회 호출" 규칙 명시.
 
 > **핵심 원칙:** 안정성 > 속도. 봇으로 탐지되지 않는 것이 최우선.
 > **티어링 원칙:** 사이트 방어 수준에 비례하는 최소 전략만 사용. 과잉 스텔스 = 오히려 시그널.
@@ -2397,16 +2398,30 @@ async function runPreflight(persona: BrowserPersona) {
 - 일일 요약: 매일 23:55 `milestone.daily_summary` 자동 송신 — 스크래퍼 프로세스 내부 `node-cron` 으로 발행(프로세스가 살아있지 않을 때는 다음 실행 시 회고 요약으로 대체; 별도 crontab 에 넣지 않음)
 - 로그 영속화: 로그 파일은 매일 로테이션, 14일 보존
 
-### 22.3 로그 민감정보 마스킹 (★ v3.2 D3)
+### 22.3 로그 민감정보 마스킹 (★ v3.2 D3 / v3.3 확장)
 
 `data/logs/`는 외장 SSD 로 백업되므로 토큰/쿠키/PII 가 그대로 넘어가면 백업 미디어 유출 시 위험. 모든 로그 기록은 아래 마스킹을 거친다.
 
 ```typescript
-// src/logging/redact.ts
+// packages/shared/src/logging/redact.ts
 const TOKEN_PATTERNS: Array<[RegExp, string]> = [
-  [/\b\d{7,10}:[A-Za-z0-9_-]{30,}\b/g, '<TELEGRAM_TOKEN>'],   // bot token
-  [/Bearer\s+[A-Za-z0-9._-]+/gi, 'Bearer <REDACTED>'],
-  [/(cf_clearance|__cf_bm|session|sid|auth)=[^;\s,]+/gi, '$1=<REDACTED>'],
+  // Telegram bot token: 7-10자리 숫자 : 30+자 영숫자/-/_
+  // 뒷경계는 `(?![A-Za-z0-9_-])` — `-` 가 \w 에 속하지 않아 \b 가 토큰 내부에서
+  // 조기 종료하는 문제 회피. 의미는 "토큰 문자 집합 바깥에서 종료"로 동치.
+  [/\b\d{7,10}:[A-Za-z0-9_-]{30,}(?![A-Za-z0-9_-])/g, '<TELEGRAM_TOKEN>'],
+  // HTTP Authorization: Bearer <jwt|opaque> (base64 padding +/= 포함)
+  [/Bearer\s+[A-Za-z0-9._\-+/=]+/gi, 'Bearer <REDACTED>'],
+  // HTTP Authorization: Basic <base64(user:pass)>
+  [/Basic\s+[A-Za-z0-9+/=]+/gi, 'Basic <REDACTED>'],
+  // OAuth/OIDC JSON body — 헤더 경유하지 않는 응답 본문에서도 마스킹
+  [/"(access_token|refresh_token|id_token)"\s*:\s*"[^"]*"/gi, '"$1":"<REDACTED>"'],
+  // 민감 쿠키 값 마스킹 (키 보존):
+  //   cf_*, session/sid/auth, csrf/xsrf/_csrf, refresh/jwt/token
+  // `\b` 단어 경계 — `token` 같은 짧은 키가 `BOT_TOKEN=` 합성어에 오인 매칭되는 것 방지.
+  [
+    /\b(cf_clearance|__cf_bm|session|sid|auth|csrf|xsrf|_csrf|refresh|jwt|token)=[^;\s,]+/gi,
+    '$1=<REDACTED>',
+  ],
 ]
 
 export function redact(text: string): string {
@@ -2416,12 +2431,28 @@ export function redact(text: string): string {
 }
 
 export function redactObject<T>(obj: T): T {
-  return JSON.parse(redact(JSON.stringify(obj))) as T
+  try {
+    return JSON.parse(redact(JSON.stringify(obj))) as T
+  } catch (err) {
+    // BigInt / 순환 참조 / non-serializable 은 JSON.stringify 에서 throw.
+    // 로그 유실 방지를 위해 fallback 마커 객체 반환 — 호출자가 __redact_error
+    // 필드로 마스킹 실패를 관측할 수 있음.
+    const reason = err instanceof Error ? err.message : String(err)
+    return { __redact_error: reason } as unknown as T
+  }
 }
 ```
 
+**v3.3 추가 범위 근거:**
+
+- **Bearer/Basic base64 padding**: RFC 7617/7519 표준 base64 는 `+`, `/`, `=` 를 포함하므로 JWT 가 아닌 opaque 토큰도 누락 없이 매칭.
+- **OAuth/OIDC JSON**: Authorization 헤더가 아닌 응답 body(`{"access_token": "..."}`) 로 오는 토큰을 마스킹. key 는 보존하고 value 만 `<REDACTED>` 로 바꿔 디버깅 맥락(어떤 키가 왔는지)은 유지.
+- **Cookie 키 집합 확장**: CSRF/XSRF 토큰(위조 방지), refresh/jwt/token(OIDC 계열). `[^;\s,]+` 가 `.` 을 허용하므로 JWT dot-separated 값도 커버.
+- **`\b` 단어 경계**: `token` 은 4-5자로 짧아 합성어(`BOT_TOKEN=`, `ACCESS_TOKEN=`) 에 부분 매칭될 위험 → 단어 경계 강제.
+- **`redactObject` try-catch**: BigInt 는 `JSON.stringify` 에서 `TypeError: Do not know how to serialize a BigInt` throw, 순환 참조는 `TypeError: Converting circular structure to JSON` throw. 로그 이벤트 유실을 막기 위해 fallback 마커 반환.
+
 **적용 지점:**
-- `events.jsonl` append 시 `redactObject(event)` 필수
+- `events.jsonl` append 시 `redactObject(event)` 필수 — 실패 시에도 `__redact_error` 마커 이벤트가 기록되도록 보장
 - HTTP 요청/응답 로그를 남길 경우 `headers`·`set-cookie`·`cookie` 전체 마스킹
 - 파싱 실패 시 저장하는 원본 HTML(`data/invalid/...`)은 `Set-Cookie`/`Authorization` 이 의미 없으므로 제외 — 하지만 파일 권한 `chmod 600` 적용
 - `.env` 내용은 어떤 로그에도 출력 금지 (startup 로그 중 `process.env` 덤프 금지 검토)
@@ -2623,14 +2654,22 @@ export class RobotsChecker {
 
 ## 27. 데이터 검증 전략 (★ v3 신규)
 
-### 27.1 Zod 스키마 (v3.1: 출처 메타데이터 공통화)
+### 27.1 Zod 스키마 (v3.1: 출처 메타데이터 공통화 / v3.3: zod 4 API)
 
 파싱 결과는 모두 Zod 스키마 통과 의무. 실패 시 원본 HTML + 파싱 결과 + 에러 로그를 `data/invalid/<source>/<timestamp>/` 에 저장해 수동 조사.
 
-**구조 원칙:** 출처/라이선스 필드는 공통 `SourceMetadataSchema`로 추출하고 모든 엔티티가 `.merge()`로 확장한다. 누락 리스크 제거 + 표준화.
+**구조 원칙:** 출처/라이선스 필드는 공통 `SourceMetadataSchema`로 추출하고 모든 엔티티가 `.extend(B.shape)`로 확장한다. 누락 리스크 제거 + 표준화.
+
+> **zod 4 API 주의 (2026-04-19 반영):** 아래 deprecated API 사용 금지.
+> - `.merge(B)` → `.extend(B.shape)`
+> - `z.string().url()` → `z.url()`
+> - `z.string().datetime()` → `z.iso.datetime()`
+>
+> 리포지토리에 설치된 zod 버전(`4.3.6` 이상)에서 이전 API 는 deprecated 표시되며,
+> IDE 의 strikethrough 로 노출된다. 신규 스키마는 반드시 4 API 로 작성.
 
 ```typescript
-// src/validators/schemas.ts
+// packages/shared/src/validators/schemas/_base.ts
 import { z } from 'zod'
 
 // ── 공통: 출처 메타데이터 ─────────────────────────
@@ -2639,8 +2678,8 @@ export type SourceSite = z.infer<typeof SourceSiteEnum>
 
 export const SourceMetadataSchema = z.object({
   sourceSite: SourceSiteEnum,
-  sourceUrl: z.string().url(),
-  scrapedAt: z.string().datetime(),
+  sourceUrl: z.url(),
+  scrapedAt: z.iso.datetime(),
   license: z.string().min(1),
   copyrightHolder: z.string().min(1),
   attribution: z.string().min(1),
@@ -2648,27 +2687,33 @@ export const SourceMetadataSchema = z.object({
   derivedFrom: z
     .object({
       sourceSite: SourceSiteEnum,
-      sourceUrl: z.string().url(),
+      sourceUrl: z.url(),
     })
     .optional(),
 })
 export type SourceMetadata = z.infer<typeof SourceMetadataSchema>
 
-// ── 엔티티 스키마는 공통 메타데이터를 merge ──────────
-export const PokemonSchema = z.object({
-  pokedexNo: z.number().int().positive(),
-  nameEn: z.string().min(1),
-  imageUrl: z.string().url(),
-  specialties: z.array(z.string()).default([]),
-}).merge(SourceMetadataSchema)
+// ── 엔티티 스키마는 공통 메타데이터를 extend(shape) ──────
+// packages/shared/src/validators/schemas/pokemon.ts
+export const PokemonSchema = z
+  .object({
+    pokedexNo: z.number().int().positive(),
+    nameEn: z.string().min(1),
+    imageUrl: z.url(),
+    specialties: z.array(z.string()).default([]),
+  })
+  .extend(SourceMetadataSchema.shape)
 
-export const ItemSchema = z.object({
-  nameEn: z.string().min(1),
-  description: z.string().default(''),
-  tags: z.array(z.string()).default([]),
-  locations: z.array(z.string()).default([]),
-  imageUrl: z.string().url().optional(),
-}).merge(SourceMetadataSchema)
+// packages/shared/src/validators/schemas/item.ts
+export const ItemSchema = z
+  .object({
+    nameEn: z.string().min(1),
+    description: z.string().default(''),
+    tags: z.array(z.string()).default([]),
+    locations: z.array(z.string()).default([]),
+    imageUrl: z.url().optional(),
+  })
+  .extend(SourceMetadataSchema.shape)
 
 // habitat, specialty, cooking, location, furniture 등 동일 패턴으로 전 엔티티 정의
 // 한국어 번역/매핑 전용 엔티티는 derivedFrom을 반드시 포함해야 함 (§27.4 주입 헬퍼 참조)
@@ -2727,23 +2772,24 @@ export const SOURCE_DEFAULTS: Record<
 }
 ```
 
-**주입 헬퍼:**
+**주입 헬퍼 (v3.3: `scrapedAt` 옵셔널):**
 
 ```typescript
-// src/validators/metadata.ts
-import { SOURCE_DEFAULTS } from '@/config/source-metadata'
-import type { SourceMetadata, SourceSite } from '@/validators/schemas'
+// packages/shared/src/validators/metadata.ts
+import { SOURCE_DEFAULTS } from '../config/source-metadata'
+import type { SourceMetadata, SourceSite } from './schemas/_base'
 
 export function buildSourceMetadata(args: {
   sourceSite: SourceSite
   sourceUrl: string
+  scrapedAt?: string       // ★ v3.3 — 1엔티티 1회 생성 후 재사용 규칙 참조
   derivedFrom?: SourceMetadata['derivedFrom']
 }): SourceMetadata {
   const defaults = SOURCE_DEFAULTS[args.sourceSite]
   return {
     sourceSite: args.sourceSite,
     sourceUrl: args.sourceUrl,
-    scrapedAt: new Date().toISOString(),
+    scrapedAt: args.scrapedAt ?? new Date().toISOString(),
     license: defaults.license,
     copyrightHolder: defaults.copyrightHolder,
     attribution: defaults.attribution,
@@ -2752,15 +2798,35 @@ export function buildSourceMetadata(args: {
 }
 ```
 
-**사용 예 (한국어 매핑):**
+**호출 규칙 (★ v3.3):**
+
+- **1엔티티 1회 호출** 원칙: 한 엔티티를 여러 레코드(본체 + i18n + 관계 FK)로 분해할 때는 파서가 **엔티티 시작 시점에 `scrapedAt = new Date().toISOString()` 을 한 번 생성**하고, 각 `buildSourceMetadata` 호출에 동일 문자열을 전달한다. ms 단위 drift 로 동일 엔티티 내 레코드별 타임스탬프가 흩어지면 감사·재현성·결합 키 설계가 어긋난다.
+- **단일 레코드 파서**는 `scrapedAt` 을 생략해 내부 기본값(호출 시점 UTC ISO) 을 사용한다.
+- **테스트**에서는 고정 문자열(`'2026-04-19T00:00:00.000Z'` 등) 을 주입해 스냅샷/결정성 확보.
+
+**사용 예 (한국어 매핑, 엔티티 시작 시 `scrapedAt` 고정):**
 
 ```typescript
+// 파서가 하나의 Pokemon 엔티티를 파싱할 때
+const scrapedAt = new Date().toISOString()          // ★ 엔티티 진입 시 1회
+
+const pokemon = PokemonSchema.parse({
+  pokedexNo: 25,
+  nameEn: 'Pikachu',
+  ...buildSourceMetadata({
+    sourceSite: 'serebii',
+    sourceUrl: 'https://www.serebii.net/pokemonpokopia/pokemon/025.shtml',
+    scrapedAt,
+  }),
+})
+
 const pokemonKoMapping = KoreanPokemonMappingSchema.parse({
   pokedexNo: 25,
   nameKo: '피카츄',
   ...buildSourceMetadata({
     sourceSite: 'pokopiaGuide',
     sourceUrl: 'https://www.pokopiaguide.com/ko/pokedex/25',
+    scrapedAt,                                      // 동일 문자열 재사용
     derivedFrom: {
       sourceSite: 'serebii',
       sourceUrl: 'https://www.serebii.net/pokemonpokopia/pokemon/025.shtml',
