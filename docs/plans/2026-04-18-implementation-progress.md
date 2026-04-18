@@ -69,7 +69,7 @@
 | 0.6  | 루트 package.json 재구성                                      | ✅   |
 | 0.7  | 설치 검증 + 기존 테스트 통과                                  | ✅   |
 | 0.8  | CI/CD 파이프라인 조정                                         | ✅   |
-| 0.9  | 첫 커밋                                                       | 🏗️  |
+| 0.9  | 첫 커밋                                                       | ✅   |
 
 **Batch 계획 (executing-plans 패턴, 3 task씩):**
 
@@ -96,6 +96,8 @@
 - `packages/api/Dockerfile`은 모노레포 컨텍스트(`context: .`, `file: packages/api/Dockerfile`) + `pnpm deploy --filter=@pokopia-wiki/api --prod /prod-out` 2-stage. 빌드 컨텍스트 외 분리를 위해 `.dockerignore`는 루트로 복귀.
 - `.github/workflows/ci.yml`에 `paths:` 필터 추가 (packages/api, packages/shared, prisma, pnpm-workspace.yaml 등). scraper 변경 시 이 워크플로는 트리거 안 됨.
 - **루트 `tsconfig.json` 제거**. 각 패키지 tsconfig가 `../../tsconfig.base.json`을 extends하고, 루트 스크립트는 `pnpm -r --parallel type-check`로 실행되므로 불필요. 루트에 tsconfig가 남아 있으면 IDE가 루트 기준으로 잘못 분석할 수 있음.
+
+**Phase 0 커밋:** `b02617f` `chore: transform to pnpm monorepo (scraper + api + shared)` (49 files changed, +2226 / -66).
 
 **Phase 0 감사 (완료 후):** 프로파일 `docs`/`setup` → `codereview-architect-reviewer` + `pokopia-doc-strategist`.
 
