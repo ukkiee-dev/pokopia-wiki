@@ -9,6 +9,33 @@
 
 ---
 
+## 이번 세션 요약 (2026-04-19)
+
+**시작 상태:** Phase 1 감사 루프 1 PASS (`b286dac`) — 85 Prisma 모델 + ARCH-003 unresolved.
+**종료 상태:** Phase 4 완료, 감사 대기 (`c63e996`).
+**세션 커밋:** 13개. Phase 2 구현+감사+Warning 보완 6 / Phase 3 구현+감사+Critical 번들 수정 5 / Phase 4 구현 2.
+
+**핵심 성과:**
+
+- **Phase 2 (공통 검증·메타데이터)** — ARCH-003 resolved(`@prisma/adapter-pg` factory), zod 4 API 핵심 5 엔티티, SOURCE_DEFAULTS, redact TDD. 감사 Loop 0 PASS. Warning 보완 세션으로 CRAWLING_STRATEGY v3.3 동기화 (redact 패턴 확장, scrapedAt 옵셔널, zod 4 원문 갱신).
+- **Phase 3 (사전 검증 하네스)** — 4 preflight 스크립트 실행 + Notifier 뼈대 + data/ 13 디렉토리 표준화. 감사 Loop 0에서 Critical 2건 발견 → 번들 수정(SEC-001 Telegram URL redact, OPS-001 Serebii marker HTML entity) → CRAWLING_STRATEGY v3.4 동기화. Loop 1 재감사는 Phase 4 감사에 병합 결정.
+- **Phase 4 (Fetcher 인프라)** — 15 파일(티어별 fetcher 4종 + factory + HtmlCache TDD + CookieStore + RateLimiter §14.3 + Chrome 버전 훅 + 공용 에러 5종 + persona stub). 모노레포 회귀 45/45 tests pass.
+
+**외부 자원 상태:**
+- Telegram 토큰 미주입 (사용자 TODO, 필수 아님 — console fallback으로 Phase 5 진행 가능)
+- Playwright chromium 설치 완료 (Phase 3에서 Claude가 수행)
+- docker-compose.local.yml Postgres 정상 (Phase 1부터)
+- robots.txt 4 소스 전부 샘플 URL allowed
+- T0~T3 4 소스 HTTP 접근 전부 `ok=true` (OPS-001 수정 후)
+
+**미결(다음 세션 이월):**
+1. **Phase 4 감사 실행 (최우선)** — Phase 3 Loop 1 병합 포함. 프로파일 `crawler` + security 1명. Phase 3 Critical 2건 resolved 확인 + Warning 8건 재분류 + Phase 4 신규 감사.
+2. **W-005 재분류 결정 (Phase 4 감사 내)** — Phase 2에서 전제 반증됐지만 Warning 유지. Phase 4 감사에서 Info 강등 vs Warning 유지 재판정.
+3. **Telegram 토큰 (사용자 액션, 선택)** — @BotFather 발급 후 `.env` 주입 → `notifier:test` 실전송 확인.
+4. **Phase 5 (페르소나 & 워밍)** — Phase 4 감사 Critical 없음 확인 후 진입. 워밍 1일 백그라운드 실행 포함.
+
+---
+
 ## 빠른 상태 보드
 
 | Phase                           | 상태       | 시작       | 완료       | 감사 | 비고                                                 |
@@ -499,25 +526,75 @@
 
 ---
 
-## 다음 세션 바로 시작 카드 — Phase 5
+## 다음 세션 바로 시작 카드 — Phase 4 감사 → Phase 5
 
-Phase 4 🟡 감사 대기 + Phase 3 Loop 1 병합 재감사 필요.
+Phase 4 🟡 감사 대기 + Phase 3 Loop 1 병합 재감사 필요. 아래 순서로 진행.
 
-1. **Phase 4 감사 실행** — `/pokopia-phase-review-harness` 프로파일 `crawler`. Phase 3 Loop 1 finding(SEC-001/OPS-001 resolved + Warning 8건 재분류)도 동시에 판정. prev_report는 `_workspace/audit/phase-3/20260419-0322/REPORT.md`.
-2. **Phase 5 범위** — 로드맵 §Phase 5 (라인 827~). `packages/scraper/src/persona/` + `fingerprint/` + `scheduler/`. 2개 페르소나(`korean-pokemon-fan` T1/T2 / `namuwiki-researcher` T3 전용) + ProfileWarmer + ConcurrencyGuard + CircadianScheduler.
-3. **Phase 5 전제:**
-   - Phase 4 감사 critical 없음 (LOOP_REQUIRED 시 수정 후 진입)
-   - Telegram 토큰 주입 선택 (워밍 1일 BG 실행 시 알림 채널로 유용)
-   - Phase 4 `persona/types.ts` stub이 Phase 5 `definitions.ts` 인터페이스와 호환 확인
-4. **주요 작업 선행:**
-   - PERSONAS 2인 상수 + `ProfileFingerprint` 하드웨어 결정형 필드 (§5.1/§5.3 A3)
-   - `ProfileWarmer` — 파일 편집 금지, API만 (§5.4)
-   - `ConcurrencyGuard` proper-lockfile (§6.4.3 A4 전체)
-   - 워밍 1일 백그라운드 실행 — 실제 크롤링 전 페르소나 수명 시작
+### 첫 30분 체크리스트 (세션 재개 직후)
 
-**사용자 TODO (감사 직후/Phase 5 시작 전):**
-- `@BotFather` Telegram 토큰 발급 후 `.env`에 `TELEGRAM_BOT_TOKEN`/`TELEGRAM_CHAT_ID` 주입 → `notifier:test` 재실행
-- `check:access` T0 marker 문제는 **해결됨** (OPS-001 정규식 전환 커밋) — 별도 조치 불요
+```bash
+# 1. 위치 + 환경 확인 (복붙 실행)
+cd /Users/ukyi/workspace/pokopia-wiki
+git log --oneline -5                # 마지막 커밋: c63e996 docs(plans) Phase 4
+git status                           # clean 확인
+pnpm --filter @pokopia-wiki/scraper --filter @pokopia-wiki/shared --filter @pokopia-wiki/api test:run  # 45/45 pass 재확인
+docker compose -f docker-compose.local.yml ps postgres  # Running 확인 (Phase 1 DB)
+```
+
+### 2. Phase 4 감사 실행 (최우선)
+
+- 스킬: `/pokopia-phase-review-harness`
+- 인자: `phase=4, type=crawler, prev_report=_workspace/audit/phase-3/20260419-0322/REPORT.md, loop_context=phase-3-loop-1-merged`
+- 프로파일: `crawler` (security 필수 + performance 필수 + ops-runner 권장)
+- 추가: `codereview-style` 1명(W-005 재분류 지속) + Phase 4 감사에서 Phase 3 잔존 Warning 8건 재분류
+
+**감사자가 판정해야 할 것 (핵심 5):**
+1. Phase 3 **SEC-001/002/003/OPS-001 resolved 태그** 부여 (이전 감사 리포트 대비)
+2. Phase 3 Warning 재분류 — PERF-001~003(Phase 7 TODO로 이월 OK?), OPS-002~006(개선 필요?), STYLE-401(W-005 최종 판정)
+3. **HtmlCache 경로 해싱**(§10.3) path traversal 방어 실효성 — sha256 앞 16자 + `encodeURIComponent`가 충분한지
+4. **RateLimiter 3종 분리** + UTC+9 자정 리셋 로직 정확성
+5. **`persona/types.ts` stub** 이 Phase 5 `definitions.ts` 인터페이스 확장 시 깨지지 않는지
+
+### 3. Phase 4 감사 결과 분기
+
+| 결과 | 다음 액션 |
+|---|---|
+| **PASS** | Phase 5 바로 착수 |
+| **LOOP_REQUIRED** | `loopback_directive.md` 기반 Critical 수정 → Loop 1 재감사 |
+| **ESCALATE** (3 루프 초과) | 사용자 결정 대기 |
+
+### 4. Phase 5 범위 (감사 PASS 후)
+
+**로드맵:** `docs/plans/2026-04-18-implementation-roadmap.md` §Phase 5 (라인 827~)
+
+**산출물:**
+- `packages/scraper/src/persona/definitions.ts` — PERSONAS 2인 (`korean-pokemon-fan` T1/T2 / `namuwiki-researcher` T3)
+- `packages/scraper/src/persona/manager.ts` — 활성 시간 기반 선택
+- `packages/scraper/src/persona/warmer.ts` — ProfileWarmer (파일 편집 금지, API만)
+- `packages/scraper/src/fingerprint/inject.ts` — T1 `attachFingerprint` (Phase 4 TKTK 해소)
+- `packages/scraper/src/fingerprint/patchright-webgl.ts` — T2/T3 `maybeReinforceWebgl` (Phase 4 TKTK 해소)
+- `packages/scraper/src/scheduler/concurrency-guard.ts` — §6.4.3 A4 전체 (proper-lockfile 파일락)
+- `data/browser-profiles/{korean-pokemon-fan,namuwiki-researcher}/` — 워밍 후 생성
+- `RateLimiter.isHigherTierActive` → ConcurrencyGuard 연결 (Phase 4 TKTK 해소)
+
+**Phase 4 TKTK 해소 6건 (Phase 5에서 처리):**
+1. PersonaManager 실제 구현 + PERSONAS 상수
+2. `attachFingerprint` fingerprint-injector 연결
+3. `maybeReinforceWebgl` addInitScript 주입
+4. `isHigherTierActive` → ConcurrencyGuard
+5. `onSessionStart` → Notifier `chrome.version_bump` 발행
+6. T1/T2/T3 `userAgentDataInitScript` 공용화 → `behavior/` 모듈
+
+### 5. 복귀 시 유의 사항
+
+- `_workspace/` 는 `.gitignore` 로 제외됨. 감사 산출물(`_workspace/audit/phase-4/...`)은 git 추적 안 되므로 이 세션 종료 전에 필요하면 별도 백업.
+- 세션 중 기존 활성 Task(#26~36) 모두 completed. 새 세션에서는 Phase 4 감사용 Task + Phase 5 Task 신규 생성.
+- Postgres docker 컨테이너는 `docker compose -f docker-compose.local.yml up -d` 로 재시작. DB 데이터는 볼륨에 영속.
+- Phase 4 `persona/types.ts` 에 Phase 5 에서 확장할 최소 필드만 있음 — `id`, `locale`, `timezone`, `storageStatePath`. `activeHours`, `fingerprintSeed` 등은 Phase 5 에서 추가.
+
+**사용자 TODO (감사 전후, 선택):**
+- `@BotFather` Telegram 토큰 발급 후 `.env`에 `TELEGRAM_BOT_TOKEN`/`TELEGRAM_CHAT_ID` 주입 → `pnpm --filter @pokopia-wiki/scraper notifier:test` 재실행해서 실제 4건 Telegram 메시지 도착 확인 (Phase 5 워밍 1일 BG 실행 시 알림 채널로 유용, 필수 아님)
+- `check:access` T0 marker 문제는 **이미 해결됨** (OPS-001 정규식 전환, 커밋 `0fcfdbb`) — 별도 조치 불요
 
 ---
 
