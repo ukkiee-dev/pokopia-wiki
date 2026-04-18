@@ -1,0 +1,25 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+
+  // 한 줄 최대 폭 (기본 100 → 120으로 완화)
+  "printWidth": 120,
+
+  // 쌍따옴표 대신 홑따옴표
+  "singleQuote": true,
+
+  // import 구문 자동 정렬 (builtin → external → [internal, subpath] → [parent, sibling, index] → style → unknown)
+  // 그룹 내부는 알파벳 오름차순, 그룹 간 빈 줄 삽입
+  "sortImports": true,
+
+  // package.json 키 정렬 (기본 true지만 명시)
+  "sortPackageJson": true,
+
+  // 포맷팅 제외 — 배포/인프라 파일은 손대지 않음
+  "ignorePatterns": [
+    ".github/**", // GitHub Actions workflow
+    ".app-config.yml", // ArgoCD 연동용 앱 설정
+    "pnpm-lock.yaml", // pnpm 생성물
+    "Dockerfile",
+    ".dockerignore",
+  ],
+}

@@ -1,0 +1,101 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+
+  // 기본 플러그인(typescript/unicorn/oxc)에 import/promise/node 추가
+  "plugins": ["typescript", "unicorn", "oxc", "import", "promise", "node"],
+
+  // 카테고리 레벨 설정
+  "categories": {
+    "correctness": "error", // 명백한 버그/오용
+    "suspicious": "error", // 실제 버그일 가능성 높음
+    "perf": "error", // 성능 문제
+    "pedantic": "warn", // 엄격한 규칙 (false positive 가능성 있어 warn)
+    "style": "off", // 포맷팅은 oxfmt가 담당
+    "restriction": "off", // 필요한 규칙만 개별적으로 켜기
+    "nursery": "off", // 불안정/개발 중
+  },
+
+  "rules": {
+    // any는 금지, --fix 시 자동으로 unknown으로 치환 (narrowing 강제)
+    // 프레임워크 제약(`Hono<any, any, any>` 등) 파일은 아래 overrides에서 off
+    "typescript/no-explicit-any": ["error", { "fixToUnknown": true, "ignoreRestArgs": false }],
+
+    // Promise 안전성 — async Hono 핸들러에서 await 누락 방지
+    "typescript/no-floating-promises": "error",
+    "typescript/no-misused-promises": "error",
+
+    // type-only import 강제 (verbatimModuleSyntax와 이중 방어)
+    "typescript/consistent-type-imports": "error",
+
+    // zod `z.infer<Schema>`가 type alias여서 일관성을 위해 `type`으로 강제
+    // (declaration merging이 필요한 곳은 개별 disable 주석 사용)
+    "typescript/consistent-type-definitions": ["error", "type"],
+
+    // non-null assertion(!) 주의 — zod-parsed narrowing 선호
+    "typescript/no-non-null-assertion": "warn",
+
+    // 유한집합(zod enum, HttpStatus) switch 누락을 타입 레벨에서 방어
+    "typescript/switch-exhaustiveness-check": "error",
+
+    // 불필요한 `as` 제거 — zod가 이미 narrowing 해주므로 대부분 불필요
+    "typescript/no-unnecessary-type-assertion": "warn",
+
+    // 공통 버그/스타일 방지
+    "eqeqeq": "error", // === / !== 강제
+    "no-throw-literal": "error", // throw는 Error 인스턴스만
+    "prefer-template": "warn", // 문자열 연결보다 template literal
+    "no-console": "warn", // 로거(pino) 사용 중이므로 console 경고
+    "max-classes-per-file": "off", // HTTP exception 번들 허용 (app-exception.ts)
+
+    // Import 건전성 — awilix DI 패턴은 순환 참조 나기 쉬움
+    "import/no-cycle": "error",
+    "import/no-duplicates": "error",
+    "import/no-self-import": "error",
+
+    // 기본 10은 루트 조립 파일에서 타이트 — 15로 상향
+    "import/max-dependencies": ["warn", { "max": 15 }],
+
+    // Promise 사용 패턴
+    "promise/no-return-wrap": "error",
+    "promise/param-names": "error",
+    "promise/no-nesting": "warn",
+
+    // Oxc 전용 — O(n^2) spread 누적 방지
+    "oxc/no-accumulating-spread": "error",
+
+    // Unicorn — 유용한 규칙만 선별 on
+    "unicorn/prefer-node-protocol": "error", // `import "fs"` → `import "node:fs"`
+    "unicorn/error-message": "error", // `new Error()` 메시지 강제
+    "unicorn/throw-new-error": "error", // `throw Error()` 금지 (new 누락)
+
+    // Unicorn — 노이즈/스택 불일치 규칙은 off
+    "unicorn/no-null": "off", // null은 DB/JSON 응답에서 실사용
+    "unicorn/filename-case": "off", // 프로젝트별 혼용 허용
+    "unicorn/no-array-reduce": "off", // reduce 정당한 사용 가능
+    "unicorn/no-await-expression-member": "off", // 과도한 강제
+    "unicorn/no-array-for-each": "off", // 가독성 선택 허용
+  },
+
+  "env": {
+    "builtin": true,
+  },
+
+  "ignorePatterns": ["dist", "node_modules"],
+
+  "overrides": [
+    {
+      // 루트 조립 파일은 모듈 수만큼 import가 느는 것이 자연스러움
+      "files": ["src/app.ts"],
+      "rules": {
+        "import/max-dependencies": "off",
+      },
+    },
+    {
+      // .d.ts는 declaration merging/module augmentation 용도라 interface 허용
+      "files": ["**/*.d.ts"],
+      "rules": {
+        "typescript/consistent-type-definitions": "off",
+      },
+    },
+  ],
+}

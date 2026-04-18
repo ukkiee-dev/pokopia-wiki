@@ -1,0 +1,113 @@
+name: Delete App
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: "정말 삭제하시겠습니까? 'yes'를 입력하세요"
+        required: true
+        type: string
+      delete-repo:
+        description: "GitHub 레포도 함께 삭제 (기본: false)"
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    outputs:
+      app-name: ${{ github.event.repository.name }}
+    steps:
+      - name: Confirm deletion
+        env:
+          CONFIRM: ${{ inputs.confirm }}
+          APP_NAME: ${{ github.event.repository.name }}
+        run: |
+          echo "삭제 대상: $APP_NAME"
+          if [ "$CONFIRM" != "yes" ]; then
+            echo "::error::'yes'를 입력해야 삭제가 진행됩니다."
+            exit 1
+          fi
+
+      - name: Generate token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.HOMELAB_APP_ID }}
+          private-key: ${{ secrets.HOMELAB_APP_PRIVATE_KEY }}
+          owner: ukkiee-dev
+          repositories: homelab
+
+      - name: Check app exists in homelab
+        env:
+          APP_NAME: ${{ github.event.repository.name }}
+          TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "Authorization: Bearer $TOKEN" \
+            "https://api.github.com/repos/ukkiee-dev/homelab/contents/manifests/apps/${APP_NAME}")
+          if [ "$STATUS" != "200" ]; then
+            echo "::error::${APP_NAME}은 homelab에 존재하지 않는 앱입니다."
+            exit 1
+          fi
+
+  teardown:
+    needs: validate
+    uses: ukkiee-dev/homelab/.github/workflows/_teardown.yml@main
+    with:
+      app-name: ${{ needs.validate.outputs.app-name }}
+    secrets:
+      APP_ID:              ${{ secrets.HOMELAB_APP_ID }}
+      APP_PRIVATE_KEY:     ${{ secrets.HOMELAB_APP_PRIVATE_KEY }}
+      TF_CLOUDFLARE_TOKEN: ${{ secrets.TF_CLOUDFLARE_TOKEN }}
+      TF_ZONE_ID:          ${{ secrets.TF_ZONE_ID }}
+      TF_TUNNEL_ID:        ${{ secrets.TF_TUNNEL_ID }}
+      TF_ACCOUNT_ID:       ${{ secrets.TF_ACCOUNT_ID }}
+      R2_ACCESS_KEY_ID:    ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      TF_DOMAIN:           ${{ secrets.TF_DOMAIN }}
+      ARGOCD_AUTH_TOKEN:   ${{ secrets.ARGOCD_AUTH_TOKEN }}
+
+  delete-repo:
+    needs: [validate, teardown]
+    if: inputs.delete-repo == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.HOMELAB_APP_ID }}
+          private-key: ${{ secrets.HOMELAB_APP_PRIVATE_KEY }}
+          owner: ukkiee-dev
+
+      - name: Delete repository
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          APP_NAME: ${{ needs.validate.outputs.app-name }}
+        run: |
+          gh api -X DELETE "repos/ukkiee-dev/${APP_NAME}" \
+            && echo "레포 삭제 완료" \
+            || echo "::error::레포 삭제 실패"
+
+  notify:
+    needs: [validate, teardown, delete-repo]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Telegram notification
+        env:
+          TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TG_CHAT: ${{ secrets.TELEGRAM_CHAT_ID }}
+          APP_NAME: ${{ needs.validate.outputs.app-name }}
+          TEARDOWN_RESULT: ${{ needs.teardown.result }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          if [ "$TEARDOWN_RESULT" = "success" ]; then
+            MSG="🗑️ ${APP_NAME} 삭제 완료"
+          else
+            MSG="❌ ${APP_NAME} 삭제 실패%0A${RUN_URL}"
+          fi
+          curl -s -X POST "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" \
+            -d chat_id="${TG_CHAT}" -d text="$MSG"

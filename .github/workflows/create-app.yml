@@ -1,0 +1,32 @@
+name: Create App
+
+on:
+  workflow_dispatch:
+    inputs:
+      subdomain:
+        description: "서브도메인 (비워두면 레포 이름 사용)"
+        required: false
+        type: string
+        default: ""
+
+jobs:
+  create:
+    uses: ukkiee-dev/homelab/.github/workflows/_create-app.yml@main
+    with:
+      app-name: ${{ github.event.repository.name }}
+      subdomain: ${{ inputs.subdomain }}
+      app-type: web
+      app-health: /health
+      default-icon: mdi-application
+    secrets:
+      APP_ID:              ${{ secrets.HOMELAB_APP_ID }}
+      APP_PRIVATE_KEY:     ${{ secrets.HOMELAB_APP_PRIVATE_KEY }}
+      TF_CLOUDFLARE_TOKEN: ${{ secrets.TF_CLOUDFLARE_TOKEN }}
+      TF_ZONE_ID:          ${{ secrets.TF_ZONE_ID }}
+      TF_TUNNEL_ID:        ${{ secrets.TF_TUNNEL_ID }}
+      TF_ACCOUNT_ID:       ${{ secrets.TF_ACCOUNT_ID }}
+      R2_ACCESS_KEY_ID:    ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      TF_DOMAIN:           ${{ secrets.TF_DOMAIN }}
+      TELEGRAM_BOT_TOKEN:  ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID:    ${{ secrets.TELEGRAM_CHAT_ID }}
