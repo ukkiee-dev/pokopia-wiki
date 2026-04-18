@@ -24,25 +24,26 @@ model Item {
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
-  translations              ItemI18n[]
-  tags                      ItemTag[]
-  locations                 ItemLocation[]
-  craftingRecipes           CraftingRecipe[]
-  craftingUsedIn            CraftingIngredient[]
-  cookingRecipes            CookingRecipe[]
-  cookingUsedIn             CookingIngredient[]
-  buildingKitMaterials      BuildingKitMaterial[]
-  favoriteTags              ItemFavoriteTag[]
-  foodExt                   Food?
-  lostRelicExt              LostRelic?
-  tradeValuationExt         TradeValuation?
-  shopItems                 ShopItem[]
-  questRequirements         QuestRequirement[]
-  teamChallengeRequirements TeamChallengeRequirement[]
-  pokemonCenterMaterials    PokemonCenterMaterial[]
-  eventAppearances          EventItem[]
-  exchangeResults           ExchangeRecipe[]
-  litterRewards             PokemonLitterReward[]
+  translations                ItemI18n[]
+  tags                        ItemTag[]
+  locations                   ItemLocation[]
+  craftingRecipes             CraftingRecipe[]
+  craftingUsedIn              CraftingIngredient[]
+  cookingRecipes              CookingRecipe[]
+  cookingUsedIn               CookingIngredient[]
+  buildingKitMaterials        BuildingKitMaterial[]
+  favoriteTags                ItemFavoriteTag[]
+  foodExt                     Food?
+  lostRelicExt                LostRelic?                 @relation("LostRelicItem")
+  lostRelicAppraisalResultFor LostRelic[]                @relation("LostRelicAppraisalResult")
+  tradeValuationExt           TradeValuation?
+  shopItems                   ShopItem[]
+  questRequirements           QuestRequirement[]
+  teamChallengeRequirements   TeamChallengeRequirement[]
+  pokemonCenterMaterials      PokemonCenterMaterial[]
+  eventAppearances            EventItem[]
+  exchangeResults             ExchangeRecipe[]
+  litterRewards               PokemonLitterReward[]
 
   @@index([category])
   @@map("item")
@@ -112,11 +113,14 @@ model Food {
 // ─── §2.20 유물 (item 1:1 확장) ───
 
 model LostRelic {
-  itemId          Int           @id @map("item_id")
-  sizeClass       LostRelicSize @map("size_class")
-  isAppraisedForm Boolean       @map("is_appraised_form")
+  itemId                Int           @id @map("item_id")
+  sizeClass             LostRelicSize @map("size_class")
+  isAppraisedForm       Boolean       @map("is_appraised_form")
+  appraisalResultItemId Int?          @map("appraisal_result_item_id")
+  appraisalCost         Int?          @map("appraisal_cost")
 
-  item Item @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  item                Item  @relation("LostRelicItem", fields: [itemId], references: [id], onDelete: Cascade)
+  appraisalResultItem Item? @relation("LostRelicAppraisalResult", fields: [appraisalResultItemId], references: [id], onDelete: SetNull)
 
   @@map("lost_relic")
 }
