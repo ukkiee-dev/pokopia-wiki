@@ -4,7 +4,7 @@
 > 새 세션을 시작할 때는 (1) 이 문서의 "다음에 할 일", (2) 로드맵 해당 Phase, (3) `_workspace/` 잔여물 순서로 읽는다.
 >
 > **최종 갱신:** 2026-04-19
-> **현재 Phase:** Phase 2 (공통 검증·메타데이터) — ✅ 완료 + 감사 루프 0 PASS
+> **현재 Phase:** Phase 3 (사전 검증 하네스) — ✅ 완료 (감사 대기)
 > **총 Phase 수:** 17개 (Phase 0 ~ Phase 16)
 
 ---
@@ -16,7 +16,7 @@
 | 0 — 모노레포 스캐폴딩           | ✅ 완료    | 2026-04-18 | 2026-04-18 | ⏳   | 전체 CI 로컬 시뮬레이션 ALL GREEN. 감사는 별도 세션. |
 | 1 — Prisma 스키마               | ✅ 완료    | 2026-04-19 | 2026-04-19 | ✅   | 루프 1 PASS (DC-001 resolved). 85 모델 + 25 ENUM, 10 도메인 파일 분리, Prisma 7.7.0 |
 | 2 — 공통 검증·메타데이터        | ✅ 완료    | 2026-04-19 | 2026-04-19 | ✅   | 루프 0 PASS. Critical 0, Warning 8, Info 29. ARCH-003 resolved. Warning 7건 보완 세션 완료(W-005 의도적 잔존). |
-| 3 — Preflight 하네스            | ⏳ 대기    | —          | —    | —    | Telegram/Chrome 필요 |
+| 3 — Preflight 하네스            | ✅ 완료    | 2026-04-19 | 2026-04-19 | 🟡   | Task 3.1~3.9 완료. 4 preflight 실행(network/robots/patchright/access). Notifier 뼈대. Telegram 토큰 주입은 사용자 액션. |
 | 4 — Fetcher 인프라              | ⏳ 대기    | —          | —    | —    | —                    |
 | 5 — 페르소나·워밍               | ⏳ 대기    | —          | —    | —    | 워밍 1일 BG          |
 | 6 — 세션/행동 루프              | ⏳ 대기    | —          | —    | —    | —                    |
@@ -338,28 +338,98 @@
 
 ---
 
-## 다음 세션 바로 시작 카드 — Phase 3
+## Phase 3 — 사전 검증 하네스
 
-Phase 2가 🟡 감사 대기. 감사를 먼저 돌리고, Phase 3(사전 검증 하네스)은 외부 자원이 필요하므로 준비 체크리스트부터.
+**Goal:** `packages/scraper`에 robots/access/patchright/network/notifier 5종 preflight + Notifier 뼈대 구축. 외부 자원 접근성 · WebGL stealth · 네트워크 위치 · 민감정보 마스킹 체계를 크롤링 착수 전에 검증.
 
-1. **Phase 2 감사 실행** — `/pokopia-phase-review-harness` 프로파일 `schema`. critical 발견 시 수정 후 재감사.
-2. **Phase 3 외부 자원 준비 (감사 전/병렬 가능):**
-   - Telegram Bot 생성(@BotFather) → `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID`(+`CRITICAL`) `.env` 주입
-   - `npx playwright install chromium` (Phase 3 patchright WebGL probe 필수)
-   - `.env.example` 갱신(Telegram·user-agent·SSD 마운트)
-3. **Phase 3 범위** — `docs/plans/2026-04-18-implementation-roadmap.md` §Phase 3 (라인 526~). `packages/scraper`에 robots/access/patchright/network/notifier 5종 preflight + Notifier 뼈대.
-4. **작업 단위 (Task 3.1~3.9):**
-   - 3.1 의존성(ky/robots-parser/dotenv + playwright/patchright/fingerprint-injector 등)
-   - 3.2 `.env.example` 확장
-   - 3.3 `check:robots`(4 소스 robots.txt + sample URL `isAllowed`)
-   - 3.4 `check:access`(T0~T3 대표 페이지 접근)
-   - 3.5 `check:patchright` ★ WebGL probe (`data/preflight/patchright-webgl.json`)
-   - 3.6 `check:network`(ipapi 국가/시간대 확인)
-   - 3.7 Notifier 뼈대 + `notifier:test`
-   - 3.8 `data/` 디렉토리 + `.gitignore` 표준화
-   - 3.9 통합 실행 + `data/preflight/<date>/report.md` 기록
+**세부 태스크 상태:**
 
-**전제:** Telegram 토큰 부재 시 Task 3.7·3.9 부분 실행 불가. Playwright 미설치 시 Task 3.5 실패. Phase 2 감사 critical 발견 시 Phase 3 착수 지연 가능.
+| Task | 설명                                                           | 상태 |
+| ---- | -------------------------------------------------------------- | ---- |
+| 3.1  | scraper 의존성 추가 (ky/robots-parser/playwright/patchright 등) | ✅   |
+| 3.2  | `.env.example` 확장 (Telegram·UA·SSD 마운트 빈값+주석)         | ✅   |
+| 3.3  | `check:robots` + `robots/checker.ts`                           | ✅   |
+| 3.4  | `check:access` (T0~T3 대표 페이지)                             | ✅   |
+| 3.5  | `check:patchright` WebGL probe                                 | ✅   |
+| 3.6  | `check:network` (ipapi 국가/시간대)                            | ✅   |
+| 3.7  | Notifier 뼈대 (events/config/index) + `notifier:test`          | ✅   |
+| 3.8  | `data/` 13개 디렉토리 + `.gitignore` 규칙                      | ✅   |
+| 3.9  | chromium 설치 + 4 preflight 부분 실행 (Telegram 제외)          | ✅   |
+| 3.10 | 검증 + 커밋                                                    | ✅   |
+
+**실행 방식 (사용자 선택 2026-04-19):**
+
+- 의존성 설치 + `npx playwright install chromium`까지 Claude가 수행
+- `.env.example`은 모두 빈값 + 주석 (실제 `.env` 값 주입은 사용자)
+- Telegram 토큰은 사용자가 `@BotFather` 발급 후 `.env`에 주입 (Notifier 실제 전송은 그 이후)
+
+**Phase 3 기술 결정 기록:**
+
+- **의존성 추가 (13개 신규):** `ky` `robots-parser` `dotenv` (런타임 1차), `playwright` `patchright` `fingerprint-injector` `fingerprint-generator` `ghost-cursor-playwright` `tough-cookie` `tough-cookie-file-store` `proper-lockfile` `node-cron` (런타임 2차), `@types/proper-lockfile` `@types/node-cron` (devDep). tsx는 Phase 0부터 존재.
+- **`src/paths.ts` 추가 (의뢰 외):** `pnpm --filter`는 cwd를 `packages/scraper/`로 설정해서 스크립트 내 `path.resolve('data/...')` 이 잘못된 위치에 산출물을 남기는 버그를 1차 smoke test에서 재현. `import.meta.dirname` 기반 `REPO_ROOT` 상수로 통일. 2차 smoke에서 repo root `data/logs/events.jsonl` 정확 기록 확인.
+- **Notifier 뼈대 전략:** events.ts (EventType union + Severity + SEVERITY_MAP 전체) + config.ts (`loadNotifierConfig` — 환경변수 누락 시 null + enabled=false console fallback) + index.ts (`Notifier.notify(event, meta)` — `redactObject` 경유 후 events.jsonl append + Telegram POST 또는 console). **Phase 7에서 batch/dedup/rate/shutdown 훅 추가 예정** — TODO 7건 `_workspace/phase-3/01_preflight_harness.md` 기록.
+- **CWD headless 전략:** `patchright`·`playwright` 기본 `headless: true`. `SCRAPER_HEADED=1` 환경변수로 선택 토글.
+- **실행 내성 (Task 3.4/3.6):** ipapi 429나 T2/T3 접근 실패는 exit 0으로 기록만 (VPN 환경·Phase 12 skip 근거 판단). 반면 Task 3.5 patchright는 실패 시 exit 1 (stealth 검증 핵심).
+- **`.gitignore`**: `data/<subdir>/*` + `!data/*/.gitkeep` 규칙으로 구조만 유지. `data/manual/`은 수동 번역 소스이므로 추적.
+- **User-Agent 기본값:** `process.env.SCRAPER_USER_AGENT ?? 'PokopiaScraperBot/1.0'` fallback. `.env.example` 에서는 명시적 빈값 + 발급 절차 주석.
+
+**Phase 3 실행 결과 (2026-04-19 03:07~08 KST):**
+
+| 스크립트 | 결과 | 비고 |
+|---|---|---|
+| check:network | 429 (ipapi rate limit), exit 0 기록만 | `data/preflight/20260419-0307/network.json`. VPN 의심 시 수동 재검증. |
+| check:robots | 4 소스 전원 OK, 샘플 11 URL 전부 allowed | serebii 62B / pokopiaguide 1738B / pokopoko 1807B / namu 393B |
+| check:patchright | ✅ `overridesWebgl: true`, patchright v1.59.4 (8일 전 릴리스) | `data/preflight/patchright-webgl.json`. headless 모드라 WebGL vendor/renderer="no-webgl"로 stealth 적용됨 |
+| check:access | T0 HTTP 200 261KB (marker 미검출 — warn), T1/T2/T3 OK | T0 marker "Available Pokemon" 미검출은 Phase 8 파서 착수 시 실제 HTML 구조로 재확인 필요 |
+| notifier:test | code-builder smoke: 4 severity 전부 console fallback + `data/logs/events.jsonl` append 확인 | Telegram 실전송은 사용자 토큰 주입 후 별도 재실행 |
+
+**Phase 3 산출물:**
+
+- 신규 10개 소스 파일:
+  - `packages/scraper/src/robots/checker.ts` (RobotsChecker §26.2)
+  - `packages/scraper/src/notifier/{events,config,index}.ts` (3파일, 뼈대)
+  - `packages/scraper/src/paths.ts` (REPO_ROOT 헬퍼)
+  - `packages/scraper/scripts/{check-robots,check-access,check-patchright,check-network,notifier-test}.ts` (5파일)
+- 수정: `packages/scraper/package.json` (+13 deps), `packages/scraper/src/index.ts` (lint disable 1줄), `.env.example` (Telegram·UA·SSD 추가), `.gitignore` (data 규칙), `pnpm-lock.yaml`
+- 신규 13개 `.gitkeep` (data/ 하위 디렉토리)
+
+**완료 조건 (체크리스트):**
+
+- [x] `pnpm --filter @pokopia-wiki/scraper type-check` 0 error
+- [x] `pnpm --filter @pokopia-wiki/scraper lint` 0 warning/0 error
+- [x] `pnpm --filter @pokopia-wiki/scraper test:run` (No test files — Phase 4+에서 단위 테스트 추가 예정)
+- [x] `pnpm format:check` clean
+- [x] 4 preflight 스크립트 실제 실행 + 산출물 기록 확인
+- [x] notifier-test Telegram 미설정 시 console fallback 경로 smoke 통과
+
+**Phase 3 감사 (별도 세션 권장):**
+
+- **프로파일:** `crawler` (fetcher·preflight 성격). 감사자 구성은 harness의 프로파일 파일 참조.
+- **주목 포인트 (Phase 2 감사 지연 리스크 포함):**
+  - W-005 재분류 — `packages/shared/src/validators/schemas/item.ts`의 Zod 로컬 ENUM 5개는 Prisma 7 `$Enums` 제약이라 Info 강등이 자연스러움. 본 Phase 감사에서 같이 처리.
+  - `redactObject` 실사용 — Notifier가 진짜로 `events.jsonl` append 전에 호출하는지 security auditor 확인 (Phase 2에서 실사용 지점 없어 유보됐던 검증)
+  - `paths.ts` REPO_ROOT 해석 — worktree/remote 환경에서도 정확한 repo root를 가리키는지 architect 확인
+  - Notifier의 "Phase 7에서 완성" TODO 7건이 구조적으로 이후 확장 가능한지 검증
+
+---
+
+## 다음 세션 바로 시작 카드 — Phase 4
+
+Phase 3 🟡 감사 대기. 감사를 먼저 돌리고, Phase 4(Fetcher 인프라) 착수.
+
+1. **Phase 3 감사 실행** — `/pokopia-phase-review-harness` 프로파일 `crawler` (+ security 1명 추가 권장). W-005 재분류 동시 처리.
+2. **Phase 4 범위** — 로드맵 §Phase 4 (라인 660~). `packages/scraper/src/fetchers/` 티어별(T0 ky / T1 playwright / T2·T3 patchright) FetcherFactory + persona·rate·cookie·circadian 조합.
+3. **Phase 4 전제:**
+   - Phase 3 감사 critical 없음 (LOOP_REQUIRED 시 수정 후 진입)
+   - Telegram 토큰 주입 선택 (Fetcher는 Telegram 독립이지만 에러 알림 경로가 필요하면 선행 권장)
+4. **작업 단위 (Task 4.1~4.x 세부 로드맵 참조).** 주요 결정 선행 항목:
+   - PersonaManager 1인칭 vs 페르소나 2개 시간 분리 (§6.1)
+   - Rate limiter 구현 — in-memory vs file-backed (§3.2)
+   - Cookie persistence 경로 표준화 (`data/cookies/<source>/<persona>.json`)
+
+**사용자 TODO (감사 직후/Phase 4 시작 전):**
+- `@BotFather` Telegram 토큰 발급 후 `.env`에 `TELEGRAM_BOT_TOKEN`/`TELEGRAM_CHAT_ID` 주입 → `pnpm --filter @pokopia-wiki/scraper notifier:test` 재실행해서 실제 Telegram 메시지 4건 도착 확인
+- `check:access` T0 marker 미검출은 Phase 8 파서 단계에서 HTML 구조 실측으로 재검토 (지금 조치 불필요)
 
 ---
 
