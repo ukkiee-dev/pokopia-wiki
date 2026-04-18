@@ -10,3 +10,20 @@ packages/shared/src/prisma-client/*
 
 # Workspace 생성물
 _workspace/
+
+# data/ 크롤링 산출물 (cache/parsed/logs/state/...). .gitkeep 만 추적.
+data/cache/*
+data/parsed/*
+data/logs/*
+data/state/*
+data/preflight/*
+data/robots/*
+data/browser-profiles/*
+data/images/*
+data/cookies/*
+data/invalid/*
+data/snapshots/*
+!data/*/.gitkeep
+
+# data/manual/ 은 수동 번역 소스(나무위키 수동 복사본)이므로 추적.
+# 별도 제외 규칙 없음 — 파일·하위 디렉토리 모두 커밋.
