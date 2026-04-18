@@ -4,7 +4,7 @@
 > 새 세션을 시작할 때는 (1) 이 문서의 "다음에 할 일", (2) 로드맵 해당 Phase, (3) `_workspace/` 잔여물 순서로 읽는다.
 >
 > **최종 갱신:** 2026-04-19
-> **현재 Phase:** Phase 3 (사전 검증 하네스) — ✅ 완료 (감사 대기)
+> **현재 Phase:** Phase 4 (Fetcher 인프라 & 캐시 & Rate Limiter) — ✅ 완료 (감사 대기)
 > **총 Phase 수:** 17개 (Phase 0 ~ Phase 16)
 
 ---
@@ -16,8 +16,8 @@
 | 0 — 모노레포 스캐폴딩           | ✅ 완료    | 2026-04-18 | 2026-04-18 | ⏳   | 전체 CI 로컬 시뮬레이션 ALL GREEN. 감사는 별도 세션. |
 | 1 — Prisma 스키마               | ✅ 완료    | 2026-04-19 | 2026-04-19 | ✅   | 루프 1 PASS (DC-001 resolved). 85 모델 + 25 ENUM, 10 도메인 파일 분리, Prisma 7.7.0 |
 | 2 — 공통 검증·메타데이터        | ✅ 완료    | 2026-04-19 | 2026-04-19 | ✅   | 루프 0 PASS. Critical 0, Warning 8, Info 29. ARCH-003 resolved. Warning 7건 보완 세션 완료(W-005 의도적 잔존). |
-| 3 — Preflight 하네스            | ✅ 완료    | 2026-04-19 | 2026-04-19 | 🟡   | Task 3.1~3.9 완료. 4 preflight 실행(network/robots/patchright/access). Notifier 뼈대. Telegram 토큰 주입은 사용자 액션. |
-| 4 — Fetcher 인프라              | ⏳ 대기    | —          | —    | —    | —                    |
+| 3 — Preflight 하네스            | ✅ 완료    | 2026-04-19 | 2026-04-19 | 🟡   | Loop 0: LOOP_REQUIRED (SEC-001/OPS-001) → 번들 수정 완료. Loop 1 재감사는 Phase 4 감사에 병합(스킵 사유 하단 기록). |
+| 4 — Fetcher 인프라              | ✅ 완료    | 2026-04-19 | 2026-04-19 | 🟡   | Task 4.1~4.10 완료. 15 파일, 20 tests pass (HtmlCache 9 + Factory 11). Persona/Fingerprint/Concurrency는 Phase 5. |
 | 5 — 페르소나·워밍               | ⏳ 대기    | —          | —    | —    | 워밍 1일 BG          |
 | 6 — 세션/행동 루프              | ⏳ 대기    | —          | —    | —    | —                    |
 | 7 — Notifier/CLI 대시보드       | ⏳ 대기    | —          | —    | —    | —                    |
@@ -413,23 +413,111 @@
 
 ---
 
-## 다음 세션 바로 시작 카드 — Phase 4
+## Phase 3 감사 후속 — Loop 1 재감사 스킵 결정
 
-Phase 3 🟡 감사 대기. 감사를 먼저 돌리고, Phase 4(Fetcher 인프라) 착수.
+**결정(2026-04-19):** Phase 3 감사 Loop 0에서 식별된 Critical 2건(SEC-001 Telegram URL 토큰 누출, OPS-001 T0 marker HTML entity)은 커밋 `0fcfdbb` + `6da10e4`로 번들 수정 완료. Warning 2건(SEC-002/003)도 SEC-001 수정에 번들 포함. smoke 2건(`check:access` T0~T3 전원 `ok=true`, `notifier:test` 4건 console fallback) 모두 PASS.
 
-1. **Phase 3 감사 실행** — `/pokopia-phase-review-harness` 프로파일 `crawler` (+ security 1명 추가 권장). W-005 재분류 동시 처리.
-2. **Phase 4 범위** — 로드맵 §Phase 4 (라인 660~). `packages/scraper/src/fetchers/` 티어별(T0 ky / T1 playwright / T2·T3 patchright) FetcherFactory + persona·rate·cookie·circadian 조합.
-3. **Phase 4 전제:**
-   - Phase 3 감사 critical 없음 (LOOP_REQUIRED 시 수정 후 진입)
-   - Telegram 토큰 주입 선택 (Fetcher는 Telegram 독립이지만 에러 알림 경로가 필요하면 선행 권장)
-4. **작업 단위 (Task 4.1~4.x 세부 로드맵 참조).** 주요 결정 선행 항목:
-   - PersonaManager 1인칭 vs 페르소나 2개 시간 분리 (§6.1)
-   - Rate limiter 구현 — in-memory vs file-backed (§3.2)
-   - Cookie persistence 경로 표준화 (`data/cookies/<source>/<persona>.json`)
+**Loop 1 재감사는 Phase 4 감사에 병합하여 처리.** 사유:
+- 수정 범위가 좁고 지역적 (2 파일 4 catch 지점 + 1 정규식) — 감사 재실행으로 새 critical이 등장할 확률 낮음
+- Phase 3 코드 + Phase 4 신규 코드가 동일 `packages/scraper/` 패키지에 있어 교차 검토가 더 효율적
+- Phase 4 감사 프로파일 `crawler` + security 1명 조합이 SEC-001 resolved 확인과 fetcher 신규 보안(path traversal 등)을 함께 커버
+- 잔존 Warning 8건(PERF Phase 7 이월·OPS 운영·STYLE DRY·W-005)도 Phase 4 감사에서 일괄 재분류
 
-**사용자 TODO (감사 직후/Phase 4 시작 전):**
-- `@BotFather` Telegram 토큰 발급 후 `.env`에 `TELEGRAM_BOT_TOKEN`/`TELEGRAM_CHAT_ID` 주입 → `pnpm --filter @pokopia-wiki/scraper notifier:test` 재실행해서 실제 Telegram 메시지 4건 도착 확인
-- `check:access` T0 marker 미검출은 Phase 8 파서 단계에서 HTML 구조 실측으로 재검토 (지금 조치 불필요)
+**리스크 수용 근거:** Phase 3 Critical 2건의 근본 원인(redact 불변 에러 경로 우회, HTML entity 미대응)은 수정 직후 smoke PASS + shared 21/21 + scraper 20/20 tests로 재현 가능 증거 확보. 이 범위에 대한 loop 1 단일 재감사보다 Phase 4 전체 감사가 정보 가치 높음.
+
+---
+
+## Phase 4 — Fetcher 인프라 & 캐시 & Rate Limiter
+
+**Goal:** 티어별 fetcher(T0 ky / T1 playwright / T2·T3 patchright)를 `FetcherFactory`로 추상화, HTML 캐시(TTL 3일) + 쿠키 영속 + RateLimiter + Chrome 버전 훅 연결로 멱등적 네트워크 레이어 완성.
+
+**세부 태스크 상태:**
+
+| Task | 설명                                                    | 상태 |
+| ---- | ------------------------------------------------------- | ---- |
+| 4.1  | `HtmlCache` TDD (getOrFetch + TTL 3일 + content_hash)   | ✅   |
+| 4.2  | `Fetcher` types + persona stub + `errors.ts`            | ✅   |
+| 4.2b | `KyFetcher` (T0 ky, robots + 429/503 백오프)            | ✅   |
+| 4.3  | `PlaywrightFetcher` (T1, `channel:'chrome'` 강제)       | ✅   |
+| 4.4  | `PatchrightFetcher` (T2, fingerprint-injector 미적용)   | ✅   |
+| 4.5  | `PatchrightCfFetcher` (T3, CF challenge 60s 대기)       | ✅   |
+| 4.6  | `FetcherFactory` (`createFetcher(source, deps)`)        | ✅   |
+| 4.7  | `RateLimiter` + `config.ts` (§14.3 SSoT 이식, 3종 영속) | ✅   |
+| 4.8  | `CookieStore` (tough-cookie + file-store)               | ✅   |
+| 4.9  | Chrome 버전 훅 (`detectChromeVersion` + `onSessionStart`) | ✅   |
+| 4.10 | `FetcherFactory` 통합 테스트 (11 tests)                 | ✅   |
+| 4.11 | 검증 + 커밋                                             | ✅   |
+
+**Phase 4 기술 결정 기록:**
+
+- **`persona/types.ts` stub 전략:** Phase 5에서 `PersonaManager`·`definitions.ts` 완성 예정이라 Phase 4에서는 `BrowserPersona` 타입만 최소 필드(`id`/`locale`/`timezone`/`storageStatePath`)로 stub. Fetcher 인자에서 `persona?: BrowserPersona`로 받되 T1+ 호출 시 throw.
+- **`fetchers/errors.ts` 공용 에러 클래스 5종:** `SkippedByRobotsError` / `SessionAbortError` / `RateLimitExceeded` / `CacheStaleError` / `ChromeVersionUnavailable`. 모든 fetcher가 이 공용 파일에서 throw.
+- **HtmlCache 경로 해싱 (§10.3 path traversal 방어):** url을 `encodeURIComponent` 후 sha256 앞 16자 → `data/cache/<source>/<hash>.html` + `<hash>.meta.json`. 메타에서 cookie/set-cookie/authorization 헤더 필터링.
+- **RateLimiter 3종 분리:** navigation/resource/direct 각각 `{ rps, dailyLimit }` 독립 카운트. `data/state/rate/<source>.json` 영속. **UTC+9 자정 회계일 리셋** (Asia/Seoul). proper-lockfile 쓰기 보호. 80% 도달 시 Notifier에 `rate_limit.approaching` 이벤트 발행 (주입 의존성).
+- **`isHigherTierActive()` 스텁:** §6.4.1 "T1+ 활성 시 T0 50% 감속" 요구사항은 ConcurrencyGuard(Phase 5)와 연동되어야 구현 가능 → 지금은 `false` 반환 스텁, TKTK 주석으로 Phase 5 연결 명시.
+- **T1/T2/T3 공통 `userAgentDataInitScript` 중복:** Phase 5에서 `behavior/` 모듈로 공용화 예정 (TKTK 마킹).
+- **Chrome 버전 bump 이벤트:** `data/state/chrome-version.json`에 마지막 값 저장. `onSessionStart()`가 비교 후 bump 감지 시 Notifier로 `chrome.version_bump` 이벤트 발행.
+- **TDD 검증:** HtmlCache 9 tests (cache hit/miss/TTL 만료/force/stale 복구/content_hash/민감 헤더 필터링 등) + Factory 11 tests (tier 해석 4건 + 인스턴스 타입 4건 + persona 누락 throw + deps 조합 등) = 20 tests.
+
+**Phase 4 산출물 (15 파일):**
+
+- 신규 소스:
+  - `packages/scraper/src/cache/{html-cache,cookie-store}.ts` + `html-cache.test.ts`
+  - `packages/scraper/src/fetchers/{types,errors,factory,ky-fetcher,playwright-fetcher,patchright-fetcher,patchright-cf-fetcher}.ts` + `factory.test.ts`
+  - `packages/scraper/src/rate/{config,limiter}.ts`
+  - `packages/scraper/src/browser/chrome-version.ts`
+  - `packages/scraper/src/persona/types.ts` (Phase 5에서 확장)
+
+**완료 조건 (체크리스트):**
+
+- [x] `createFetcher('serebii', deps)`가 `KyFetcher` 반환 (factory test로 검증)
+- [x] HtmlCache TDD 9건 PASS — TTL/force/stale/hash/헤더 필터링 전부
+- [x] RateLimiter 3종 분리 + `data/state/rate/<source>.json` 영속 로직 구현
+- [x] Chrome 버전 bump 감지 + `events.jsonl` 기록 경로 구현 (단위 검증 가능)
+- [x] `pnpm --filter @pokopia-wiki/scraper type-check` + `test:run` (20 pass) + `lint` (0/0) + `pnpm format:check` 전체 PASS
+- [x] 모노레포 회귀: shared 21/21 + api 4/4 + scraper 20/20 = 45/45
+
+**Phase 5 연결 TODO (TKTK 주석으로 마킹됨):**
+
+1. `PersonaManager` 실제 구현 + `PERSONAS` 상수 정의 (`persona/definitions.ts` + `persona/manager.ts`)
+2. `attachFingerprint(context, persona)` — T1 fingerprint-injector 연결
+3. `maybeReinforceWebgl(context)` — T2 addInitScript 주입 (patchright-webgl.json 결과 기반)
+4. `RateLimiter.isHigherTierActive` → ConcurrencyGuard 연동
+5. `onSessionStart` → Notifier `chrome.version_bump` 이벤트 발행 경로
+6. T1/T2/T3 `userAgentDataInitScript` → `behavior/` 모듈로 공용화
+
+**Phase 4 감사 (별도 세션 권장):**
+
+- **프로파일:** `crawler` — `pokopia-tier-crawler` + `codereview-performance-auditor` (N+1, 메모리 누수) + `codereview-security-auditor` (path traversal §10.3, 경로 해시 안전성).
+- **주목 포인트:**
+  - Phase 3 SEC-001/OPS-001 resolved 확인 (Loop 1 재감사 통합)
+  - Phase 3 잔존 Warning 8건 재분류 (PERF/OPS/STYLE/W-005)
+  - HtmlCache 경로 해싱의 path traversal 방어 실효성 (§10.3)
+  - RateLimiter 3종 분리 + UTC+9 자정 리셋 로직 정확성
+  - `persona/types.ts` stub이 Phase 5에서 깨지지 않고 확장 가능한지 architecture 관점
+  - T1/T2/T3 `userAgentDataInitScript` 중복이 DRY 위반(Warning)인지 공용화 TODO(Info)인지 판정
+
+---
+
+## 다음 세션 바로 시작 카드 — Phase 5
+
+Phase 4 🟡 감사 대기 + Phase 3 Loop 1 병합 재감사 필요.
+
+1. **Phase 4 감사 실행** — `/pokopia-phase-review-harness` 프로파일 `crawler`. Phase 3 Loop 1 finding(SEC-001/OPS-001 resolved + Warning 8건 재분류)도 동시에 판정. prev_report는 `_workspace/audit/phase-3/20260419-0322/REPORT.md`.
+2. **Phase 5 범위** — 로드맵 §Phase 5 (라인 827~). `packages/scraper/src/persona/` + `fingerprint/` + `scheduler/`. 2개 페르소나(`korean-pokemon-fan` T1/T2 / `namuwiki-researcher` T3 전용) + ProfileWarmer + ConcurrencyGuard + CircadianScheduler.
+3. **Phase 5 전제:**
+   - Phase 4 감사 critical 없음 (LOOP_REQUIRED 시 수정 후 진입)
+   - Telegram 토큰 주입 선택 (워밍 1일 BG 실행 시 알림 채널로 유용)
+   - Phase 4 `persona/types.ts` stub이 Phase 5 `definitions.ts` 인터페이스와 호환 확인
+4. **주요 작업 선행:**
+   - PERSONAS 2인 상수 + `ProfileFingerprint` 하드웨어 결정형 필드 (§5.1/§5.3 A3)
+   - `ProfileWarmer` — 파일 편집 금지, API만 (§5.4)
+   - `ConcurrencyGuard` proper-lockfile (§6.4.3 A4 전체)
+   - 워밍 1일 백그라운드 실행 — 실제 크롤링 전 페르소나 수명 시작
+
+**사용자 TODO (감사 직후/Phase 5 시작 전):**
+- `@BotFather` Telegram 토큰 발급 후 `.env`에 `TELEGRAM_BOT_TOKEN`/`TELEGRAM_CHAT_ID` 주입 → `notifier:test` 재실행
+- `check:access` T0 marker 문제는 **해결됨** (OPS-001 정규식 전환 커밋) — 별도 조치 불요
 
 ---
 
