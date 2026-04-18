@@ -4,7 +4,7 @@
 > 새 세션을 시작할 때는 (1) 이 문서의 "다음에 할 일", (2) 로드맵 해당 Phase, (3) `_workspace/` 잔여물 순서로 읽는다.
 >
 > **최종 갱신:** 2026-04-19
-> **현재 Phase:** Phase 1 (Prisma 스키마) — ✅ 완료 (루프 1 감사 통과)
+> **현재 Phase:** Phase 2 (공통 검증·메타데이터) — ✅ 완료 (감사는 별도 세션)
 > **총 Phase 수:** 17개 (Phase 0 ~ Phase 16)
 
 ---
@@ -15,7 +15,7 @@
 | ------------------------------- | ---------- | ---------- | ---------- | ---- | ---------------------------------------------------- |
 | 0 — 모노레포 스캐폴딩           | ✅ 완료    | 2026-04-18 | 2026-04-18 | ⏳   | 전체 CI 로컬 시뮬레이션 ALL GREEN. 감사는 별도 세션. |
 | 1 — Prisma 스키마               | ✅ 완료    | 2026-04-19 | 2026-04-19 | ✅   | 루프 1 PASS (DC-001 resolved). 85 모델 + 25 ENUM, 10 도메인 파일 분리, Prisma 7.7.0 |
-| 2 — 공통 검증·메타데이터        | ⏳ 대기    | —          | —    | —    | —                    |
+| 2 — 공통 검증·메타데이터        | ✅ 완료    | 2026-04-19 | 2026-04-19 | 🟡   | ARCH-003 resolved (adapter-pg factory) + Task 2.1~2.5. 14 tests pass. 감사 대기. |
 | 3 — Preflight 하네스            | ⏳ 대기    | —          | —    | —    | Telegram/Chrome 필요 |
 | 4 — Fetcher 인프라              | ⏳ 대기    | —          | —    | —    | —                    |
 | 5 — 페르소나·워밍               | ⏳ 대기    | —          | —    | —    | 워밍 1일 BG          |
@@ -258,21 +258,91 @@
 
 ---
 
-## 다음 세션 바로 시작 카드 — Phase 2
+## Phase 2 — 공통 검증·메타데이터 인프라
 
-Phase 1 감사가 🟡 대기이므로, 감사를 먼저 돌린 뒤 Phase 2 진행 권장. Phase 2 착수 체크리스트:
+**Goal:** `packages/shared`에 스크래퍼/API가 공유하는 Zod 검증 계약, 출처 메타데이터, 로깅 마스킹 유틸을 정착.
 
-1. **Phase 1 감사 실행** — `/pokopia-phase-review-harness` 또는 `pokopia-phase-review-lead` 에이전트로 프로파일 `schema` 감사. critical 발견 시 schema 수정 후 재감사.
-2. **Phase 2 범위 확인** — `docs/plans/2026-04-18-implementation-roadmap.md` §Phase 2 (라인 435~). 공통 검증·메타데이터 인프라(`packages/shared`).
-3. **작업 단위:**
-   - Task 2.1: `SourceMetadataSchema` (CRAWLING_STRATEGY §27.1)
-   - Task 2.2: 엔티티별 Zod 스키마 (SCHEMA §2 1:1 매핑)
-   - Task 2.3: `SOURCE_DEFAULTS` + `buildSourceMetadata()` (§27.4)
-   - Task 2.4: `redact()` 유틸 + 단위 테스트 (§22.3, 엣지 케이스 3종)
-   - Task 2.5: `packages/shared/src/index.ts`에 validators/metadata/redact export 추가
-   - Task 2.6: type-check + test + 커밋
+**세부 태스크 상태:**
 
-**전제 없음**: Phase 2는 외부 자원 불요. scraper preflight는 Phase 3부터.
+| Task | 설명                                                         | 상태 |
+| ---- | ------------------------------------------------------------ | ---- |
+| 2.0  | ARCH-003: `@prisma/adapter-pg` factory 진입 조건 해결        | ✅   |
+| 2.1  | `SourceMetadataSchema` (CRAWLING_STRATEGY §27.1)             | ✅   |
+| 2.2  | 엔티티별 Zod 스키마 (핵심 5개 + 도메인 분리)                 | ✅   |
+| 2.3  | `SOURCE_DEFAULTS` + `buildSourceMetadata()` (§27.4)          | ✅   |
+| 2.4  | `redact()` 유틸 + 테스트 (§22.3, TDD)                        | ✅   |
+| 2.5  | `packages/shared/src/index.ts` 통합 export                   | ✅   |
+| 2.6  | type-check + test + 커밋                                     | ✅   |
+
+**실행 방식 (사용자 선택 2026-04-19):**
+
+- Task 2.2 범위: **핵심 5개 + 도메인 분리** — Pokemon / Item / CookingRecipe / CraftingRecipe / Habitat. 나머지 80 엔티티는 해당 파서 Phase(Phase 8+)에서 점진 추가.
+- Factory 위치: **`packages/shared/src/db/client.ts`** (prisma-client/는 생성물이라 postinstall로 갈아엎혀서 제외).
+
+**Phase 2 기술 결정 기록:**
+
+- **zod 4 API 판정**: `z.url()` / `z.iso.datetime()` / `.extend(B.shape)` 사용. `z.string().url()` / `z.string().datetime()` / `.merge()` 는 zod 4에서 deprecated. `_base.ts` JSDoc에 후속 에이전트용 가이드 명시.
+- **Zod 스코프 경계**: Zod는 "스크래퍼가 파싱 직후 넘기는 객체" 계약. Prisma 생성 컬럼(`id` autoincrement, `createdAt`/`updatedAt`, `contentHash` 파생)은 Zod에서 제외하고 loader 책임으로. FK는 영문명(`resultItemNameEn` 등)으로 느슨히 두고 loader가 name→id resolve.
+- **Prisma 7 runtime adapter 패턴**: `createPrismaClient({ connectionString?, pool? })` 팩토리 + `getPrismaClient()` 싱글톤 + `resetPrismaClient()` 테스트용. `PrismaPg(pool)` 주입, pg named import(`{ Pool }`) 사용 (oxlint `no-named-as-default-member` 준수).
+- **redact 정규식 1건 원문 차이**: Telegram 토큰 패턴 뒷경계를 `\b` 대신 `(?![A-Za-z0-9_-])`로 구현. `-`가 `\w`에 속하지 않아 원문 `\b`가 조기 종료하는 문제 회피. 의미 동일. §22.3 원문 보완 여부는 감사 시 `doc-strategist`가 판정.
+- **이중 타입 호환 검증**: `expectTypeOf<PokemonInput['pokedexNo']>().toExtend<Prisma.PokemonCreateInput['pokedexNo']>()` 등 compile-time 할당성 보장. Pokemon + Item 두 엔티티에 대해 각 5건(safeParse 3 + 타입 2) = 총 10건 신규 테스트.
+- **의존성 추가**: `@prisma/adapter-pg`, `pg` 런타임 + `@types/pg` devDep (3 packages). 다른 의존성은 건드리지 않음.
+- **docker-compose.local.yml oxfmt side-effect**: Phase 1 커밋 이후 포맷 미정렬 상태였던 파일이 format:check에서 드러남. Phase 2 커밋 범위에 포함시켜 정리.
+
+**Phase 2 산출물:**
+
+- 신규 13개 파일:
+  - `packages/shared/src/db/client.ts` (Prisma factory, ARCH-003)
+  - `packages/shared/src/validators/schemas/{_base,pokemon,item,recipe,geography,index}.ts` (6개)
+  - `packages/shared/src/validators/schemas/{pokemon,item}.test.ts` (2개)
+  - `packages/shared/src/validators/metadata.ts` (buildSourceMetadata)
+  - `packages/shared/src/config/source-metadata.ts` (SOURCE_DEFAULTS)
+  - `packages/shared/src/logging/{redact,redact.test}.ts` (2개)
+- 수정: `packages/shared/src/index.ts` (통합 export), `packages/shared/package.json` (+3 deps), `pnpm-lock.yaml`, `docker-compose.local.yml` (oxfmt)
+
+**완료 조건 (체크리스트):**
+
+- [x] `SourceMetadataSchema.safeParse({ ... })` 정상 동작
+- [x] `buildSourceMetadata({ sourceSite: 'serebii', sourceUrl: '...' })`가 license/copyrightHolder/attribution 자동 주입
+- [x] `redact()`가 Telegram 토큰·Bearer·cf_clearance 쿠키 모두 마스킹 (4 tests pass)
+- [x] Pokemon + Item Zod `.infer` ↔ Prisma.{Entity}CreateInput 타입 호환 compile-time 검증
+- [x] `pnpm --filter @pokopia-wiki/shared type-check` + `test:run` (14 pass) + `lint` (0/0) + `pnpm format:check` 전체 PASS
+- [x] `pnpm --filter @pokopia-wiki/api type-check` + `test:run` (4 pass) — shared 변경이 api 호환성 깨뜨리지 않음
+
+**Phase 2 커밋:** 이 커밋에서 포함. 진행 카드 갱신은 후속 `docs(plans)` 커밋.
+
+**Phase 2 감사 (별도 세션 권장):**
+
+- **프로파일:** `schema` (Task 2.1/2.2가 스키마 계약이므로 `schema` 프로파일 적용). 감사자 3명: `pokopia-doc-consistency` (SCHEMA vs Zod 필드 정합성), `codereview-style` (zod 4 API 일관성, JSDoc 품질), `codereview-security-audit` (redact 우회 가능성 — 로드맵 Phase 2 감사 지시).
+- **주목 포인트:**
+  - redact 정규식의 §22.3 원문 차이 (의미 동일하지만 SSoT 문자 단위 차이)
+  - `redactObject` JSON 왕복의 `undefined`/함수 소실 (JSDoc으로 경계 명시됨)
+  - `buildSourceMetadata`의 `scrapedAt` 호출 시점마다 재생성 — 단일 엔티티 내 여러 필드 조립 시 milliseconds 차이. Phase 3+ 파서에서 scrapedAt 선생성/재사용 권장 (인수인계 메모).
+
+---
+
+## 다음 세션 바로 시작 카드 — Phase 3
+
+Phase 2가 🟡 감사 대기. 감사를 먼저 돌리고, Phase 3(사전 검증 하네스)은 외부 자원이 필요하므로 준비 체크리스트부터.
+
+1. **Phase 2 감사 실행** — `/pokopia-phase-review-harness` 프로파일 `schema`. critical 발견 시 수정 후 재감사.
+2. **Phase 3 외부 자원 준비 (감사 전/병렬 가능):**
+   - Telegram Bot 생성(@BotFather) → `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID`(+`CRITICAL`) `.env` 주입
+   - `npx playwright install chromium` (Phase 3 patchright WebGL probe 필수)
+   - `.env.example` 갱신(Telegram·user-agent·SSD 마운트)
+3. **Phase 3 범위** — `docs/plans/2026-04-18-implementation-roadmap.md` §Phase 3 (라인 526~). `packages/scraper`에 robots/access/patchright/network/notifier 5종 preflight + Notifier 뼈대.
+4. **작업 단위 (Task 3.1~3.9):**
+   - 3.1 의존성(ky/robots-parser/dotenv + playwright/patchright/fingerprint-injector 등)
+   - 3.2 `.env.example` 확장
+   - 3.3 `check:robots`(4 소스 robots.txt + sample URL `isAllowed`)
+   - 3.4 `check:access`(T0~T3 대표 페이지 접근)
+   - 3.5 `check:patchright` ★ WebGL probe (`data/preflight/patchright-webgl.json`)
+   - 3.6 `check:network`(ipapi 국가/시간대 확인)
+   - 3.7 Notifier 뼈대 + `notifier:test`
+   - 3.8 `data/` 디렉토리 + `.gitignore` 표준화
+   - 3.9 통합 실행 + `data/preflight/<date>/report.md` 기록
+
+**전제:** Telegram 토큰 부재 시 Task 3.7·3.9 부분 실행 불가. Playwright 미설치 시 Task 3.5 실패. Phase 2 감사 critical 발견 시 Phase 3 착수 지연 가능.
 
 ---
 
