@@ -15,7 +15,7 @@
 | ------------------------------- | ---------- | ---------- | ---------- | ---- | ---------------------------------------------------- |
 | 0 — 모노레포 스캐폴딩           | ✅ 완료    | 2026-04-18 | 2026-04-18 | ⏳   | 전체 CI 로컬 시뮬레이션 ALL GREEN. 감사는 별도 세션. |
 | 1 — Prisma 스키마               | ✅ 완료    | 2026-04-19 | 2026-04-19 | ✅   | 루프 1 PASS (DC-001 resolved). 85 모델 + 25 ENUM, 10 도메인 파일 분리, Prisma 7.7.0 |
-| 2 — 공통 검증·메타데이터        | ✅ 완료    | 2026-04-19 | 2026-04-19 | ✅   | 루프 0 PASS. Critical 0, Warning 8, Info 29. ARCH-003 resolved. Warning은 별도 문서 보완 세션. |
+| 2 — 공통 검증·메타데이터        | ✅ 완료    | 2026-04-19 | 2026-04-19 | ✅   | 루프 0 PASS. Critical 0, Warning 8, Info 29. ARCH-003 resolved. Warning 7건 보완 세션 완료(W-005 의도적 잔존). |
 | 3 — Preflight 하네스            | ⏳ 대기    | —          | —    | —    | Telegram/Chrome 필요 |
 | 4 — Fetcher 인프라              | ⏳ 대기    | —          | —    | —    | —                    |
 | 5 — 페르소나·워밍               | ⏳ 대기    | —          | —    | —    | 워밍 1일 BG          |
@@ -326,11 +326,15 @@
   - W-006~008 (sec): redact Bearer 범위 확장(JSON body access_token, Basic auth), Cookie 키 확장(CSRF/refresh/JWT), `redactObject` BigInt/순환 throw 방어
 - **감사 산출물:** `_workspace/audit/phase-2/20260419-0206/` (scope.md, profile.md, 4개 YAML, REPORT.md — `.gitignore`로 제외됨)
 
-**Phase 2 후속 작업 (별도 세션 권장):**
+**Phase 2 Warning 보완 세션 (2026-04-19, 완료):**
 
-1. **X-004 scrapedAt drift 해결:** `buildSourceMetadata` signature에 `scrapedAt?: string` 옵셔널 추가 + §27.4에 "파서가 엔티티 단위로 사전 생성·재사용" 규칙 명시 — **Phase 3+ 파서 착수 전 권장**
-2. **W-001~003 문서 보완:** CRAWLING_STRATEGY §27.1 zod 4 API 반영, §22.3 Telegram 각주 + Bearer/Cookie 확장, §27.4 scrapedAt 규칙
-3. **W-006~008 코드 보완:** redact TOKEN_PATTERNS 확장 + 테스트 추가, `redactObject` try-catch + fallback
+1. **코드 3파일 보완:**
+   - `packages/shared/src/validators/metadata.ts` — `scrapedAt?: string` 옵셔널 (W-004)
+   - `packages/shared/src/logging/redact.ts` — TOKEN_PATTERNS 5개로 확장(Telegram + Bearer + Basic + OAuth JSON + Cookie 키 확장), `\b` 단어 경계, `redactObject` try-catch fallback (W-006/007/008)
+   - `packages/shared/src/logging/redact.test.ts` — 회귀 케이스 6건 추가 (Basic auth / OAuth JSON / CSRF+JWT / Base64 padding / BigInt / circular). 총 20/20 pass.
+2. **CRAWLING_STRATEGY.md v3.3 동기화:** §22.3 TOKEN_PATTERNS 확장 설명 + `redactObject` 방어, §27.1 zod 4 API 전환(`.extend(B.shape)`/`z.url()`/`z.iso.datetime()`) + deprecated 금지 각주, §27.4 `buildSourceMetadata` scrapedAt 옵셔널 + 1엔티티 1회 호출 규칙. 개정 이력 v3.3 엔트리.
+3. **해결된 Warning (7/8):** W-001, W-002, W-003, W-004, W-006, W-007, W-008.
+4. **의도적 잔존 (1/8):** W-005 `item.ts` Prisma `$Enums` 로컬 ENUM 5개 수동 동기 — Prisma 7 런타임 `$Enums`가 `type`만 export하고 value를 export하지 않는 제약으로 Zod `z.enum`에서 사용 불가. expectTypeOf로 컴파일 타임 차단 중이며, Prisma enum 변경 시 IDE·CI가 즉시 감지. 설계상 정당하므로 Info 강등이 자연스러움 — 다음 감사에서 재분류.
 
 ---
 
