@@ -27,20 +27,25 @@ import type { SourceMetadata, SourceSite } from './schemas/_base';
  * `sourceSite` 별 기본 라이선스/저작권/attribution 을 주입한
  * `SourceMetadata` 객체를 조립한다.
  *
- * - `scrapedAt` 은 호출 시점 UTC ISO 문자열로 자동 설정
+ * - `scrapedAt` 미지정 시 호출 시점 UTC ISO 문자열로 자동 설정
+ * - 한 엔티티가 여러 레코드(본체 + i18n + 관계)로 분해될 때는 파서가
+ *   엔티티 시작 시점에 `scrapedAt = new Date().toISOString()` 을 한 번
+ *   생성하고 각 `buildSourceMetadata` 호출에 동일 문자열을 전달할 것
+ *   (§27.4 호출 규칙 — ms 단위 drift 방지로 감사·재현성 확보)
  * - 한국어 매핑 등 다른 소스에서 파생된 엔티티는 `derivedFrom` 을 명시할 것
  *   (§27.1 주석 — 한국어 매핑 스키마는 `derivedFrom` 의무)
  */
 export function buildSourceMetadata(args: {
   sourceSite: SourceSite;
   sourceUrl: string;
+  scrapedAt?: string;
   derivedFrom?: SourceMetadata['derivedFrom'];
 }): SourceMetadata {
   const defaults = SOURCE_DEFAULTS[args.sourceSite];
   return {
     sourceSite: args.sourceSite,
     sourceUrl: args.sourceUrl,
-    scrapedAt: new Date().toISOString(),
+    scrapedAt: args.scrapedAt ?? new Date().toISOString(),
     license: defaults.license,
     copyrightHolder: defaults.copyrightHolder,
     attribution: defaults.attribution,

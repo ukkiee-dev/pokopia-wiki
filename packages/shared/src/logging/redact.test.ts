@@ -21,6 +21,32 @@ describe('redact()', () => {
     const output = redact(input);
     expect(output).toBe('Cookie: cf_clearance=<REDACTED>; session=<REDACTED>');
   });
+
+  it('masks Basic auth credentials', () => {
+    // RFC 7617: Basic <base64(user:pass)>
+    const input = 'Authorization: Basic dXNlcjpwYXNzd29yZA==';
+    const output = redact(input);
+    expect(output).toBe('Authorization: Basic <REDACTED>');
+  });
+
+  it('masks OAuth tokens in JSON response bodies while preserving keys', () => {
+    const input = '{"access_token":"eyJhbG+ci/Oi=","refresh_token":"rt_abc123","scope":"read"}';
+    const output = redact(input);
+    expect(output).toBe('{"access_token":"<REDACTED>","refresh_token":"<REDACTED>","scope":"read"}');
+  });
+
+  it('masks CSRF-family and JWT cookie values', () => {
+    // JWT 는 `.` 을 포함하지만 쿠키 값 캡처 패턴 `[^;\s,]+` 가 허용
+    const input = 'Cookie: csrf=tok1; xsrf=tok2; jwt=eyJhbG.eyJzdWIi.sig; refresh=rt_xyz';
+    const output = redact(input);
+    expect(output).toBe('Cookie: csrf=<REDACTED>; xsrf=<REDACTED>; jwt=<REDACTED>; refresh=<REDACTED>');
+  });
+
+  it('handles base64 padding characters (+/=) in Bearer tokens', () => {
+    const input = 'Authorization: Bearer eyJhbG+ciO/iJI=.eyJzdWIi.abc';
+    const output = redact(input);
+    expect(output).toBe('Authorization: Bearer <REDACTED>');
+  });
 });
 
 describe('redactObject()', () => {
@@ -28,5 +54,20 @@ describe('redactObject()', () => {
     const input = { token: 'Bearer abc', meta: { note: 'ok' } };
     const output = redactObject(input);
     expect(output).toEqual({ token: 'Bearer <REDACTED>', meta: { note: 'ok' } });
+  });
+
+  it('returns fallback marker when object contains BigInt (JSON.stringify throws)', () => {
+    // BigInt 는 JSON.stringify 에서 TypeError
+    const input = { balance: 9007199254740993n, currency: 'KRW' } as unknown;
+    const output = redactObject(input) as { __redact_error?: string };
+    expect(output.__redact_error).toMatch(/BigInt|serialize/i);
+  });
+
+  it('returns fallback marker when object has a circular reference', () => {
+    type Node = { name: string; self?: Node };
+    const input: Node = { name: 'root' };
+    input.self = input;
+    const output = redactObject(input) as { __redact_error?: string };
+    expect(output.__redact_error).toMatch(/circular|cycle|convert/i);
   });
 });
