@@ -10,6 +10,13 @@ describe('redact()', () => {
     expect(output).toBe('TELEGRAM_BOT_TOKEN=<TELEGRAM_TOKEN>');
   });
 
+  it('masks Telegram API URL embedded tokens while preserving URL structure', () => {
+    // Phase 3 감사 SEC-001: URL 안의 bot<TOKEN> 은 단어 경계 부재로 기존 패턴이 잡지 못함.
+    const input = 'GET https://api.telegram.org/bot1234567:ABCdefGHIjklMNOpqrSTUvwxYZ0123456_-/sendMessage failed';
+    const output = redact(input);
+    expect(output).toBe('GET https://api.telegram.org/bot<TELEGRAM_TOKEN>/sendMessage failed');
+  });
+
   it('masks Bearer tokens in Authorization headers as Bearer <REDACTED>', () => {
     const input = 'Authorization: Bearer eyJhbGciOi.eyJzdWIi.SflKxw';
     const output = redact(input);

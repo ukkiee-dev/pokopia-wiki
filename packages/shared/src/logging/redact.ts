@@ -27,6 +27,10 @@
  *   refresh/jwt/token (OIDC/OAuth). `.` 을 허용해 JWT dot-separated 값도 매칭.
  */
 const TOKEN_PATTERNS: Array<[RegExp, string]> = [
+  // Telegram API URL — `https://api.telegram.org/bot<TOKEN>/...` 경로에서 토큰 마스킹.
+  // URL 안의 token 은 `bot` 과 digit 사이 단어 경계가 없어 아래 "Telegram bot token"
+  // 패턴이 매칭되지 않으므로 URL 전용 규칙이 선행해야 한다(순서 의존).
+  [/(https?:\/\/api\.telegram\.org\/bot)[^/\s?#]+/gi, '$1<TELEGRAM_TOKEN>'],
   // Telegram bot token: 7-10자리 숫자 : 30+자 영숫자/-/_
   [/\b\d{7,10}:[A-Za-z0-9_-]{30,}(?![A-Za-z0-9_-])/g, '<TELEGRAM_TOKEN>'],
   // HTTP Authorization: Bearer <jwt|opaque> (base64 padding +/= 포함)

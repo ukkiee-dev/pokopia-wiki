@@ -37,6 +37,15 @@ import { repoPath } from '#paths';
 const DEFAULT_USER_AGENT = 'PokopiaScraperBot/1.0 (+ukyi.js@gmail.com)';
 const HEADED = process.env['SCRAPER_HEADED'] === '1';
 
+/**
+ * Serebii 페이지 고유 마커 — "Available Pokémon".
+ *
+ * Phase 3 감사 OPS-001: 원문 HTML 은 `é` 를 HTML entity(`&eacute;`) 로 인코딩해
+ * plain 문자열 `includes('Available Pokemon')` 이 false 가 되었다.
+ * unicode `\u00e9`, decimal `&#233;`, hex `&#xe9;` 세 가지 표기를 동시 매칭.
+ */
+const SEREBII_MARKER = /Available\s+Pok(?:\u00E9|&eacute;|&#233;|&#xe9;)mon/i;
+
 type SourceSlug = 'serebii' | 'pokopiaguide' | 'pokopoko' | 'namu.wiki';
 
 type AccessResult = {
@@ -99,8 +108,8 @@ async function probeSerebii(userAgent: string): Promise<AccessResult> {
       throwHttpErrors: false,
     });
     const body = await response.text();
-    const hasMarker = body.includes('Available Pokemon');
-    if (!hasMarker) notes.push('marker "Available Pokemon" 미검출');
+    const hasMarker = SEREBII_MARKER.test(body);
+    if (!hasMarker) notes.push('marker "Available Pokémon" 미검출 (entity + unicode 양자 매칭)');
     return {
       source: 'serebii',
       tier: 'T0',

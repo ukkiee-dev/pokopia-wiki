@@ -20,7 +20,7 @@ import { appendFile, mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { promisify } from 'node:util';
 
-import { redactObject } from '@pokopia-wiki/shared';
+import { redact, redactObject } from '@pokopia-wiki/shared';
 import ky from 'ky';
 
 import { repoPath } from '../paths.js';
@@ -31,6 +31,24 @@ const execFileAsync = promisify(execFile);
 
 /** `data/logs/events.jsonl` — repo root 기준 고정 경로. */
 const EVENTS_LOG_PATH = repoPath('data', 'logs', 'events.jsonl');
+
+/**
+ * 메타 키 네이밍 가드 (Phase 3 감사 SEC-002).
+ *
+ * `notify(event, meta)` 의 `meta` 는 호출자가 자유롭게 채우는 Record 라
+ * 실수로 `botToken`/`apiKey`/`authorization` 같은 키에 원본 시크릿이 들어올 수
+ * 있다. redact 는 값 내부의 패턴만 잡으므로, 아예 키 이름으로 의심되는 필드는
+ * 값을 `<REDACTED>` 로 치환해 더 강한 가드를 건다. 케이스/구분자 비의존.
+ */
+const SENSITIVE_META_KEY_PATTERN = /token|apikey|authorization|password|secret|credential|cookie|bearer/i;
+
+function sanitizeMeta(meta: Record<string, unknown>): Record<string, unknown> {
+  const sanitized: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(meta)) {
+    sanitized[key] = SENSITIVE_META_KEY_PATTERN.test(key) ? '<REDACTED>' : value;
+  }
+  return sanitized;
+}
 
 /**
  * Telegram API 응답 최소 스키마.
@@ -56,8 +74,10 @@ async function appendEventLog(entry: NotifierEvent): Promise<void> {
     await mkdir(path.dirname(EVENTS_LOG_PATH), { recursive: true });
     await appendFile(EVENTS_LOG_PATH, `${JSON.stringify(entry)}\n`, 'utf8');
   } catch (err) {
+    // Phase 3 감사 SEC-003: 에러 메시지에 경로 이외의 민감정보가 섞일 수
+    // 있으므로 fs 에러도 redact 경유 후 출력.
     const reason = err instanceof Error ? err.message : String(err);
-    console.error(`[notifier] events.jsonl append failed: ${reason}`);
+    console.error(`[notifier] events.jsonl append failed: ${redact(reason)}`);
   }
 }
 
@@ -96,8 +116,9 @@ async function sendMacOSBanner(entry: NotifierEvent): Promise<void> {
   try {
     await execFileAsync('osascript', ['-e', script, 'Pokopia Scraper', entry.event, body]);
   } catch (err) {
+    // Phase 3 감사 SEC-001 연계: 외부 프로세스 에러도 일관되게 redact 경유.
     const reason = err instanceof Error ? err.message : String(err);
-    console.error(`[notifier] macOS banner failed: ${reason}`);
+    console.error(`[notifier] macOS banner failed: ${redact(reason)}`);
   }
 }
 
@@ -134,18 +155,23 @@ export class Notifier {
       event,
       severity,
       ts: new Date().toISOString(),
-      meta,
+      // Phase 3 감사 SEC-002: 키 네이밍 가드를 값 기반 redact 앞에서 먼저 적용.
+      meta: sanitizeMeta(meta),
     };
     const entry = redactObject(rawEntry);
 
     await appendEventLog(entry);
 
     if (!this.config.enabled || !this.config.telegram) {
-      console.log(`[notifier:fallback] ${JSON.stringify(entry)}`);
+      // 이미 redactObject 를 거친 entry 이지만 JSON.stringify 결과 문자열에
+      // URL 임베드 토큰이 재조립될 수 있어(§22.3 Telegram API URL 패턴) 2차 redact.
+      console.log(`[notifier:fallback] ${redact(JSON.stringify(entry))}`);
     } else {
       await this.sendTelegram(entry).catch((err: unknown) => {
+        // Phase 3 감사 SEC-001: ky HTTPError 메시지는 URL(토큰 포함) 을 담을 수
+        // 있으므로 redact 경유 필수.
         const reason = err instanceof Error ? err.message : String(err);
-        console.error(`[notifier] Telegram send failed: ${reason}`);
+        console.error(`[notifier] Telegram send failed: ${redact(reason)}`);
       });
     }
 
