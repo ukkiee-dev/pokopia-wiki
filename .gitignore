@@ -7,3 +7,6 @@ dist/
 # Prisma Client 생성물 — pnpm install postinstall 또는 `pnpm prisma generate`로 재생성
 packages/shared/src/prisma-client/*
 !packages/shared/src/prisma-client/.gitkeep
+
+# Workspace 생성물
+_workspace/
