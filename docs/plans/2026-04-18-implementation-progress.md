@@ -4,7 +4,7 @@
 > 새 세션을 시작할 때는 (1) 이 문서의 "다음에 할 일", (2) 로드맵 해당 Phase, (3) `_workspace/` 잔여물 순서로 읽는다.
 >
 > **최종 갱신:** 2026-04-19
-> **현재 Phase:** Phase 2 (공통 검증·메타데이터) — ✅ 완료 (감사는 별도 세션)
+> **현재 Phase:** Phase 2 (공통 검증·메타데이터) — ✅ 완료 + 감사 루프 0 PASS
 > **총 Phase 수:** 17개 (Phase 0 ~ Phase 16)
 
 ---
@@ -15,7 +15,7 @@
 | ------------------------------- | ---------- | ---------- | ---------- | ---- | ---------------------------------------------------- |
 | 0 — 모노레포 스캐폴딩           | ✅ 완료    | 2026-04-18 | 2026-04-18 | ⏳   | 전체 CI 로컬 시뮬레이션 ALL GREEN. 감사는 별도 세션. |
 | 1 — Prisma 스키마               | ✅ 완료    | 2026-04-19 | 2026-04-19 | ✅   | 루프 1 PASS (DC-001 resolved). 85 모델 + 25 ENUM, 10 도메인 파일 분리, Prisma 7.7.0 |
-| 2 — 공통 검증·메타데이터        | ✅ 완료    | 2026-04-19 | 2026-04-19 | 🟡   | ARCH-003 resolved (adapter-pg factory) + Task 2.1~2.5. 14 tests pass. 감사 대기. |
+| 2 — 공통 검증·메타데이터        | ✅ 완료    | 2026-04-19 | 2026-04-19 | ✅   | 루프 0 PASS. Critical 0, Warning 8, Info 29. ARCH-003 resolved. Warning은 별도 문서 보완 세션. |
 | 3 — Preflight 하네스            | ⏳ 대기    | —          | —    | —    | Telegram/Chrome 필요 |
 | 4 — Fetcher 인프라              | ⏳ 대기    | —          | —    | —    | —                    |
 | 5 — 페르소나·워밍               | ⏳ 대기    | —          | —    | —    | 워밍 1일 BG          |
@@ -309,15 +309,28 @@
 - [x] `pnpm --filter @pokopia-wiki/shared type-check` + `test:run` (14 pass) + `lint` (0/0) + `pnpm format:check` 전체 PASS
 - [x] `pnpm --filter @pokopia-wiki/api type-check` + `test:run` (4 pass) — shared 변경이 api 호환성 깨뜨리지 않음
 
-**Phase 2 커밋:** 이 커밋에서 포함. 진행 카드 갱신은 후속 `docs(plans)` 커밋.
+**Phase 2 커밋:**
+- `221704f` `feat(shared): add Phase 2 validation/metadata infra (ARCH-003 + Task 2.1-2.5)` (17 files, +957/-3)
+- `2c741c1` `docs(plans): record Phase 2 implementation in progress tracker`
+- 감사 결과 반영 커밋: 후속 `docs(plans): Phase 2 감사 루프 0 PASS 결과 기록`
 
-**Phase 2 감사 (별도 세션 권장):**
+**Phase 2 감사 (루프 0, PASS):**
 
-- **프로파일:** `schema` (Task 2.1/2.2가 스키마 계약이므로 `schema` 프로파일 적용). 감사자 3명: `pokopia-doc-consistency` (SCHEMA vs Zod 필드 정합성), `codereview-style` (zod 4 API 일관성, JSDoc 품질), `codereview-security-audit` (redact 우회 가능성 — 로드맵 Phase 2 감사 지시).
-- **주목 포인트:**
-  - redact 정규식의 §22.3 원문 차이 (의미 동일하지만 SSoT 문자 단위 차이)
-  - `redactObject` JSON 왕복의 `undefined`/함수 소실 (JSDoc으로 경계 명시됨)
-  - `buildSourceMetadata`의 `scrapedAt` 호출 시점마다 재생성 — 단일 엔티티 내 여러 필드 조립 시 milliseconds 차이. Phase 3+ 파서에서 scrapedAt 선생성/재사용 권장 (인수인계 메모).
+- **하네스:** `pokopia-phase-review-harness` (프로파일 `schema` + 사용자 요청 `security` 1명 추가). 감사자 4명: `pokopia-doc-consistency`, `codereview-architecture`, `codereview-style`, `codereview-security`.
+- **루프 0 (2026-04-19 02:06 KST):** VERDICT=**PASS**. Critical 0건, Warning 8건, Info 29건. 감사자 4명 전원 verdict_hint: PASS로 독립 수렴.
+- **ARCH-003 해소 확정:** doc-consistency(DC-001) + architecture(ARCH-201) 양측 독립 `resolved` 판정. Phase 1 감사의 `rule: dip-runtime-adapter`는 본 Phase에서 종료.
+- **주요 Warning (후속 세션 대상):**
+  - W-001~003 (doc): CRAWLING_STRATEGY §27.1 zod 4 API 반영, §22.3 Telegram 뒷경계 치환 각주, §27.4 `scrapedAt` 1회 호출 규칙 명시
+  - W-004 (arch): `buildSourceMetadata`의 `new Date()` 내부 호출 → `scrapedAt?: string` 옵셔널 추가 권장
+  - W-005 (style): `item.ts`의 Zod 로컬 ENUM 5개는 Prisma `$Enums` 런타임 제약으로 수동 동기 (expectTypeOf 차단 중, 의도적)
+  - W-006~008 (sec): redact Bearer 범위 확장(JSON body access_token, Basic auth), Cookie 키 확장(CSRF/refresh/JWT), `redactObject` BigInt/순환 throw 방어
+- **감사 산출물:** `_workspace/audit/phase-2/20260419-0206/` (scope.md, profile.md, 4개 YAML, REPORT.md — `.gitignore`로 제외됨)
+
+**Phase 2 후속 작업 (별도 세션 권장):**
+
+1. **X-004 scrapedAt drift 해결:** `buildSourceMetadata` signature에 `scrapedAt?: string` 옵셔널 추가 + §27.4에 "파서가 엔티티 단위로 사전 생성·재사용" 규칙 명시 — **Phase 3+ 파서 착수 전 권장**
+2. **W-001~003 문서 보완:** CRAWLING_STRATEGY §27.1 zod 4 API 반영, §22.3 Telegram 각주 + Bearer/Cookie 확장, §27.4 scrapedAt 규칙
+3. **W-006~008 코드 보완:** redact TOKEN_PATTERNS 확장 + 테스트 추가, `redactObject` try-catch + fallback
 
 ---
 
