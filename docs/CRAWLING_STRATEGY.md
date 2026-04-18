@@ -1,8 +1,9 @@
-# Pokopia Scraper — Crawling Strategy v3.3
+# Pokopia Scraper — Crawling Strategy v3.4
 
 > 개정 이력
 > - 2026-04-17: 개정 이력 섹션 신설. §29.2 백업 스크립트 경로(`SRC`, crontab 예시)의 `pokopia-scraper` → `pokopia-wiki`로 갱신 — 모노레포 루트 디렉토리명 변경 반영. 사이트명(`PokopiaGuide`)·DB명(`pokopia`)·Zod ENUM(`pokopiaGuide`)·외장 SSD 백업 디렉토리(`pokopia-backup`)·별도 레포(`pokopia-web`)는 별개 식별자이므로 유지.
 > - 2026-04-19: v3.3. Phase 2 감사 Warning 반영 — (1) §22.3 `TOKEN_PATTERNS` 확장(Bearer base64 padding, Basic auth, OAuth/OIDC JSON body, Cookie 키 집합 확장 + `\b` 단어 경계, `redactObject` BigInt/순환 참조 fallback). (2) §27.1 zod 4 API로 예시 갱신(`.extend(B.shape)`·`z.url()`·`z.iso.datetime()`). (3) §27.4 `buildSourceMetadata`에 `scrapedAt?: string` 옵셔널 도입 + "1엔티티 1회 호출" 규칙 명시.
+> - 2026-04-19 (후속): v3.4. Phase 3 감사 SEC-001/002/003 Critical·Warning 반영 — §22.3 `TOKEN_PATTERNS` 맨 앞에 `https?://api.telegram.org/bot*` 패턴 추가(URL embed 토큰이 기존 Telegram bot token 패턴에 매칭 안 되는 문제 — `bot` 과 digit 사이 `\b` 부재). §13.3.5 Notifier 뼈대에 "메타 키 네이밍 가드"(`sanitizeMeta`) 절차 명시 + 에러 경로(sendTelegram/appendEventLog/sendMacOSBanner catch) 및 `console.log fallback`에서 `redact()` 2차 적용 의무화.
 
 > **핵심 원칙:** 안정성 > 속도. 봇으로 탐지되지 않는 것이 최우선.
 > **티어링 원칙:** 사이트 방어 수준에 비례하는 최소 전략만 사용. 과잉 스텔스 = 오히려 시그널.
@@ -2398,13 +2399,18 @@ async function runPreflight(persona: BrowserPersona) {
 - 일일 요약: 매일 23:55 `milestone.daily_summary` 자동 송신 — 스크래퍼 프로세스 내부 `node-cron` 으로 발행(프로세스가 살아있지 않을 때는 다음 실행 시 회고 요약으로 대체; 별도 crontab 에 넣지 않음)
 - 로그 영속화: 로그 파일은 매일 로테이션, 14일 보존
 
-### 22.3 로그 민감정보 마스킹 (★ v3.2 D3 / v3.3 확장)
+### 22.3 로그 민감정보 마스킹 (★ v3.2 D3 / v3.3 확장 / v3.4 Telegram URL)
 
 `data/logs/`는 외장 SSD 로 백업되므로 토큰/쿠키/PII 가 그대로 넘어가면 백업 미디어 유출 시 위험. 모든 로그 기록은 아래 마스킹을 거친다.
 
 ```typescript
 // packages/shared/src/logging/redact.ts
 const TOKEN_PATTERNS: Array<[RegExp, string]> = [
+  // Telegram API URL — `https://api.telegram.org/bot<TOKEN>/...` 경로 토큰 마스킹.
+  // URL 안의 `bot1234567:ABC...` 는 `bot` 과 digit 사이에 \b 가 없어 아래
+  // "Telegram bot token" 패턴이 매칭되지 않으므로 URL 전용 규칙이 선행해야 한다.
+  // (Phase 3 감사 SEC-001, v3.4).
+  [/(https?:\/\/api\.telegram\.org\/bot)[^/\s?#]+/gi, '$1<TELEGRAM_TOKEN>'],
   // Telegram bot token: 7-10자리 숫자 : 30+자 영숫자/-/_
   // 뒷경계는 `(?![A-Za-z0-9_-])` — `-` 가 \w 에 속하지 않아 \b 가 토큰 내부에서
   // 조기 종료하는 문제 회피. 의미는 "토큰 문자 집합 바깥에서 종료"로 동치.
@@ -2456,6 +2462,14 @@ export function redactObject<T>(obj: T): T {
 - HTTP 요청/응답 로그를 남길 경우 `headers`·`set-cookie`·`cookie` 전체 마스킹
 - 파싱 실패 시 저장하는 원본 HTML(`data/invalid/...`)은 `Set-Cookie`/`Authorization` 이 의미 없으므로 제외 — 하지만 파일 권한 `chmod 600` 적용
 - `.env` 내용은 어떤 로그에도 출력 금지 (startup 로그 중 `process.env` 덤프 금지 검토)
+
+**v3.4 에러 경로 2차 redact 의무 (★ Phase 3 감사 SEC-001/003):**
+- **성공 경로 `redactObject` 만으로 부족.** 외부 라이브러리(ky HTTPError 등)가 URL·요청 본문을 그대로 메시지에 삽입하면 catch 블록에서 누출된다. 따라서:
+  - `sendTelegram` 실패 catch → `console.error(redact(reason))`
+  - `appendEventLog` 실패 catch → `console.error(redact(reason))`
+  - `sendMacOSBanner` 실패 catch → `console.error(redact(reason))`
+  - `console.log fallback` 도 `redact(JSON.stringify(entry))` 로 감싼다 (URL 재조립 리스크)
+- 호출자 편의상 `notify(event, meta)` 의 `meta` 에 실수로 토큰이 들어올 경우를 대비해 **메타 키 네이밍 가드**(`sanitizeMeta`) 선행 적용 — 민감 키(`token`/`apiKey`/`authorization`/`password`/`secret`/`credential`/`cookie`/`bearer`) 포함 시 값 전체를 `<REDACTED>` 치환 후 `redactObject` 로 전달. (Phase 3 감사 SEC-002)
 
 ---
 
