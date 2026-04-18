@@ -235,7 +235,7 @@
 - `packages/shared/src/index.ts` (`PrismaClient` + `Prisma` + type re-export)
 - `package.json` (prisma/@prisma/client 7.7.0 + dotenv + postinstall hook), `packages/shared/package.json` (@prisma/client 7.7.0), `.oxlintrc.jsonc`, `.gitignore` 업데이트
 
-**Phase 1 커밋:** 커밋 직후 별도 `docs(plans): record Phase 1 commit hash` 커밋에서 해시 기록.
+**Phase 1 커밋:** `990e39f` `feat(schema): add Prisma 7.7 schema with 85 entities across 10 domain files (§2.1-§2.27)` (23 files changed, +4624 / -94).
 
 **Phase 1 감사 (완료 후):** `pokopia-phase-review-harness` 프로파일 `schema` → `pokopia-schema-architect` + `codereview-style-auditor` + `pokopia-doc-consistency`. 위 7개 불일치 항목 검토 필수.
 
