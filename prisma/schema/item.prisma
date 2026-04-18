@@ -1,0 +1,242 @@
+// Pokopia Wiki — §2.2 아이템 + §2.8 음식 + §2.20 유물 + §2.27 교역/교환/쓰레기
+//
+// 모델: Item, ItemI18n, ItemTag, ItemLocation,
+//       Food (1:1), LostRelic (1:1), TradeValuation (1:1),
+//       ExchangeRecipe, PokemonLitterReward
+// ENUM: ItemCategory, ItemTagName, ItemLocationMethod,
+//       FlavorType, PpRestore, MoveBoost, LostRelicSize
+//
+// 참고: FlavorType은 Food 정의, MosslaxBoost(content.prisma)가 참조.
+
+// ─── §2.2 아이템 테이블 그룹 ───
+
+model Item {
+  id               Int          @id @default(autoincrement())
+  category         ItemCategory
+  isPaintable      Boolean      @default(false) @map("is_paintable")
+  isPatternable    Boolean      @default(false) @map("is_patternable")
+  isMagnetRiseOnly Boolean      @default(false) @map("is_magnet_rise_only")
+
+  sourceSlug  String   @unique @map("source_slug")
+  sourceUrl   String   @map("source_url")
+  scrapedAt   DateTime @map("scraped_at")
+  contentHash String   @map("content_hash")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  translations              ItemI18n[]
+  tags                      ItemTag[]
+  locations                 ItemLocation[]
+  craftingRecipes           CraftingRecipe[]
+  craftingUsedIn            CraftingIngredient[]
+  cookingRecipes            CookingRecipe[]
+  cookingUsedIn             CookingIngredient[]
+  buildingKitMaterials      BuildingKitMaterial[]
+  favoriteTags              ItemFavoriteTag[]
+  foodExt                   Food?
+  lostRelicExt              LostRelic?
+  tradeValuationExt         TradeValuation?
+  shopItems                 ShopItem[]
+  questRequirements         QuestRequirement[]
+  teamChallengeRequirements TeamChallengeRequirement[]
+  pokemonCenterMaterials    PokemonCenterMaterial[]
+  eventAppearances          EventItem[]
+  exchangeResults           ExchangeRecipe[]
+  litterRewards             PokemonLitterReward[]
+
+  @@index([category])
+  @@map("item")
+}
+
+model ItemI18n {
+  itemId      Int        @map("item_id")
+  locale      String
+  name        String
+  description String?
+  source      I18nSource
+  verified    Boolean    @default(false)
+  verifiedAt  DateTime?  @map("verified_at")
+  verifiedBy  String?    @map("verified_by")
+
+  item Item @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@id([itemId, locale])
+  @@map("item_i18n")
+}
+
+model ItemTag {
+  itemId Int         @map("item_id")
+  tag    ItemTagName
+
+  item Item @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@id([itemId, tag])
+  @@map("item_tag")
+}
+
+model ItemLocation {
+  id         Int                @id @default(autoincrement())
+  itemId     Int                @map("item_id")
+  locationId Int?               @map("location_id")
+  method     ItemLocationMethod
+  detail     String?
+
+  sourceSlug  String   @unique @map("source_slug")
+  sourceUrl   String   @map("source_url")
+  scrapedAt   DateTime @map("scraped_at")
+  contentHash String   @map("content_hash")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  item     Item      @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  location Location? @relation(fields: [locationId], references: [id], onDelete: SetNull)
+
+  @@index([itemId])
+  @@index([method])
+  @@map("item_location")
+}
+
+// ─── §2.8 음식 & 맛 (item 1:1 확장) ───
+
+model Food {
+  itemId    Int        @id @map("item_id")
+  flavor    FlavorType
+  ppRestore PpRestore  @map("pp_restore")
+  moveBoost MoveBoost? @map("move_boost")
+
+  item Item @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@map("food")
+}
+
+// ─── §2.20 유물 (item 1:1 확장) ───
+
+model LostRelic {
+  itemId          Int           @id @map("item_id")
+  sizeClass       LostRelicSize @map("size_class")
+  isAppraisedForm Boolean       @map("is_appraised_form")
+
+  item Item @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@map("lost_relic")
+}
+
+// ─── §2.27 교역 & 수집 교환 & 쓰레기 보상 ───
+
+model TradeValuation {
+  itemId                  Int   @id @map("item_id")
+  baseValue               Int   @map("base_value")
+  favoriteBonusMultiplier Float @map("favorite_bonus_multiplier")
+
+  item Item @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@map("trade_valuation")
+}
+
+model ExchangeRecipe {
+  id               Int  @id @default(autoincrement())
+  costCurrencyId   Int  @map("cost_currency_id")
+  costAmount       Int  @map("cost_amount")
+  resultItemId     Int  @map("result_item_id")
+  resultQuantity   Int  @default(1) @map("result_quantity")
+  requiredEnvLevel Int? @map("required_env_level")
+  sourceLocationId Int? @map("source_location_id")
+
+  sourceSlug  String   @unique @map("source_slug")
+  sourceUrl   String   @map("source_url")
+  scrapedAt   DateTime @map("scraped_at")
+  contentHash String   @map("content_hash")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  costCurrency   Currency  @relation(fields: [costCurrencyId], references: [id], onDelete: Restrict)
+  resultItem     Item      @relation(fields: [resultItemId], references: [id], onDelete: Cascade)
+  sourceLocation Location? @relation(fields: [sourceLocationId], references: [id], onDelete: SetNull)
+
+  @@index([resultItemId])
+  @@index([costCurrencyId])
+  @@map("exchange_recipe")
+}
+
+model PokemonLitterReward {
+  // SCHEMA §2.27은 (pokemon_id, item_id, habitat_id) 복합 PK로 기술하나,
+  // habitat_id가 nullable이므로 PostgreSQL PK 제약을 만족할 수 없어
+  // autoincrement id + composite @@unique로 구현. habitat_id NULL은 "모든 서식지 공통" 의미.
+  id        Int    @id @default(autoincrement())
+  pokemonId Int    @map("pokemon_id")
+  itemId    Int    @map("item_id")
+  habitatId Int?   @map("habitat_id")
+  dropRate  Float? @map("drop_rate")
+
+  pokemon Pokemon  @relation(fields: [pokemonId], references: [id], onDelete: Cascade)
+  item    Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  habitat Habitat? @relation(fields: [habitatId], references: [id], onDelete: SetNull)
+
+  @@unique([pokemonId, itemId, habitatId])
+  @@index([pokemonId])
+  @@index([itemId])
+  @@map("pokemon_litter_reward")
+}
+
+// ─── ENUMs ───
+
+enum ItemCategory {
+  Materials
+  Food
+  Furniture
+  Misc
+  Outdoor
+  Utilities
+  Nature
+  Buildings
+  Blocks
+  Kits
+  Key_Items @map("Key Items")
+}
+
+enum ItemTagName {
+  Decoration
+  Food
+  Relaxation
+  Road
+  Toy
+}
+
+enum ItemLocationMethod {
+  Natural
+  Craft
+  Shop
+  Trade
+  Dream_Island    @map("Dream Island")
+  Build_Kit       @map("Build Kit")
+  Relic_Appraisal @map("Relic Appraisal")
+  Pokemon_Center  @map("Pokemon Center")
+  Litter
+}
+
+enum FlavorType {
+  Bitter
+  Dry
+  Sour
+  Spicy
+  Sweet
+  None
+}
+
+enum PpRestore {
+  little
+  some
+  lot
+}
+
+enum MoveBoost {
+  Leafage
+  Water_Gun  @map("Water Gun")
+  Cut
+  Rock_Smash @map("Rock Smash")
+}
+
+enum LostRelicSize {
+  L
+  S
+}

@@ -1,3 +1,7 @@
 export const SHARED_PACKAGE_NAME = '@pokopia-wiki/shared' as const;
 
-// Phase 1에서 Prisma 생성 클라이언트 re-export, Phase 2에서 Zod 스키마 + redact 유틸 추가 예정.
+// Phase 1: Prisma Client re-export (scraper·api가 공유)
+export { PrismaClient, Prisma } from './prisma-client';
+export type * from './prisma-client';
+
+// Phase 2 예정: Zod 스키마, SourceMetadata, redact 유틸

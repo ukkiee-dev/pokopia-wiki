@@ -80,7 +80,7 @@
     "builtin": true,
   },
 
-  "ignorePatterns": ["dist", "node_modules"],
+  "ignorePatterns": ["dist", "node_modules", "packages/shared/src/prisma-client"],
 
   "overrides": [
     {

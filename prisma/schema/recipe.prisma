@@ -1,0 +1,166 @@
+// Pokopia Wiki — §2.3 제작/요리 + §2.11 도색
+//
+// 모델: CraftingRecipe, CraftingIngredient, CookingRecipe, CookingIngredient,
+//       PaintColor, PaintColorI18n, PaintPattern, PaintPatternI18n, PaintRecipe
+// ENUM: MealCategory, CookingRole
+
+// ─── §2.3 제작 & 요리 ───
+
+model CraftingRecipe {
+  id             Int    @id @default(autoincrement())
+  resultItemId   Int    @map("result_item_id")
+  resultQuantity Int    @default(1) @map("result_quantity")
+  unlockMethod   String @map("unlock_method")
+
+  sourceSlug  String   @unique @map("source_slug")
+  sourceUrl   String   @map("source_url")
+  scrapedAt   DateTime @map("scraped_at")
+  contentHash String   @map("content_hash")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  resultItem  Item                 @relation(fields: [resultItemId], references: [id], onDelete: Cascade)
+  ingredients CraftingIngredient[]
+
+  @@index([resultItemId])
+  @@map("crafting_recipe")
+}
+
+model CraftingIngredient {
+  recipeId Int @map("recipe_id")
+  itemId   Int @map("item_id")
+  quantity Int @default(1)
+
+  recipe CraftingRecipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  item   Item           @relation(fields: [itemId], references: [id], onDelete: Restrict)
+
+  @@id([recipeId, itemId])
+  @@map("crafting_ingredient")
+}
+
+model CookingRecipe {
+  id               Int          @id @default(autoincrement())
+  resultItemId     Int          @map("result_item_id")
+  mealCategory     MealCategory @map("meal_category")
+  bonusSpecialtyId Int?         @map("bonus_specialty_id")
+
+  sourceSlug  String   @unique @map("source_slug")
+  sourceUrl   String   @map("source_url")
+  scrapedAt   DateTime @map("scraped_at")
+  contentHash String   @map("content_hash")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  resultItem     Item                @relation(fields: [resultItemId], references: [id], onDelete: Cascade)
+  bonusSpecialty Specialty?          @relation(fields: [bonusSpecialtyId], references: [id], onDelete: SetNull)
+  ingredients    CookingIngredient[]
+
+  @@index([resultItemId])
+  @@index([mealCategory])
+  @@map("cooking_recipe")
+}
+
+model CookingIngredient {
+  recipeId Int         @map("recipe_id")
+  itemId   Int         @map("item_id")
+  quantity Int         @default(1)
+  role     CookingRole
+
+  recipe CookingRecipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  item   Item          @relation(fields: [itemId], references: [id], onDelete: Restrict)
+
+  @@id([recipeId, itemId])
+  @@map("cooking_ingredient")
+}
+
+// ─── §2.11 도색 ───
+
+model PaintColor {
+  id Int @id @default(autoincrement())
+
+  sourceSlug  String   @unique @map("source_slug")
+  sourceUrl   String   @map("source_url")
+  scrapedAt   DateTime @map("scraped_at")
+  contentHash String   @map("content_hash")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  translations      PaintColorI18n[]
+  resultRecipes     PaintRecipe[]    @relation("PaintRecipeResult")
+  ingredientRecipes PaintRecipe[]    @relation("PaintRecipeIngredient")
+
+  @@map("paint_color")
+}
+
+model PaintColorI18n {
+  colorId     Int        @map("color_id")
+  locale      String
+  name        String
+  description String?
+  source      I18nSource
+  verified    Boolean    @default(false)
+  verifiedAt  DateTime?  @map("verified_at")
+  verifiedBy  String?    @map("verified_by")
+
+  color PaintColor @relation(fields: [colorId], references: [id], onDelete: Cascade)
+
+  @@id([colorId, locale])
+  @@map("paint_color_i18n")
+}
+
+model PaintPattern {
+  id Int @id @default(autoincrement())
+
+  sourceSlug  String   @unique @map("source_slug")
+  sourceUrl   String   @map("source_url")
+  scrapedAt   DateTime @map("scraped_at")
+  contentHash String   @map("content_hash")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  translations PaintPatternI18n[]
+
+  @@map("paint_pattern")
+}
+
+model PaintPatternI18n {
+  patternId   Int        @map("pattern_id")
+  locale      String
+  name        String
+  description String?
+  source      I18nSource
+  verified    Boolean    @default(false)
+  verifiedAt  DateTime?  @map("verified_at")
+  verifiedBy  String?    @map("verified_by")
+
+  pattern PaintPattern @relation(fields: [patternId], references: [id], onDelete: Cascade)
+
+  @@id([patternId, locale])
+  @@map("paint_pattern_i18n")
+}
+
+model PaintRecipe {
+  resultColorId     Int @map("result_color_id")
+  ingredientColorId Int @map("ingredient_color_id")
+  quantity          Int @default(1)
+
+  resultColor     PaintColor @relation("PaintRecipeResult", fields: [resultColorId], references: [id], onDelete: Cascade)
+  ingredientColor PaintColor @relation("PaintRecipeIngredient", fields: [ingredientColorId], references: [id], onDelete: Restrict)
+
+  @@id([resultColorId, ingredientColorId])
+  @@map("paint_recipe")
+}
+
+// ─── ENUMs ───
+
+enum MealCategory {
+  Salad
+  Soup
+  Bread
+  Steak
+}
+
+enum CookingRole {
+  main
+  sub
+}

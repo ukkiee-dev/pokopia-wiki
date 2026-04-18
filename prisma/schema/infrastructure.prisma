@@ -1,0 +1,171 @@
+// Pokopia Wiki — §2.6 건축 + §2.13 포켓몬 센터 + §2.14 전기/물
+//
+// 모델: BuildingKit, BuildingKitI18n, BuildingKitMaterial,
+//       PokemonCenter, PokemonCenterMaterial,
+//       Generator, GeneratorI18n, WaterType, WaterTypeI18n
+// ENUM: BuildingKitCategory
+
+// ─── §2.6 건축 ───
+
+model BuildingKit {
+  id              Int                 @id @default(autoincrement())
+  category        BuildingKitCategory
+  pokemonCapacity Int                 @map("pokemon_capacity")
+  buildingPoints  Int                 @map("building_points")
+  width           Int
+  depth           Int
+
+  sourceSlug  String   @unique @map("source_slug")
+  sourceUrl   String   @map("source_url")
+  scrapedAt   DateTime @map("scraped_at")
+  contentHash String   @map("content_hash")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  translations BuildingKitI18n[]
+  materials    BuildingKitMaterial[]
+
+  @@index([category])
+  @@map("building_kit")
+}
+
+model BuildingKitI18n {
+  buildingKitId Int        @map("building_kit_id")
+  locale        String
+  name          String
+  description   String?
+  source        I18nSource
+  verified      Boolean    @default(false)
+  verifiedAt    DateTime?  @map("verified_at")
+  verifiedBy    String?    @map("verified_by")
+
+  buildingKit BuildingKit @relation(fields: [buildingKitId], references: [id], onDelete: Cascade)
+
+  @@id([buildingKitId, locale])
+  @@map("building_kit_i18n")
+}
+
+model BuildingKitMaterial {
+  buildingKitId Int @map("building_kit_id")
+  itemId        Int @map("item_id")
+
+  buildingKit BuildingKit @relation(fields: [buildingKitId], references: [id], onDelete: Cascade)
+  item        Item        @relation(fields: [itemId], references: [id], onDelete: Restrict)
+
+  @@id([buildingKitId, itemId])
+  @@map("building_kit_material")
+}
+
+// ─── §2.13 포켓몬 센터 ───
+
+model PokemonCenter {
+  id                   Int @id @default(autoincrement())
+  locationId           Int @map("location_id")
+  requiredEnvLevel     Int @map("required_env_level")
+  requiredPokemonCount Int @map("required_pokemon_count")
+
+  sourceSlug  String   @unique @map("source_slug")
+  sourceUrl   String   @map("source_url")
+  scrapedAt   DateTime @map("scraped_at")
+  contentHash String   @map("content_hash")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  location  Location                @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  materials PokemonCenterMaterial[]
+
+  @@index([locationId])
+  @@map("pokemon_center")
+}
+
+model PokemonCenterMaterial {
+  centerId Int @map("center_id")
+  itemId   Int @map("item_id")
+  quantity Int @default(1)
+
+  center PokemonCenter @relation(fields: [centerId], references: [id], onDelete: Cascade)
+  item   Item          @relation(fields: [itemId], references: [id], onDelete: Restrict)
+
+  @@id([centerId, itemId])
+  @@map("pokemon_center_material")
+}
+
+// ─── §2.14 전기 & 물 ───
+
+model Generator {
+  id             Int     @id @default(autoincrement())
+  outputUnits    Int     @map("output_units")
+  outputUnitsAlt Int?    @map("output_units_alt")
+  isRenewable    Boolean @map("is_renewable")
+
+  sourceSlug  String   @unique @map("source_slug")
+  sourceUrl   String   @map("source_url")
+  scrapedAt   DateTime @map("scraped_at")
+  contentHash String   @map("content_hash")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  translations GeneratorI18n[]
+
+  @@map("generator")
+}
+
+model GeneratorI18n {
+  generatorId Int        @map("generator_id")
+  locale      String
+  name        String
+  description String?
+  source      I18nSource
+  verified    Boolean    @default(false)
+  verifiedAt  DateTime?  @map("verified_at")
+  verifiedBy  String?    @map("verified_by")
+
+  generator Generator @relation(fields: [generatorId], references: [id], onDelete: Cascade)
+
+  @@id([generatorId, locale])
+  @@map("generator_i18n")
+}
+
+model WaterType {
+  id             Int     @id @default(autoincrement())
+  spreadRadius   Int     @map("spread_radius")
+  trenchDistance Int     @map("trench_distance")
+  hydrates       Boolean
+
+  sourceSlug  String   @unique @map("source_slug")
+  sourceUrl   String   @map("source_url")
+  scrapedAt   DateTime @map("scraped_at")
+  contentHash String   @map("content_hash")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  translations WaterTypeI18n[]
+
+  @@map("water_type")
+}
+
+model WaterTypeI18n {
+  waterTypeId Int        @map("water_type_id")
+  locale      String
+  name        String
+  description String?
+  source      I18nSource
+  verified    Boolean    @default(false)
+  verifiedAt  DateTime?  @map("verified_at")
+  verifiedBy  String?    @map("verified_by")
+
+  waterType WaterType @relation(fields: [waterTypeId], references: [id], onDelete: Cascade)
+
+  @@id([waterTypeId, locale])
+  @@map("water_type_i18n")
+}
+
+// ─── ENUMs ───
+
+enum BuildingKitCategory {
+  Residential
+  Infrastructure
+  Decorative
+  Venue
+  Special
+}

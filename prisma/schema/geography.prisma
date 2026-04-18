@@ -1,0 +1,197 @@
+// Pokopia Wiki — §2.4 지역 + §2.5 서식지 + §2.24 Dream/Cloud Island
+//
+// 모델: Location, LocationI18n, Habitat, HabitatI18n, HabitatPokemon,
+//       IslandVariant, IslandVariantI18n, IslandReward
+// ENUM: LocationType, TimeCondition, WeatherCondition, IslandRewardType
+
+// ─── §2.4 지역 ───
+
+model Location {
+  id       Int          @id @default(autoincrement())
+  type     LocationType
+  parentId Int?         @map("parent_id")
+
+  sourceSlug  String   @unique @map("source_slug")
+  sourceUrl   String   @map("source_url")
+  scrapedAt   DateTime @map("scraped_at")
+  contentHash String   @map("content_hash")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  parent                Location?              @relation("LocationHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children              Location[]             @relation("LocationHierarchy")
+  translations          LocationI18n[]
+  itemLocations         ItemLocation[]
+  legendaryAcquisitions LegendaryAcquisition[]
+  dittoUnlocks          DittoAbility[]
+  environmentRewards    EnvironmentReward[]
+  shopItems             ShopItem[]
+  quests                Quest[]
+  pokemonCenters        PokemonCenter[]
+  customizationUnlocks  CustomizationItem[]
+  cdLocations           CdLocation[]
+  humanRecords          HumanRecord[]
+  islandVariants        IslandVariant[]
+  exchangeRecipes       ExchangeRecipe[]
+
+  @@index([type])
+  @@map("location")
+}
+
+model LocationI18n {
+  locationId  Int        @map("location_id")
+  locale      String
+  name        String
+  description String?
+  source      I18nSource
+  verified    Boolean    @default(false)
+  verifiedAt  DateTime?  @map("verified_at")
+  verifiedBy  String?    @map("verified_by")
+
+  location Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+
+  @@id([locationId, locale])
+  @@map("location_i18n")
+}
+
+// ─── §2.5 서식지 ───
+
+model Habitat {
+  id        Int     @id @default(autoincrement())
+  habitatNo Int?    @unique @map("habitat_no")
+  isEvent   Boolean @default(false) @map("is_event")
+
+  sourceSlug  String   @unique @map("source_slug")
+  sourceUrl   String   @map("source_url")
+  scrapedAt   DateTime @map("scraped_at")
+  contentHash String   @map("content_hash")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  translations     HabitatI18n[]
+  pokemon          HabitatPokemon[]
+  eventAppearances EventHabitat[]
+  litterRewards    PokemonLitterReward[]
+
+  @@map("habitat")
+}
+
+model HabitatI18n {
+  habitatId   Int        @map("habitat_id")
+  locale      String
+  name        String
+  description String?
+  source      I18nSource
+  verified    Boolean    @default(false)
+  verifiedAt  DateTime?  @map("verified_at")
+  verifiedBy  String?    @map("verified_by")
+
+  habitat Habitat @relation(fields: [habitatId], references: [id], onDelete: Cascade)
+
+  @@id([habitatId, locale])
+  @@map("habitat_i18n")
+}
+
+model HabitatPokemon {
+  habitatId        Int              @map("habitat_id")
+  pokemonId        Int              @map("pokemon_id")
+  // SCHEMA §2.5는 time/weather_condition을 nullable로 기술하나, 복합 PK 제약상 NOT NULL + default Any로 구현.
+  timeCondition    TimeCondition    @default(Any) @map("time_condition")
+  weatherCondition WeatherCondition @default(Any) @map("weather_condition")
+
+  habitat Habitat @relation(fields: [habitatId], references: [id], onDelete: Cascade)
+  pokemon Pokemon @relation(fields: [pokemonId], references: [id], onDelete: Cascade)
+
+  @@id([habitatId, pokemonId, timeCondition, weatherCondition])
+  @@index([pokemonId])
+  @@map("habitat_pokemon")
+}
+
+// ─── §2.24 Dream/Cloud Island ───
+
+model IslandVariant {
+  id                    Int  @id @default(autoincrement())
+  locationId            Int  @map("location_id")
+  difficulty            Int?
+  guaranteedLegendaryId Int? @map("guaranteed_legendary_id")
+
+  sourceSlug  String   @unique @map("source_slug")
+  sourceUrl   String   @map("source_url")
+  scrapedAt   DateTime @map("scraped_at")
+  contentHash String   @map("content_hash")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  location            Location            @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  guaranteedLegendary Pokemon?            @relation(fields: [guaranteedLegendaryId], references: [id], onDelete: SetNull)
+  translations        IslandVariantI18n[]
+  rewards             IslandReward[]
+
+  @@index([locationId])
+  @@map("island_variant")
+}
+
+model IslandVariantI18n {
+  variantId   Int        @map("variant_id")
+  locale      String
+  name        String
+  description String?
+  source      I18nSource
+  verified    Boolean    @default(false)
+  verifiedAt  DateTime?  @map("verified_at")
+  verifiedBy  String?    @map("verified_by")
+
+  variant IslandVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+
+  @@id([variantId, locale])
+  @@map("island_variant_i18n")
+}
+
+model IslandReward {
+  id              Int              @id @default(autoincrement())
+  islandVariantId Int              @map("island_variant_id")
+  rewardType      IslandRewardType @map("reward_type")
+  rewardRefId     Int              @map("reward_ref_id")
+  dropRate        Float?           @map("drop_rate")
+
+  sourceSlug  String   @unique @map("source_slug")
+  sourceUrl   String   @map("source_url")
+  scrapedAt   DateTime @map("scraped_at")
+  contentHash String   @map("content_hash")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  variant IslandVariant @relation(fields: [islandVariantId], references: [id], onDelete: Cascade)
+
+  @@index([islandVariantId])
+  @@map("island_reward")
+}
+
+// ─── ENUMs ───
+
+enum LocationType {
+  Main
+  Dream_Island @map("Dream Island")
+  Cloud_Island @map("Cloud Island")
+  Sub
+}
+
+enum TimeCondition {
+  Day
+  Night
+  Any
+}
+
+enum WeatherCondition {
+  Sunny
+  Rainy
+  Snowy
+  Cloudy
+  Any
+}
+
+enum IslandRewardType {
+  item
+  cd
+  recipe
+}

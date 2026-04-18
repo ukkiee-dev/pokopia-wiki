@@ -1,0 +1,134 @@
+// Pokopia Wiki — §2.1 포켓몬 코어
+//
+// 모델: Pokemon, PokemonI18n, LegendaryAcquisition, LegendaryAcquisitionI18n,
+//       Specialty, SpecialtyI18n, PokemonSpecialty
+
+model Pokemon {
+  id                Int     @id @default(autoincrement())
+  pokedexNo         Int?    @unique @map("pokedex_no")
+  isEvent           Boolean @default(false) @map("is_event")
+  isUniqueCharacter Boolean @default(false) @map("is_unique_character")
+  isLegendary       Boolean @default(false) @map("is_legendary")
+  basedOnSpeciesId  Int?    @map("based_on_species_id")
+
+  sourceSlug  String   @unique @map("source_slug")
+  sourceUrl   String   @map("source_url")
+  scrapedAt   DateTime @map("scraped_at")
+  contentHash String   @map("content_hash")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  basedOnSpecies           Pokemon?              @relation("PokemonBaseSpecies", fields: [basedOnSpeciesId], references: [id], onDelete: SetNull)
+  derivedCharacters        Pokemon[]             @relation("PokemonBaseSpecies")
+  translations             PokemonI18n[]
+  specialties              PokemonSpecialty[]
+  legendaryAcquisition     LegendaryAcquisition?
+  habitats                 HabitatPokemon[]
+  favorites                PokemonFavorite[]
+  dittoUnlocks             DittoAbility[]
+  questRequirements        QuestRequirement[]
+  eventAppearances         EventPokemon[]
+  guaranteedIslandVariants IslandVariant[]
+  litterRewards            PokemonLitterReward[]
+
+  @@index([isEvent, isUniqueCharacter])
+  @@index([isLegendary])
+  @@map("pokemon")
+}
+
+model PokemonI18n {
+  pokemonId   Int        @map("pokemon_id")
+  locale      String
+  name        String
+  description String?
+  source      I18nSource
+  verified    Boolean    @default(false)
+  verifiedAt  DateTime?  @map("verified_at")
+  verifiedBy  String?    @map("verified_by")
+
+  pokemon Pokemon @relation(fields: [pokemonId], references: [id], onDelete: Cascade)
+
+  @@id([pokemonId, locale])
+  @@map("pokemon_i18n")
+}
+
+model LegendaryAcquisition {
+  id              Int    @id @default(autoincrement())
+  pokemonId       Int    @unique @map("pokemon_id")
+  unlockCondition String @map("unlock_condition")
+  locationId      Int?   @map("location_id")
+  effect          String
+
+  sourceSlug  String   @unique @map("source_slug")
+  sourceUrl   String   @map("source_url")
+  scrapedAt   DateTime @map("scraped_at")
+  contentHash String   @map("content_hash")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  pokemon      Pokemon                    @relation(fields: [pokemonId], references: [id], onDelete: Cascade)
+  location     Location?                  @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  translations LegendaryAcquisitionI18n[]
+
+  @@map("legendary_acquisition")
+}
+
+model LegendaryAcquisitionI18n {
+  legendaryAcquisitionId Int        @map("legendary_acquisition_id")
+  locale                 String
+  unlockCondition        String     @map("unlock_condition")
+  effect                 String
+  source                 I18nSource
+  verified               Boolean    @default(false)
+  verifiedAt             DateTime?  @map("verified_at")
+  verifiedBy             String?    @map("verified_by")
+
+  acquisition LegendaryAcquisition @relation(fields: [legendaryAcquisitionId], references: [id], onDelete: Cascade)
+
+  @@id([legendaryAcquisitionId, locale])
+  @@map("legendary_acquisition_i18n")
+}
+
+model Specialty {
+  id Int @id @default(autoincrement())
+
+  sourceSlug  String   @unique @map("source_slug")
+  sourceUrl   String   @map("source_url")
+  scrapedAt   DateTime @map("scraped_at")
+  contentHash String   @map("content_hash")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  translations        SpecialtyI18n[]
+  pokemon             PokemonSpecialty[]
+  cookingBonusRecipes CookingRecipe[]
+
+  @@map("specialty")
+}
+
+model SpecialtyI18n {
+  specialtyId Int        @map("specialty_id")
+  locale      String
+  name        String
+  description String?
+  source      I18nSource
+  verified    Boolean    @default(false)
+  verifiedAt  DateTime?  @map("verified_at")
+  verifiedBy  String?    @map("verified_by")
+
+  specialty Specialty @relation(fields: [specialtyId], references: [id], onDelete: Cascade)
+
+  @@id([specialtyId, locale])
+  @@map("specialty_i18n")
+}
+
+model PokemonSpecialty {
+  pokemonId   Int @map("pokemon_id")
+  specialtyId Int @map("specialty_id")
+
+  pokemon   Pokemon   @relation(fields: [pokemonId], references: [id], onDelete: Cascade)
+  specialty Specialty @relation(fields: [specialtyId], references: [id], onDelete: Cascade)
+
+  @@id([pokemonId, specialtyId])
+  @@map("pokemon_specialty")
+}

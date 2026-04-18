@@ -1,0 +1,72 @@
+// Pokopia Wiki — §2.25 엔티티 이미지 + §2.26 번역 충돌
+//
+// 모델: EntityImage (polymorphic, 14 entity_type), TranslationConflict (polymorphic)
+// ENUM: EntityImageType
+//
+// 두 테이블은 모두 애플리케이션 레벨에서 다형 참조를 관리. FK 제약 없음.
+// 참조 정합성은 qa-analyst + validators/에서 검증.
+
+// ─── §2.25 엔티티 이미지 (Multi-variant) ───
+
+model EntityImage {
+  id          Int             @id @default(autoincrement())
+  entityType  EntityImageType @map("entity_type")
+  entityId    Int             @map("entity_id")
+  variant     String // `thumb`, `detail`, `color_red`, `pose_sleep` 등
+  filePath    String          @map("file_path")
+  url         String
+  width       Int?
+  height      Int?
+  contentHash String          @map("content_hash")
+  isPrimary   Boolean         @default(false) @map("is_primary")
+
+  scrapedAt DateTime @map("scraped_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([entityType, entityId])
+  @@index([entityType, entityId, isPrimary])
+  @@map("entity_image")
+}
+
+// ─── §2.26 번역 충돌 추적 ───
+
+model TranslationConflict {
+  id                   Int       @id @default(autoincrement())
+  entityType           String    @map("entity_type")
+  entityId             Int       @map("entity_id")
+  field                String
+  pokopiaguideValue    String?   @map("pokopiaguide_value")
+  pokopokoValue        String?   @map("pokopoko_value")
+  namuwikiValue        String?   @map("namuwiki_value")
+  pokemonOfficialValue String?   @map("pokemon_official_value")
+  resolvedValue        String?   @map("resolved_value")
+  resolvedBy           String?   @map("resolved_by")
+  resolvedAt           DateTime? @map("resolved_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([entityType, entityId])
+  @@index([resolvedAt])
+  @@map("translation_conflict")
+}
+
+// ─── ENUM ───
+
+enum EntityImageType {
+  pokemon
+  item
+  habitat
+  building_kit
+  cd
+  human_record
+  location
+  paint_color
+  paint_pattern
+  plant
+  customization
+  specialty
+  lost_relic
+  island_variant
+}

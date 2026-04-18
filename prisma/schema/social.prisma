@@ -1,0 +1,318 @@
+// Pokopia Wiki — §2.7 선호도/우정 + §2.9 디토 + §2.12 퀘스트/팀 + §2.17 인간기록 + §2.18 도감
+//
+// 모델: FavoriteCategory, FavoriteCategoryI18n, PokemonFavorite, ItemFavoriteTag,
+//       FriendshipTier, FriendshipTierI18n,
+//       DittoAbility, DittoAbilityI18n,
+//       Quest, QuestI18n, QuestRequirement,
+//       TeamChallenge, TeamChallengeRequirement,
+//       HumanRecord, HumanRecordI18n,
+//       PokedexMilestone
+// ENUM: DittoAbilityType, HumanRecordCategory, HumanRecordRewardType, PokedexMilestoneRewardType
+
+// ─── §2.7 선호도 & 우정 ───
+
+model FavoriteCategory {
+  id Int @id @default(autoincrement())
+
+  sourceSlug  String   @unique @map("source_slug")
+  sourceUrl   String   @map("source_url")
+  scrapedAt   DateTime @map("scraped_at")
+  contentHash String   @map("content_hash")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  translations     FavoriteCategoryI18n[]
+  pokemonFavorites PokemonFavorite[]
+  itemFavoriteTags ItemFavoriteTag[]
+
+  @@map("favorite_category")
+}
+
+model FavoriteCategoryI18n {
+  categoryId  Int        @map("category_id")
+  locale      String
+  name        String
+  description String?
+  source      I18nSource
+  verified    Boolean    @default(false)
+  verifiedAt  DateTime?  @map("verified_at")
+  verifiedBy  String?    @map("verified_by")
+
+  category FavoriteCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([categoryId, locale])
+  @@map("favorite_category_i18n")
+}
+
+model PokemonFavorite {
+  pokemonId  Int @map("pokemon_id")
+  categoryId Int @map("category_id")
+
+  pokemon  Pokemon          @relation(fields: [pokemonId], references: [id], onDelete: Cascade)
+  category FavoriteCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([pokemonId, categoryId])
+  @@map("pokemon_favorite")
+}
+
+model ItemFavoriteTag {
+  itemId     Int @map("item_id")
+  categoryId Int @map("category_id")
+
+  item     Item             @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  category FavoriteCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([itemId, categoryId])
+  @@map("item_favorite_tag")
+}
+
+model FriendshipTier {
+  id             Int @id @default(autoincrement())
+  tier           Int @unique
+  requiredPoints Int @map("required_points")
+
+  sourceSlug  String   @unique @map("source_slug")
+  sourceUrl   String   @map("source_url")
+  scrapedAt   DateTime @map("scraped_at")
+  contentHash String   @map("content_hash")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  translations FriendshipTierI18n[]
+
+  @@map("friendship_tier")
+}
+
+model FriendshipTierI18n {
+  tierId      Int        @map("tier_id")
+  locale      String
+  name        String
+  description String? // 해금 기능 설명 (§2.7)
+  source      I18nSource
+  verified    Boolean    @default(false)
+  verifiedAt  DateTime?  @map("verified_at")
+  verifiedBy  String?    @map("verified_by")
+
+  tier FriendshipTier @relation(fields: [tierId], references: [id], onDelete: Cascade)
+
+  @@id([tierId, locale])
+  @@map("friendship_tier_i18n")
+}
+
+// ─── §2.9 디토 능력 ───
+
+model DittoAbility {
+  id               Int              @id @default(autoincrement())
+  type             DittoAbilityType
+  unlockPokemonId  Int              @map("unlock_pokemon_id")
+  unlockLocationId Int?             @map("unlock_location_id")
+
+  sourceSlug  String   @unique @map("source_slug")
+  sourceUrl   String   @map("source_url")
+  scrapedAt   DateTime @map("scraped_at")
+  contentHash String   @map("content_hash")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  unlockPokemon  Pokemon            @relation(fields: [unlockPokemonId], references: [id], onDelete: Cascade)
+  unlockLocation Location?          @relation(fields: [unlockLocationId], references: [id], onDelete: SetNull)
+  translations   DittoAbilityI18n[]
+
+  @@index([type])
+  @@map("ditto_ability")
+}
+
+model DittoAbilityI18n {
+  dittoAbilityId Int        @map("ditto_ability_id")
+  locale         String
+  name           String
+  description    String?
+  source         I18nSource
+  verified       Boolean    @default(false)
+  verifiedAt     DateTime?  @map("verified_at")
+  verifiedBy     String?    @map("verified_by")
+
+  ability DittoAbility @relation(fields: [dittoAbilityId], references: [id], onDelete: Cascade)
+
+  @@id([dittoAbilityId, locale])
+  @@map("ditto_ability_i18n")
+}
+
+// ─── §2.12 스토리 & 퀘스트 ───
+
+model Quest {
+  id                  Int  @id @default(autoincrement())
+  locationId          Int  @map("location_id")
+  sortOrder           Int  @map("sort_order")
+  prerequisiteQuestId Int? @map("prerequisite_quest_id")
+
+  sourceSlug  String   @unique @map("source_slug")
+  sourceUrl   String   @map("source_url")
+  scrapedAt   DateTime @map("scraped_at")
+  contentHash String   @map("content_hash")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  location     Location           @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  prerequisite Quest?             @relation("QuestChain", fields: [prerequisiteQuestId], references: [id], onDelete: SetNull)
+  followers    Quest[]            @relation("QuestChain")
+  translations QuestI18n[]
+  requirements QuestRequirement[]
+
+  @@index([locationId, sortOrder])
+  @@map("quest")
+}
+
+model QuestI18n {
+  questId     Int        @map("quest_id")
+  locale      String
+  name        String
+  objective   String
+  walkthrough String // Markdown
+  source      I18nSource
+  verified    Boolean    @default(false)
+  verifiedAt  DateTime?  @map("verified_at")
+  verifiedBy  String?    @map("verified_by")
+
+  quest Quest @relation(fields: [questId], references: [id], onDelete: Cascade)
+
+  @@id([questId, locale])
+  @@map("quest_i18n")
+}
+
+model QuestRequirement {
+  id          Int     @id @default(autoincrement())
+  questId     Int     @map("quest_id")
+  itemId      Int?    @map("item_id")
+  pokemonId   Int?    @map("pokemon_id")
+  quantity    Int     @default(1)
+  description String?
+
+  quest   Quest    @relation(fields: [questId], references: [id], onDelete: Cascade)
+  item    Item?    @relation(fields: [itemId], references: [id], onDelete: SetNull)
+  pokemon Pokemon? @relation(fields: [pokemonId], references: [id], onDelete: SetNull)
+
+  @@index([questId])
+  @@map("quest_requirement")
+}
+
+model TeamChallenge {
+  id        Int    @id @default(autoincrement())
+  stage     Int    @unique
+  badgeName String @map("badge_name")
+
+  sourceSlug  String   @unique @map("source_slug")
+  sourceUrl   String   @map("source_url")
+  scrapedAt   DateTime @map("scraped_at")
+  contentHash String   @map("content_hash")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  requirements TeamChallengeRequirement[]
+
+  @@map("team_challenge")
+}
+
+model TeamChallengeRequirement {
+  challengeId Int @map("challenge_id")
+  itemId      Int @map("item_id")
+  quantity    Int @default(1)
+
+  challenge TeamChallenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  item      Item          @relation(fields: [itemId], references: [id], onDelete: Restrict)
+
+  @@id([challengeId, itemId])
+  @@map("team_challenge_requirement")
+}
+
+// ─── §2.17 인간 기록 (polymorphic reward) ───
+
+model HumanRecord {
+  id          Int                   @id @default(autoincrement())
+  category    HumanRecordCategory
+  locationId  Int                   @map("location_id")
+  rewardType  HumanRecordRewardType @map("reward_type")
+  rewardRefId Int?                  @map("reward_ref_id")
+
+  sourceSlug  String   @unique @map("source_slug")
+  sourceUrl   String   @map("source_url")
+  scrapedAt   DateTime @map("scraped_at")
+  contentHash String   @map("content_hash")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  location     Location          @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  translations HumanRecordI18n[]
+
+  @@index([category])
+  @@index([rewardType])
+  @@map("human_record")
+}
+
+model HumanRecordI18n {
+  humanRecordId Int        @map("human_record_id")
+  locale        String
+  name          String
+  description   String // 위치
+  content       String? // 본문 (nullable, Markdown 허용)
+  source        I18nSource
+  verified      Boolean    @default(false)
+  verifiedAt    DateTime?  @map("verified_at")
+  verifiedBy    String?    @map("verified_by")
+
+  humanRecord HumanRecord @relation(fields: [humanRecordId], references: [id], onDelete: Cascade)
+
+  @@id([humanRecordId, locale])
+  @@map("human_record_i18n")
+}
+
+// ─── §2.18 도감 완성 보상 (polymorphic reward) ───
+
+model PokedexMilestone {
+  id            Int                        @id @default(autoincrement())
+  requiredCount Int                        @map("required_count")
+  rewardType    PokedexMilestoneRewardType @map("reward_type")
+  rewardRefId   Int                        @map("reward_ref_id")
+  note          String?
+
+  sourceSlug  String   @unique @map("source_slug")
+  sourceUrl   String   @map("source_url")
+  scrapedAt   DateTime @map("scraped_at")
+  contentHash String   @map("content_hash")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([requiredCount])
+  @@index([rewardType])
+  @@map("pokedex_milestone")
+}
+
+// ─── ENUMs ───
+
+enum DittoAbilityType {
+  Primary
+  Secondary
+}
+
+enum HumanRecordCategory {
+  Newspaper
+  Diary
+  Magazine
+  Note
+  Letter
+  Paper
+  Photo
+}
+
+enum HumanRecordRewardType {
+  customization
+  item
+  cd
+  none
+}
+
+enum PokedexMilestoneRewardType {
+  item
+  recipe
+  feature_unlock
+}

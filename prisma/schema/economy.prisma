@@ -1,0 +1,98 @@
+// Pokopia Wiki — §2.10 환경/상점/통화
+//
+// 모델: EnvironmentReward, ShopItem, Currency, CurrencyI18n
+// ENUM: EnvironmentRewardType
+//
+// shop_item은 currency_id + price 단일 통화 구매 전용. 특수 화폐(깃털·유물) 혹은
+// 수량 조합 교환은 item.prisma의 ExchangeRecipe가 담당 (SCHEMA §2.27).
+
+// ─── §2.10 환경 & 상점 ───
+
+model EnvironmentReward {
+  id          Int                   @id @default(autoincrement())
+  locationId  Int                   @map("location_id")
+  level       Int
+  rewardType  EnvironmentRewardType @map("reward_type")
+  rewardRefId Int?                  @map("reward_ref_id")
+  note        String?
+
+  sourceSlug  String   @unique @map("source_slug")
+  sourceUrl   String   @map("source_url")
+  scrapedAt   DateTime @map("scraped_at")
+  contentHash String   @map("content_hash")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  location Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+
+  @@index([locationId, level])
+  @@index([rewardType])
+  @@map("environment_reward")
+}
+
+model ShopItem {
+  id               Int  @id @default(autoincrement())
+  locationId       Int  @map("location_id")
+  itemId           Int  @map("item_id")
+  requiredEnvLevel Int  @map("required_env_level")
+  price            Int?
+  currencyId       Int  @map("currency_id")
+
+  sourceSlug  String   @unique @map("source_slug")
+  sourceUrl   String   @map("source_url")
+  scrapedAt   DateTime @map("scraped_at")
+  contentHash String   @map("content_hash")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  location Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  item     Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  currency Currency @relation(fields: [currencyId], references: [id], onDelete: Restrict)
+
+  @@index([locationId])
+  @@index([itemId])
+  @@map("shop_item")
+}
+
+model Currency {
+  id   Int    @id @default(autoincrement())
+  code String @unique
+
+  sourceSlug  String   @unique @map("source_slug")
+  sourceUrl   String   @map("source_url")
+  scrapedAt   DateTime @map("scraped_at")
+  contentHash String   @map("content_hash")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  translations    CurrencyI18n[]
+  shopItems       ShopItem[]
+  exchangeRecipes ExchangeRecipe[]
+
+  @@map("currency")
+}
+
+model CurrencyI18n {
+  currencyId  Int        @map("currency_id")
+  locale      String
+  name        String
+  description String?
+  source      I18nSource
+  verified    Boolean    @default(false)
+  verifiedAt  DateTime?  @map("verified_at")
+  verifiedBy  String?    @map("verified_by")
+
+  currency Currency @relation(fields: [currencyId], references: [id], onDelete: Cascade)
+
+  @@id([currencyId, locale])
+  @@map("currency_i18n")
+}
+
+// ─── ENUM ───
+
+enum EnvironmentRewardType {
+  item
+  recipe
+  feature_unlock
+  shop_unlock
+}

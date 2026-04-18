@@ -3,8 +3,8 @@
 > **For Next Session:** 이 문서는 `docs/plans/2026-04-18-implementation-roadmap.md`를 Phase 단위로 집행하면서 실제 상태를 축적한다.
 > 새 세션을 시작할 때는 (1) 이 문서의 "다음에 할 일", (2) 로드맵 해당 Phase, (3) `_workspace/` 잔여물 순서로 읽는다.
 >
-> **최종 갱신:** 2026-04-18
-> **현재 Phase:** Phase 0 (모노레포 스캐폴딩) — 진행 중
+> **최종 갱신:** 2026-04-19
+> **현재 Phase:** Phase 1 (Prisma 스키마) — 감사 대기
 > **총 Phase 수:** 17개 (Phase 0 ~ Phase 16)
 
 ---
@@ -14,7 +14,7 @@
 | Phase                           | 상태       | 시작       | 완료       | 감사 | 비고                                                 |
 | ------------------------------- | ---------- | ---------- | ---------- | ---- | ---------------------------------------------------- |
 | 0 — 모노레포 스캐폴딩           | ✅ 완료    | 2026-04-18 | 2026-04-18 | ⏳   | 전체 CI 로컬 시뮬레이션 ALL GREEN. 감사는 별도 세션. |
-| 1 — Prisma 스키마               | ⏳ 대기    | —          | —    | —    | homelab DB 필요      |
+| 1 — Prisma 스키마               | 🟡 감사 대기 | 2026-04-19 | 2026-04-19 | ⏳   | 로컬 Docker PG 17, 85 모델 + 25 ENUM, 10 도메인 파일 분리 |
 | 2 — 공통 검증·메타데이터        | ⏳ 대기    | —          | —    | —    | —                    |
 | 3 — Preflight 하네스            | ⏳ 대기    | —          | —    | —    | Telegram/Chrome 필요 |
 | 4 — Fetcher 인프라              | ⏳ 대기    | —          | —    | —    | —                    |
@@ -45,7 +45,7 @@
 
 ### 아직 없는 자원 (Phase 진행 시점에 준비 필요)
 
-- homelab PostgreSQL 접속 정보 (Phase 1)
+- homelab PostgreSQL 접속 정보 (Phase 1은 로컬 Docker로 선행, homelab 이관은 Phase 14~16 또는 scraper 프로덕션 실행 직전)
 - Telegram Bot 토큰/Chat ID (Phase 3)
 - Playwright chromium 브라우저 (Phase 3 때 `npx playwright install`)
 - 외장 SSD 마운트 `/Volumes/External` (Phase 14, 16)
@@ -164,31 +164,103 @@
 
 ---
 
-## 다음 세션 바로 시작 카드 — Phase 1
+## Phase 1 — Prisma 스키마
 
-Phase 0가 ✅ 완료 상태이므로 새 세션에서 바로 Phase 1 진행 가능. 시작 체크리스트:
+**Goal:** SCHEMA.md §2.1~§2.27 (70+ 엔티티)를 `prisma/schema/` 다중 파일로 전사하고 초기 마이그레이션을 생성.
 
-1. **homelab PostgreSQL 준비** (로드맵 Task 1.1)
-   - `pokopia` DB + `pokopia` 유저 생성 (권한 `ALL PRIVILEGES`).
-   - Tailscale 또는 포트포워딩 경유 connection string 획득.
-   - `.env.example`에 `DATABASE_URL=postgresql://...` 추가 + 실제 `.env` 생성 (gitignored).
-2. **Prisma 스키마 전사** (Task 1.2 ~ 1.4)
-   - `pokopia-wiki-build` 스킬로 팀 A (schema-architect + doc-strategist) 구성.
-   - SCHEMA.md §2.1~§2.27을 10개 청크로 나눠 순차 작성, 매 청크마다 `pnpm prisma format` + validate.
-   - ENUM 일괄 선언.
-3. **마이그레이션 + Client 생성**
-   - `pnpm prisma migrate dev --name init`
-   - `pnpm prisma generate` → `packages/shared/src/prisma-client/` 채워짐 확인.
-4. **`packages/shared/src/index.ts` 복원**
-   - `export * from './prisma-client';` + `export type * from './prisma-client';` 재추가 (Phase 0에서 제거했던 것).
-5. **Phase 1 감사**
-   - `pokopia-phase-review-harness` (프로파일 `schema`) 호출 → schema-architect + style-reviewer + doc-strategist.
+**세부 태스크 상태:**
 
-**중단 시 복구 가이드:** Phase 1 실행 중 Prisma 마이그레이션이 실패하면 `prisma migrate reset`은 사용자 승인 후. 로컬 DB일 때만 허용, 프로덕션에서는 절대 `--force` 금지(로드맵 리스크 표 참조).
+| Task | 설명                                                         | 상태 |
+| ---- | ------------------------------------------------------------ | ---- |
+| 1.1  | 로컬 Docker PostgreSQL 구성 + .env.example 확장              | ✅   |
+| 1.2  | schema.prisma 상단 공통 패턴 주석 블록                       | ✅   |
+| 1.3  | 10 청크 순차 전사 (§2.1~§2.27)                               | ✅   |
+| 1.4  | ENUM 일괄 선언 (25 enum)                                     | ✅   |
+| 1.5  | prisma migrate dev --name init + generate                    | ✅   |
+| 1.6  | packages/shared/src/index.ts Prisma Client re-export         | ✅   |
+| 1.7  | Zod 파생 타입 스텁 — skip (Phase 2 로 이월)                  | ⏭️   |
+| 1.8  | 커밋                                                         | ✅   |
+| 1.9  | schema → 도메인 10개 .prisma 파일 분리 (prismaSchemaFolder)  | ✅   |
+
+**실행 방식 (사용자 선택 2026-04-19):**
+
+- 로컬 Docker Postgres 17-alpine (homelab 이관 전 개발 단계)
+- 청크마다 `pnpm prisma format` + `validate` (총 10회, 모두 pass)
+- 10 청크 완료 직후 `prismaSchemaFolder` preview feature로 도메인 파일 분리 (사용자 제안)
+
+**완료 조건 (체크리스트):**
+
+- [x] `prisma migrate dev` 로컬 DB에 성공 (migration `20260418152503_init`)
+- [x] `public` 스키마 테이블 수: 86 (= 85 모델 + `_prisma_migrations`)
+- [x] `packages/shared/src/prisma-client/index.d.ts`에 `PrismaClient` export 확인
+- [x] 모든 polymorphic reward 테이블(`environment_reward`, `pokedex_milestone`, `human_record`, `island_reward`, `jumprope_tier`, `hideandsneak_reward`, `pokemon_litter_reward`)이 `reward_type` + `reward_ref_id` 컬럼 보유
+- [x] 신규 테이블 `trade_valuation`, `exchange_recipe`, `pokemon_litter_reward` 존재
+- [x] 폴더 모드 인식: `pnpm prisma format`/`validate` 모두 "Prisma schema loaded from prisma/schema" 출력
+- [x] `pnpm prisma migrate status` → "Database schema is up to date" (diff==0)
+- [x] type-check (shared, api) + lint (0 err/warn) + test (4 pass)
+
+**Phase 1 기술 결정 기록:**
+
+- **로컬 개발 DB**: `postgres:17-alpine` (docker-compose.local.yml, 5432, pokopia 유저/DB). homelab 이관 시 `DATABASE_URL` 교체만. bitnami Helm 차트는 homelab 단계에서 별도 사용.
+- **Prisma 버전**: Phase 0에서는 5.22로 시작 → Phase 1 커밋 직전 **Prisma 7.7.0으로 업그레이드** (사용자 결정 2026-04-19). 7.0.0의 multi-file 인식 버그는 7.7.0에서 해결됨을 로컬 검증(format/validate/migrate status 모두 pass).
+- **스키마 파일 분리**: `prismaSchemaFolder` preview feature는 Prisma 7에서 GA이므로 `previewFeatures` 리스트에서 제거. 폴더 경로 지정은 `prisma.config.ts`의 `schema: 'prisma/schema'`로.
+- **Prisma 7 breaking change 대응**:
+  - `datasource` 블록에서 `url = env(...)` 제거 → `prisma.config.ts`의 `datasource.url`로 이관.
+  - `PrismaClient` 인스턴스 생성 시 `adapter` 또는 `accelerateUrl` 필요. Phase 2~3에서 `@prisma/adapter-pg` 주입 패턴 도입 예정.
+  - `dotenv` 런타임 의존성 추가 (`prisma.config.ts`의 `import 'dotenv/config'`).
+  - 루트 `package.json`의 `"prisma": {"schema": "..."}` 필드 제거 (config.ts 우선).
+- **도메인 그룹**: 10 파일 (`_base` / `pokemon` / `item` / `recipe` / `geography` / `infrastructure` / `social` / `content` / `economy` / `polymorphic_meta`). ENUM은 관련 모델과 동거 (공유 `I18nSource`만 `_base.prisma`, `FlavorType`은 item 정의 + content 참조).
+- **`.env` gitignored** (Phase 0부터 `.env*` / `!.env.example` 정책 유지).
+- **Prisma 생성물**: `packages/shared/src/prisma-client/**`는 `.gitignore`에 추가하고 `.gitkeep`만 커밋. 루트 `package.json`의 `postinstall` hook(`prisma generate`)로 `pnpm install` 후 자동 재생성.
+- **`.oxlintrc.jsonc` `ignorePatterns`**에 `packages/shared/src/prisma-client` 추가 (Prisma 생성물 린트 제외). oxfmtrc는 Phase 0에서 이미 처리.
+- **초기 마이그레이션 이름**: `init` (feat(schema) 범주).
+
+**SCHEMA.md SSoT 대비 도출된 불일치 (Phase 1 감사 시 doc-consistency가 검토):**
+
+1. **I18nSource ENUM 값 수**: 로드맵 Task 1.2는 "7개 값"이라 기술했으나 SCHEMA §1.2는 6값(pokopiaguide/pokopoko/namuwiki/pokemon_official/manual/pending). 스키마는 SCHEMA를 따라 6값 선언. **로드맵 문서 오타 의심**.
+2. **`ItemTag` 모델 vs ENUM 이름 충돌**: 로드맵 Task 1.4는 ENUM 이름을 `ItemTag`로 나열했으나 `model ItemTag`가 SCHEMA §2.2에 존재 (PostgreSQL table/type 네임스페이스 공유로 충돌). ENUM을 **`ItemTagName`**으로 변경.
+3. **SCHEMA §2.5 `habitat_pokemon`의 time/weather_condition "nullable"**: 복합 PK는 NOT NULL 필수. "nullable" 대신 **NOT NULL + default `Any`**로 구현 (두 ENUM 모두 `Any` 값 보유하므로 의미 보존).
+4. **SCHEMA §2.27 `pokemon_litter_reward`의 habitat_id nullable + 복합 PK**: 동일 이유로 `@@id` 대신 **autoincrement id + `@@unique([pokemonId, itemId, habitatId])`**로 구현. `habitat_id` NULL = "모든 서식지 공통" 의미 보존.
+5. **`PlantType` 값 `SeashorFlower`**: 오타 가능성(Seashore?). SCHEMA를 SSoT로 그대로 사용. 감사 시 원문 교차 확인.
+6. **로드맵 Task 1.4의 `StampJumpropeRewardType` ENUM**: SCHEMA §2.22 `stamp_reward`는 ENUM 필드 없음(`coin_amount` INT만). 생성 안 함. **로드맵 문서 오타 의심**.
+7. **`building_kit_material`**: SCHEMA §2.6은 `(building_kit_id, item_id) PK`만 명시하고 수량 필드 없음. 구현도 SCHEMA 그대로 (quantity 없음). 추후 SCHEMA 명시 필요 시 Phase에 맞춰 추가.
+
+**Phase 1 산출물:**
+
+- `docker-compose.local.yml` (postgres:17-alpine, healthcheck, persistent volume)
+- `.env.example` + `.env` (DATABASE_URL)
+- `prisma/schema/` 10개 파일 (≈1770줄 총합, 85 모델, 25 ENUM, Prisma 7.7.0 포맷)
+- `prisma/migrations/20260418152503_init/` (migration.sql + migration_lock.toml, 5.22에서 생성되었으나 7.7.0 호환 확인됨)
+- `prisma.config.ts` (schema 폴더 경로 + datasource.url 관리)
+- `packages/shared/src/index.ts` (`PrismaClient` + `Prisma` + type re-export)
+- `package.json` (prisma/@prisma/client 7.7.0 + dotenv + postinstall hook), `packages/shared/package.json` (@prisma/client 7.7.0), `.oxlintrc.jsonc`, `.gitignore` 업데이트
+
+**Phase 1 커밋:** 커밋 직후 별도 `docs(plans): record Phase 1 commit hash` 커밋에서 해시 기록.
+
+**Phase 1 감사 (완료 후):** `pokopia-phase-review-harness` 프로파일 `schema` → `pokopia-schema-architect` + `codereview-style-auditor` + `pokopia-doc-consistency`. 위 7개 불일치 항목 검토 필수.
 
 ---
 
-## 기존 레포 상태에서 발견된 (Phase 0 스코프 밖) 이슈
+## 다음 세션 바로 시작 카드 — Phase 2
+
+Phase 1 감사가 🟡 대기이므로, 감사를 먼저 돌린 뒤 Phase 2 진행 권장. Phase 2 착수 체크리스트:
+
+1. **Phase 1 감사 실행** — `/pokopia-phase-review-harness` 또는 `pokopia-phase-review-lead` 에이전트로 프로파일 `schema` 감사. critical 발견 시 schema 수정 후 재감사.
+2. **Phase 2 범위 확인** — `docs/plans/2026-04-18-implementation-roadmap.md` §Phase 2 (라인 435~). 공통 검증·메타데이터 인프라(`packages/shared`).
+3. **작업 단위:**
+   - Task 2.1: `SourceMetadataSchema` (CRAWLING_STRATEGY §27.1)
+   - Task 2.2: 엔티티별 Zod 스키마 (SCHEMA §2 1:1 매핑)
+   - Task 2.3: `SOURCE_DEFAULTS` + `buildSourceMetadata()` (§27.4)
+   - Task 2.4: `redact()` 유틸 + 단위 테스트 (§22.3, 엣지 케이스 3종)
+   - Task 2.5: `packages/shared/src/index.ts`에 validators/metadata/redact export 추가
+   - Task 2.6: type-check + test + 커밋
+
+**전제 없음**: Phase 2는 외부 자원 불요. scraper preflight는 Phase 3부터.
+
+---
+
+## 기존 레포 상태에서 발견된 (Phase 0~1 스코프 밖) 이슈
 
 - `.claude/**`, `docs/**` 마크다운 파일에 oxfmt 기준 포맷 이슈가 다수 존재 (커밋 `eb59b45`, `2e90506` 당시부터). `.oxfmtrc.jsonc` ignorePatterns에 편입하여 CI는 통과. Prettier로 일괄 정리하려면 별도 작업.
-- `pnpm-lock.yaml`은 이번 Phase 0에서 재생성됨 (단일 앱 → 모노레포 전환 불가피). 이전 lockfile은 더 이상 유효하지 않음.
+- `pnpm-lock.yaml`은 Phase 0에서 재생성됨 (단일 앱 → 모노레포 전환 불가피). 이전 lockfile은 더 이상 유효하지 않음.
+- 로드맵(`docs/plans/2026-04-18-implementation-roadmap.md`)의 Task 1.2·1.4 ENUM 기술에서 오탈자 의심 항목 2건 (위 Phase 1 §"SCHEMA.md SSoT 대비 도출된 불일치" 1·6번). SCHEMA.md(SSoT)를 기준으로 Phase 1 구현 결정, 로드맵 수정은 Phase 1 감사 때 `pokopia-doc-consistency`가 판정.

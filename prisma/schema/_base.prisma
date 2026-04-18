@@ -1,0 +1,86 @@
+// Pokopia Wiki — Prisma 스키마 (base)
+//
+// SSoT: docs/SCHEMA.md §2.1~§2.27 (70+ 엔티티).
+// 설계 변경은 SCHEMA.md가 선행되며, 이 파일은 번역본이다.
+// 직접 편집 전 docs/SCHEMA.md §1 (설계 원칙)을 반드시 읽는다.
+//
+// ─────────────────────────────────────────────────────
+//  파일 분할 (prismaSchemaFolder preview feature)
+// ─────────────────────────────────────────────────────
+//   _base.prisma             — generator, datasource, 공유 ENUM (I18nSource)
+//   pokemon.prisma           — §2.1 포켓몬·전설·특기
+//   item.prisma              — §2.2 아이템 + §2.8 음식 + §2.20 유물 + §2.27 교역/교환/쓰레기
+//   recipe.prisma            — §2.3 제작/요리 + §2.11 도색
+//   geography.prisma         — §2.4 지역 + §2.5 서식지 + §2.24 섬
+//   infrastructure.prisma    — §2.6 건축 + §2.13 센터 + §2.14 전기/물
+//   social.prisma            — §2.7 선호·우정 + §2.9 디토 + §2.12 퀘스트/팀 + §2.17 인간기록 + §2.18 도감
+//   content.prisma           — §2.15 커스터마이징 + §2.16 CD + §2.19 식물 + §2.21 이벤트 + §2.22 미니게임 + §2.23 Mosslax
+//   economy.prisma           — §2.10 환경/상점/통화
+//   polymorphic_meta.prisma  — §2.25 이미지 + §2.26 번역 충돌
+//
+// ─────────────────────────────────────────────────────
+//  공통 패턴 (모든 엔티티가 따른다)
+// ─────────────────────────────────────────────────────
+//
+// 1) 감사 컬럼 (모든 원본 엔티티 공통, i18n·조인 테이블 제외)
+//      sourceSlug   String   @unique   — 원본 URL·경로에서 파생한 안정 ID
+//      sourceUrl    String             — 원본 페이지 URL (attribution)
+//      scrapedAt    DateTime           — 수집 시점 (UTC)
+//      contentHash  String             — 원본 페이로드 해시 (변경 탐지)
+//      createdAt    DateTime @default(now())
+//      updatedAt    DateTime @updatedAt
+//
+// 2) i18n 공통 테이블 패턴 (SCHEMA §1.2)
+//      @@id([entityId, locale])         — 복합 PK로 중복 방지
+//      locale       String              — 'en' | 'ko' | 'ja' (ENUM 금지)
+//      source       I18nSource          — 6값 ENUM (pokopiaguide/pokopoko/namuwiki/pokemon_official/manual/pending)
+//      verified / verifiedAt / verifiedBy — 검증 메타
+//      (번역은 원본 엔티티에 종속되므로 감사 컬럼 없음)
+//
+// 3) Polymorphic Reward (SCHEMA §1.3)
+//      reward_type + reward_ref_id 조합. FK 제약은 **걸지 않는다** (복수 테이블 참조).
+//      참조 정합성은 애플리케이션 QA(qa-analyst + validators/)가 검증한다.
+//      적용: environment_reward, pokedex_milestone, human_record,
+//            island_reward, jumprope_tier, hideandsneak_reward, pokemon_litter_reward.
+//
+// 4) 명시적 M:N 조인 (SCHEMA §1.4)
+//      implicit M:N 금지. 조인 테이블에 복합 PK @@id([aId, bId]) + 필요 시 추가 컬럼.
+//
+// 5) 1:1 확장 테이블
+//      item의 1:1 확장: food, lost_relic, trade_valuation.
+//      확장 테이블 PK = itemId (FK + PK 동시, `@id` + `@relation`).
+//
+// 6) 네이밍
+//      모델은 PascalCase, 필드는 camelCase.
+//      DB 레벨은 snake_case를 @@map / @map 으로 지정.
+//      ENUM 값에 공백·하이픈 포함 시 `Key_Items @map("Key Items")` 형식.
+//
+// 7) 이미지
+//      각 엔티티에 `imageUrl` 필드를 두지 않는다.
+//      이미지는 entity_image (SCHEMA §2.25) 단일 테이블에 polymorphic 참조로 기록.
+//
+// 8) 번역 충돌
+//      translation_conflict (SCHEMA §2.26) polymorphic (entity_type + entity_id).
+//      상충 데이터는 삭제하지 않고 각 소스별 후보와 reviewer 결정을 함께 보관.
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../../packages/shared/src/prisma-client"
+}
+
+// Prisma 7: `url`은 prisma.config.ts의 `datasource.url`에서 관리.
+// PrismaClient 런타임 connection은 별도 adapter (@prisma/adapter-pg 등) 주입 필요.
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── 공유 ENUM ───
+
+enum I18nSource {
+  pokopiaguide
+  pokopoko
+  namuwiki
+  pokemon_official
+  manual
+  pending
+}
