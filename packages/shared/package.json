@@ -15,11 +15,14 @@
     "lint": "oxlint"
   },
   "dependencies": {
+    "@prisma/adapter-pg": "^7.7.0",
     "@prisma/client": "^7.7.0",
+    "pg": "^8.20.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
     "@types/node": "^24.12.2",
+    "@types/pg": "^8.20.0",
     "typescript": "^6.0.3",
     "vitest": "^4.1.4"
   }

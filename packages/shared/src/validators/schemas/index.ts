@@ -1,0 +1,19 @@
+/**
+ * validators/schemas barrel.
+ *
+ * Task 2.2 에서 핵심 5개 엔티티(Pokemon / Item / CookingRecipe / CraftingRecipe / Habitat)
+ * 스키마를 도메인별 파일로 분리했다. 나머지 엔티티(PokemonI18n / HabitatPokemon /
+ * Specialty / BuildingKit / ...) 는 해당 파서 Phase 에서 점진적으로 추가한다.
+ *
+ * - `./_base`     : SourceMetadataSchema / SourceSiteEnum
+ * - `./pokemon`   : PokemonSchema + PokemonInput
+ * - `./item`      : ItemSchema + ItemInput
+ * - `./recipe`    : CookingRecipeSchema / CraftingRecipeSchema + 각 type
+ * - `./geography` : HabitatSchema + HabitatInput
+ */
+
+export * from './_base';
+export * from './pokemon';
+export * from './item';
+export * from './recipe';
+export * from './geography';

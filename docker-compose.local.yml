@@ -10,11 +10,11 @@ services:
       POSTGRES_USER: pokopia
       POSTGRES_PASSWORD: pokopia_local_dev
     ports:
-      - "5432:5432"
+      - '5432:5432'
     volumes:
       - pokopia_pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U pokopia -d pokopia"]
+      test: ['CMD-SHELL', 'pg_isready -U pokopia -d pokopia']
       interval: 5s
       timeout: 5s
       retries: 10
