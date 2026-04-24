@@ -11,6 +11,7 @@
  * - `./recipe`     : CookingRecipeSchema / CraftingRecipeSchema + 각 type
  * - `./geography`  : HabitatSchema + HabitatInput
  * - `./specialty`  : SpecialtySchema + SpecialtyInput (Phase 8 단계 2)
+ * - `./social`     : FavoriteCategorySchema + FavoriteCategoryInput (Phase 8 단계 7)
  */
 
 export * from './_base';
@@ -19,3 +20,4 @@ export * from './item';
 export * from './recipe';
 export * from './geography';
 export * from './specialty';
+export * from './social';
