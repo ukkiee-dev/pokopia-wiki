@@ -23,8 +23,16 @@
   "dependencies": {
     "@pokopia-wiki/shared": "workspace:*",
     "dotenv": "^17.4.2",
+    "fingerprint-generator": "^2.1.82",
+    "fingerprint-injector": "^2.1.82",
     "ky": "^2.0.1",
+    "node-cron": "^4.2.1",
+    "patchright": "^1.59.4",
+    "playwright": "^1.59.1",
+    "proper-lockfile": "^4.1.2",
     "robots-parser": "^3.0.1",
+    "tough-cookie": "^6.0.1",
+    "tough-cookie-file-store": "^3.3.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
