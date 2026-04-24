@@ -12,6 +12,7 @@
  * - `./geography`  : HabitatSchema + HabitatInput
  * - `./specialty`  : SpecialtySchema + SpecialtyInput (Phase 8 단계 2)
  * - `./social`     : FavoriteCategorySchema + FavoriteCategoryInput (Phase 8 단계 7)
+ * - `./food`       : FoodSchema + FoodInput (Phase 8 단계 10)
  */
 
 export * from './_base';
@@ -21,3 +22,4 @@ export * from './recipe';
 export * from './geography';
 export * from './specialty';
 export * from './social';
+export * from './food';
