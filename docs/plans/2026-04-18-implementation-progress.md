@@ -3,9 +3,48 @@
 > **For Next Session:** 이 문서는 `docs/plans/2026-04-18-implementation-roadmap.md`를 Phase 단위로 집행하면서 실제 상태를 축적한다.
 > 새 세션을 시작할 때는 (1) 이 문서의 "다음에 할 일", (2) 로드맵 해당 Phase, (3) `_workspace/` 잔여물 순서로 읽는다.
 >
-> **최종 갱신:** 2026-04-19
-> **현재 Phase:** Phase 4 (Fetcher 인프라 & 캐시 & Rate Limiter) — ✅ 완료 (감사 대기)
+> **최종 갱신:** 2026-04-24
+> **현재 Phase:** Phase 5 (페르소나·워밍) — 착수 준비 완료 (Phase 4 감사 PASS + 선결 5항목 보완)
 > **총 Phase 수:** 17개 (Phase 0 ~ Phase 16)
+
+---
+
+## 이번 세션 요약 (2026-04-24)
+
+**시작 상태:** Phase 4 구현 완료, 감사 대기 (`9d6d96b`). `feat/restructure-services-dir` 브랜치 — 모노레포 재구성(`3543bc4`)으로 `packages/*` → `services/*` + `shared/` 전환 완료.
+**종료 상태:** Phase 4 감사 **PASS** + 선결 5항목 보완 완료. Phase 5 착수 준비.
+**세션 작업:** Phase 4 감사 실행 (Phase 3 Loop 1 merged) + 감사 권고 5항목 보완.
+
+**핵심 성과:**
+
+- **Phase 4 감사 PASS** — `pokopia-phase-review-lead`로 `crawler` 프로파일 4 감사자 관점 실행. Critical 0건, Warning 11건(Phase 3 이월 8 + Phase 4 신규 3), Info 19건. Phase 3 이월 4건(SEC-001/002/003/OPS-001) 전부 **resolved** 태깅. 산출물 `_workspace/audit/phase-4/20260424-0205/REPORT.md` + 4 YAML (`.gitignore` 상태).
+- **W-005 (STYLE-401) 최종 판정** — Phase 2→3→4 3연속 수렴 후 **Warning 유지**. Info 강등 반대 근거: Zod 로컬 ENUM 5개 + 테스트 커버리지 부분성. 대신 권고 A 투자로 실효 리스크 축소 반영.
+- **Phase 5 선결 조건 5항목 보완 (옵션 A 선택):**
+  1. **OPS-002** `services/scraper/src/paths.ts` — `REPO_ROOT` 런타임 assertion 추가 (`pnpm-workspace.yaml` 센티넬 존재 검사). worktree/CI 배치에서 산출물 오적재 방지.
+  2. **OPS-403** `services/scraper/src/rate/limiter.ts` — `atomicWriteJson` 유틸(tmp write + rename) 도입. state JSON 2 write 지점(`ensureFile`/`bumpUnderLock`) atomic 전환. 크래시 시 count=0 리셋 리스크 제거.
+  3. **PERF-405** 동일 파일 — `bumpUnderLock`이 `ApproachingAlertPayload` 반환하도록 재설계. `acquire()`가 락 해제 후 Notifier 호출 → Telegram 10s timeout이 다른 `acquire()`를 차단하지 않음.
+  4. **STYLE-401 권고 A** `shared/src/validators/schemas/item.test.ts` — `expectTypeOf<ItemInput['tags'][number]>` / `ItemInput['locations'][number]['method']` 가드 2건 추가. Zod 로컬 ENUM과 `$Enums.ItemTagName` / `$Enums.ItemLocationMethod` 동기 상태 **컴파일 타임 보증**.
+  5. **STYLE-404** `docs/CRAWLING_STRATEGY.md` §11.1.1 신규 — Fetcher 커스텀 에러 5종 SSoT 표. `SkippedByRobotsError`/`SessionAbortError`/`RateLimitExceededError`/`PersonaRequiredError`/`CachePathTraversalError` 각 throw 조건·호출부 반응 명시. 구현-문서 drift 해소.
+
+**회귀 검증 (보완 후):**
+
+- 테스트 **47/47** (api 4, shared 23 [+2], scraper 20) — 새 `expectTypeOf` 가드 포함
+- lint: shared 1 warning (기존 `redact.test.ts` nested describe, 무관) + services/* 0/0
+- type-check: 3/3 **PASS** — Zod ENUM ↔ Prisma `$Enums` 동기 컴파일러 보증 확인
+- format:check: 83 files all correct
+
+**외부 자원 상태:**
+
+- Postgres docker 컨테이너 기동 (이 세션 재시작). 볼륨 데이터 영속.
+- 다른 자원은 2026-04-19 상태 유지 (Telegram 토큰 미주입, playwright chromium 설치됨, 4 소스 robots/access OK).
+
+**미결(다음 세션 이월):**
+
+1. **Phase 5 (페르소나·워밍) 착수 (최우선)** — 선결 조건 전부 해소. scope 문서에 X-003(SessionManager 선결 조건) 명시 필수: Chrome bump notify 호출자 의무화, catch redact 강제, cachedUserAgent 리셋, fetcher close() 강제.
+2. **Phase 4 Warning 잔존 운영 개선 3건** — OPS-003(preflight 타임스탬프 공유), OPS-004(SUMMARY.md 자동 생성), OPS-006(check:network fallback) — Phase 5~6 중 처리.
+3. **Phase 4 Warning Phase 7 이월 3건** — PERF-001/002/003 (Notifier worker화 — dedup/queue/backpressure).
+4. **Telegram 토큰** (사용자 액션, 선택) — @BotFather 발급 → `.env` 주입.
+5. **`packages/` 빈 디렉토리 정리** — 재구성(`3543bc4`) 후 잔존. `git rm -r packages/` 1커밋 처리 가능.
 
 ---
 
@@ -44,8 +83,8 @@
 | 1 — Prisma 스키마               | ✅ 완료    | 2026-04-19 | 2026-04-19 | ✅   | 루프 1 PASS (DC-001 resolved). 85 모델 + 25 ENUM, 10 도메인 파일 분리, Prisma 7.7.0 |
 | 2 — 공통 검증·메타데이터        | ✅ 완료    | 2026-04-19 | 2026-04-19 | ✅   | 루프 0 PASS. Critical 0, Warning 8, Info 29. ARCH-003 resolved. Warning 7건 보완 세션 완료(W-005 의도적 잔존). |
 | 3 — Preflight 하네스            | ✅ 완료    | 2026-04-19 | 2026-04-19 | 🟡   | Loop 0: LOOP_REQUIRED (SEC-001/OPS-001) → 번들 수정 완료. Loop 1 재감사는 Phase 4 감사에 병합(스킵 사유 하단 기록). |
-| 4 — Fetcher 인프라              | ✅ 완료    | 2026-04-19 | 2026-04-19 | 🟡   | Task 4.1~4.10 완료. 15 파일, 20 tests pass (HtmlCache 9 + Factory 11). Persona/Fingerprint/Concurrency는 Phase 5. |
-| 5 — 페르소나·워밍               | ⏳ 대기    | —          | —    | —    | 워밍 1일 BG          |
+| 4 — Fetcher 인프라              | ✅ 완료    | 2026-04-19 | 2026-04-19 | ✅   | 감사 Loop 0 PASS (2026-04-24, Phase 3 Loop 1 merged). Critical 0, Warning 11, Info 19. 선결 5항목 보완 완료. Phase 5 scope 에 X-003 명시 필수. |
+| 5 — 페르소나·워밍               | 🏗️ 준비   | —          | —    | —    | 착수 가능. 워밍 1일 BG. X-003(SessionManager 선결 조건) scope 명시 필수. |
 | 6 — 세션/행동 루프              | ⏳ 대기    | —          | —    | —    | —                    |
 | 7 — Notifier/CLI 대시보드       | ⏳ 대기    | —          | —    | —    | —                    |
 | 8 — Serebii T0 파서             | ⏳ 대기    | —          | —    | —    | 35+ 파서             |
@@ -526,75 +565,75 @@
 
 ---
 
-## 다음 세션 바로 시작 카드 — Phase 4 감사 → Phase 5
+## 다음 세션 바로 시작 카드 — Phase 5 (페르소나·워밍)
 
-Phase 4 🟡 감사 대기 + Phase 3 Loop 1 병합 재감사 필요. 아래 순서로 진행.
+Phase 4 ✅ 감사 PASS + 선결 5항목 보완 완료. Phase 5 착수 가능.
 
-### 첫 30분 체크리스트 (세션 재개 직후)
+### 첫 15분 체크리스트 (세션 재개 직후)
 
 ```bash
 # 1. 위치 + 환경 확인 (복붙 실행)
 cd /Users/ukyi/workspace/pokopia-wiki
-git log --oneline -5                # 마지막 커밋: c63e996 docs(plans) Phase 4
-git status                           # clean 확인
-pnpm --filter @pokopia-wiki/scraper --filter @pokopia-wiki/shared --filter @pokopia-wiki/api test:run  # 45/45 pass 재확인
-docker compose -f docker-compose.local.yml ps postgres  # Running 확인 (Phase 1 DB)
+git log --oneline -5                        # 마지막 커밋: Phase 4 감사 PASS + 선결 보완
+git status                                   # clean 확인
+pnpm -r --parallel test:run                  # 47/47 pass 재확인 (api 4, shared 23, scraper 20)
+docker compose -f docker-compose.local.yml ps postgres  # Running 확인
 ```
 
-### 2. Phase 4 감사 실행 (최우선)
-
-- 스킬: `/pokopia-phase-review-harness`
-- 인자: `phase=4, type=crawler, prev_report=_workspace/audit/phase-3/20260419-0322/REPORT.md, loop_context=phase-3-loop-1-merged`
-- 프로파일: `crawler` (security 필수 + performance 필수 + ops-runner 권장)
-- 추가: `codereview-style` 1명(W-005 재분류 지속) + Phase 4 감사에서 Phase 3 잔존 Warning 8건 재분류
-
-**감사자가 판정해야 할 것 (핵심 5):**
-1. Phase 3 **SEC-001/002/003/OPS-001 resolved 태그** 부여 (이전 감사 리포트 대비)
-2. Phase 3 Warning 재분류 — PERF-001~003(Phase 7 TODO로 이월 OK?), OPS-002~006(개선 필요?), STYLE-401(W-005 최종 판정)
-3. **HtmlCache 경로 해싱**(§10.3) path traversal 방어 실효성 — sha256 앞 16자 + `encodeURIComponent`가 충분한지
-4. **RateLimiter 3종 분리** + UTC+9 자정 리셋 로직 정확성
-5. **`persona/types.ts` stub** 이 Phase 5 `definitions.ts` 인터페이스 확장 시 깨지지 않는지
-
-### 3. Phase 4 감사 결과 분기
-
-| 결과 | 다음 액션 |
-|---|---|
-| **PASS** | Phase 5 바로 착수 |
-| **LOOP_REQUIRED** | `loopback_directive.md` 기반 Critical 수정 → Loop 1 재감사 |
-| **ESCALATE** (3 루프 초과) | 사용자 결정 대기 |
-
-### 4. Phase 5 범위 (감사 PASS 후)
+### 2. Phase 5 착수 (최우선)
 
 **로드맵:** `docs/plans/2026-04-18-implementation-roadmap.md` §Phase 5 (라인 827~)
 
-**산출물:**
-- `packages/scraper/src/persona/definitions.ts` — PERSONAS 2인 (`korean-pokemon-fan` T1/T2 / `namuwiki-researcher` T3)
-- `packages/scraper/src/persona/manager.ts` — 활성 시간 기반 선택
-- `packages/scraper/src/persona/warmer.ts` — ProfileWarmer (파일 편집 금지, API만)
-- `packages/scraper/src/fingerprint/inject.ts` — T1 `attachFingerprint` (Phase 4 TKTK 해소)
-- `packages/scraper/src/fingerprint/patchright-webgl.ts` — T2/T3 `maybeReinforceWebgl` (Phase 4 TKTK 해소)
-- `packages/scraper/src/scheduler/concurrency-guard.ts` — §6.4.3 A4 전체 (proper-lockfile 파일락)
-- `data/browser-profiles/{korean-pokemon-fan,namuwiki-researcher}/` — 워밍 후 생성
-- `RateLimiter.isHigherTierActive` → ConcurrencyGuard 연결 (Phase 4 TKTK 해소)
+**주 산출물 (Phase 4 TKTK 6건 + 신규 모듈):**
 
-**Phase 4 TKTK 해소 6건 (Phase 5에서 처리):**
-1. PersonaManager 실제 구현 + PERSONAS 상수
-2. `attachFingerprint` fingerprint-injector 연결
-3. `maybeReinforceWebgl` addInitScript 주입
-4. `isHigherTierActive` → ConcurrencyGuard
-5. `onSessionStart` → Notifier `chrome.version_bump` 발행
-6. T1/T2/T3 `userAgentDataInitScript` 공용화 → `behavior/` 모듈
+- `services/scraper/src/persona/definitions.ts` — PERSONAS 2인 (`korean-pokemon-fan` T1/T2 / `namuwiki-researcher` T3). `activeHours`/`healthScore`/`fingerprint` 등 Phase 5 전용 필드는 `persona/types.ts` 에 optional 로 추가 (Phase 4 감사에서 확장 안전성 확인).
+- `services/scraper/src/persona/manager.ts` — 활성 시간 기반 선택 + `retire()`.
+- `services/scraper/src/persona/warmer.ts` — ProfileWarmer (파일 편집 금지, API만).
+- `services/scraper/src/fingerprint/inject.ts` — T1 `attachFingerprint` (Phase 4 TKTK #2 해소).
+- `services/scraper/src/fingerprint/patchright-webgl.ts` — T2/T3 `maybeReinforceWebgl` (Phase 4 TKTK #3 해소).
+- `services/scraper/src/scheduler/concurrency-guard.ts` — §6.4.3 A4 전체 (`proper-lockfile` 파일락) + `RateLimiter.isHigherTierActive` 연결 (Phase 4 TKTK #4 해소).
+- `services/scraper/src/behavior/` — `userAgentDataInitScript` 공용화 (Phase 4 TKTK #6 해소).
+- `data/browser-profiles/{korean-pokemon-fan,namuwiki-researcher}/` — 워밍 후 생성.
 
-### 5. 복귀 시 유의 사항
+**스킬 호출:** `/pokopia-code-builder` 또는 `/pokopia-tier-crawler` 로 Task 분할.
 
-- `_workspace/` 는 `.gitignore` 로 제외됨. 감사 산출물(`_workspace/audit/phase-4/...`)은 git 추적 안 되므로 이 세션 종료 전에 필요하면 별도 백업.
-- 세션 중 기존 활성 Task(#26~36) 모두 completed. 새 세션에서는 Phase 4 감사용 Task + Phase 5 Task 신규 생성.
-- Postgres docker 컨테이너는 `docker compose -f docker-compose.local.yml up -d` 로 재시작. DB 데이터는 볼륨에 영속.
-- Phase 4 `persona/types.ts` 에 Phase 5 에서 확장할 최소 필드만 있음 — `id`, `locale`, `timezone`, `storageStatePath`. `activeHours`, `fingerprintSeed` 등은 Phase 5 에서 추가.
+### 3. Phase 5 scope 문서 필수 명시 — X-003 (SessionManager 선결 조건)
 
-**사용자 TODO (감사 전후, 선택):**
-- `@BotFather` Telegram 토큰 발급 후 `.env`에 `TELEGRAM_BOT_TOKEN`/`TELEGRAM_CHAT_ID` 주입 → `pnpm --filter @pokopia-wiki/scraper notifier:test` 재실행해서 실제 4건 Telegram 메시지 도착 확인 (Phase 5 워밍 1일 BG 실행 시 알림 채널로 유용, 필수 아님)
-- `check:access` T0 marker 문제는 **이미 해결됨** (OPS-001 정규식 전환, 커밋 `0fcfdbb`) — 별도 조치 불요
+Phase 4 감사 교차 이슈 X-003 에서 지적. Phase 5 scope 에 **반드시 포함**:
+
+1. **Chrome bump notify 호출자 의무화** — `services/scraper/src/browser/chrome-version.ts` 의 `onSessionStart(notifier)` 가 SessionManager 초기화 시 누락되면 `chrome.version_bump` 이벤트 미발행 (Phase 4 TKTK #5 해소).
+2. **catch redact 강제** — SessionManager 의 모든 `catch` 경로가 `redact()` 를 거쳐 로그에 쓰도록. Phase 3 SEC-001 의 근본 방어선 연장.
+3. **cachedUserAgent 리셋** — Chrome 버전 bump 감지 시 cachedUserAgent 를 파기해 새 버전으로 재샘플.
+4. **fetcher close() 강제** — 세션 종료 시 모든 fetcher `close()` 호출 보장 (proper-lockfile stale 10s 대비).
+
+### 4. Phase 4 잔존 Warning 운영 개선 (Phase 5~6 중 처리)
+
+| ID      | 위치                                       | 개선 내용                                                          |
+| ------- | ------------------------------------------ | ------------------------------------------------------------------ |
+| OPS-003 | `data/preflight/<date>/`                   | preflight 스크립트에 `PREFLIGHT_TS` env 공유 (분 단위 분리 제거)   |
+| OPS-004 | `data/preflight/<date>/SUMMARY.md`         | `preflight:all` 스크립트 + 통합 리포터                             |
+| OPS-006 | `services/scraper/scripts/check-network.ts` | ip-api.com fallback (ipapi.co 429 대비)                            |
+
+### 5. Phase 4 Warning Phase 7 이월 3건 (Notifier worker 화)
+
+| ID       | 위치                                     | Phase 7 처리                                         |
+| -------- | ---------------------------------------- | ---------------------------------------------------- |
+| PERF-001 | `services/scraper/src/notifier/index.ts` | notify sync 블로킹 → worker 비동기 큐                |
+| PERF-002 | 동일                                     | events.jsonl race → worker 직렬화                    |
+| PERF-003 | 동일                                     | dedup/queue/backpressure 부재 → worker + ring buffer |
+
+### 6. 복귀 시 유의 사항
+
+- `_workspace/` 는 `.gitignore` 로 제외됨. Phase 4 감사 리포트 (`_workspace/audit/phase-4/20260424-0205/`) 는 이번 세션 생성 — 필요 시 별도 백업.
+- `packages/` 빈 디렉토리 잔존 (`3543bc4` 재구성 후). Phase 5 착수 전 `git rm -r packages/` 1 커밋으로 정리 권장.
+- 디렉토리 경로: 구(舊) `packages/scraper` → 현 `services/scraper`, 구 `packages/shared` → 현 `shared`. pnpm workspace 이름(`@pokopia-wiki/*`) 은 유지.
+- Postgres docker 컨테이너는 `docker compose -f docker-compose.local.yml up -d` 로 재시작. 볼륨 데이터 영속.
+- `services/scraper/src/persona/types.ts` 는 최소 5 필드(`id`/`locale`/`timezone`/`storageStatePath`/`usedFor`). `activeHours`, `fingerprintSeed` 등은 Phase 5 에서 optional 로 추가 (감사 OK).
+- `services/scraper/src/paths.ts` 에 `REPO_ROOT` 런타임 assertion 추가됨 — 모듈 load 시 `pnpm-workspace.yaml` 미발견이면 throw. worktree/CI 에서 임의 cwd 로 실행하면 조기 실패하니 인지.
+
+**사용자 TODO (Phase 5 진행과 무관, 선택):**
+
+- `@BotFather` Telegram 토큰 발급 후 `.env` 에 `TELEGRAM_BOT_TOKEN`/`TELEGRAM_CHAT_ID` 주입 → `pnpm --filter @pokopia-wiki/scraper notifier:test` 재실행해 실제 메시지 도착 확인. Phase 5 워밍 1일 BG 실행 알림 채널로 유용 (필수 아님).
 
 ---
 
