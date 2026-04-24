@@ -23,7 +23,8 @@ import { createHash } from 'node:crypto';
 import type { SourceSite } from '@pokopia-wiki/shared';
 import { chromium, type BrowserContext, type Page } from 'patchright';
 
-import { detectChromeVersion, getSystemChromeUserAgent } from '../browser/chrome-version.js';
+import { getSystemChromeUserAgent } from '../browser/chrome-version.js';
+import { injectUserAgentData } from '../browser/ua-init-script.js';
 import { maybeReinforceWebgl } from '../fingerprint/patchright-webgl.js';
 import type { BrowserPersona } from '../persona/types.js';
 import { PersonaRequiredError, SkippedByRobotsError } from './errors.js';
@@ -38,63 +39,6 @@ const DEFAULT_VIEWPORT = { width: 1440, height: 900 };
  */
 function isHeadless(): boolean {
   return process.env['SCRAPER_HEADED'] === '0';
-}
-
-/**
- * addInitScript 본문 — T1 과 동일하지만 patchright context 에 주입한다.
- *
- * 동일 스크립트를 T1/T3 와 중복해서 보존하는 이유는 각 fetcher 별 BrowserContext
- * 타입이 패키지 단위로 분리돼 있기 때문이다 (playwright vs patchright).
- * Phase 5 에서 behavior/ 모듈로 공용화하면 한 곳으로 모을 수 있다.
- */
-const userAgentDataInitScript = (v: { major: number; full: string }): void => {
-  if (!('userAgentData' in navigator)) return;
-
-  const native = Function.prototype.toString.call(isNaN);
-  const makeNative = <F extends (...args: never[]) => unknown>(fn: F, name: string): F => {
-    Object.defineProperty(fn, 'name', { value: name, configurable: true });
-    const str = native.replace('isNaN', name);
-    Object.defineProperty(fn, 'toString', {
-      configurable: true,
-      writable: true,
-      value: () => str,
-    });
-    return fn;
-  };
-
-  const brands = [
-    { brand: 'Chromium', version: String(v.major) },
-    { brand: 'Google Chrome', version: String(v.major) },
-    { brand: 'Not/A)Brand', version: '99' },
-  ];
-  const fullVersionList = brands.map((b) => ({ brand: b.brand, version: v.full }));
-  const uaData = (navigator as unknown as { userAgentData?: Record<string, unknown> }).userAgentData;
-  if (!uaData) return;
-
-  Object.defineProperty(uaData, 'brands', {
-    configurable: true,
-    enumerable: true,
-    get: makeNative(function brandsGetter() {
-      return brands;
-    }, 'get brands'),
-  });
-
-  const origGet = (uaData['getHighEntropyValues'] as (hints: string[]) => Promise<Record<string, unknown>>).bind(
-    uaData,
-  );
-  const wrapped = async function getHighEntropyValues(hints: string[]): Promise<Record<string, unknown>> {
-    const base = await origGet(hints);
-    return { ...base, fullVersionList, uaFullVersion: v.full };
-  };
-  uaData['getHighEntropyValues'] = makeNative(wrapped, 'getHighEntropyValues');
-};
-
-/**
- * `navigator.userAgentData` 보강 — T1 과 동일 로직을 patchright 에 주입.
- */
-async function injectUserAgentData(context: BrowserContext): Promise<void> {
-  const version = await detectChromeVersion();
-  await context.addInitScript(userAgentDataInitScript, { major: version.major, full: version.full });
 }
 
 /**

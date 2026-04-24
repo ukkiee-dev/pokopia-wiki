@@ -19,3 +19,6 @@ export * from './validators/metadata';
 
 // Phase 2 (Task 2.4): 로그 민감정보 마스킹
 export * from './logging/redact';
+
+// Phase 5 (STYLE-501): atomic write helper — tmp + rename POSIX 원자성 (OPS-403 공용화)
+export * from './fs/atomic-write';

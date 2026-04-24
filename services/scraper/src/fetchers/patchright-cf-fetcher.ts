@@ -24,7 +24,8 @@ import { createHash } from 'node:crypto';
 import type { SourceSite } from '@pokopia-wiki/shared';
 import { chromium, type BrowserContext, type Page } from 'patchright';
 
-import { getSystemChromeUserAgent, detectChromeVersion } from '../browser/chrome-version.js';
+import { getSystemChromeUserAgent } from '../browser/chrome-version.js';
+import { injectUserAgentData } from '../browser/ua-init-script.js';
 import { maybeReinforceWebgl } from '../fingerprint/patchright-webgl.js';
 import type { BrowserPersona } from '../persona/types.js';
 import { PersonaRequiredError, SessionAbortError, SkippedByRobotsError } from './errors.js';
@@ -44,59 +45,6 @@ const DEFAULT_VIEWPORT = { width: 1440, height: 900 };
  */
 function isHeadless(): boolean {
   return process.env['SCRAPER_HEADED'] === '0';
-}
-
-/**
- * addInitScript 본문 — T1/T2 와 동일. Phase 5 공용화 과제.
- */
-const userAgentDataInitScript = (v: { major: number; full: string }): void => {
-  if (!('userAgentData' in navigator)) return;
-
-  const native = Function.prototype.toString.call(isNaN);
-  const makeNative = <F extends (...args: never[]) => unknown>(fn: F, name: string): F => {
-    Object.defineProperty(fn, 'name', { value: name, configurable: true });
-    const str = native.replace('isNaN', name);
-    Object.defineProperty(fn, 'toString', {
-      configurable: true,
-      writable: true,
-      value: () => str,
-    });
-    return fn;
-  };
-
-  const brands = [
-    { brand: 'Chromium', version: String(v.major) },
-    { brand: 'Google Chrome', version: String(v.major) },
-    { brand: 'Not/A)Brand', version: '99' },
-  ];
-  const fullVersionList = brands.map((b) => ({ brand: b.brand, version: v.full }));
-  const uaData = (navigator as unknown as { userAgentData?: Record<string, unknown> }).userAgentData;
-  if (!uaData) return;
-
-  Object.defineProperty(uaData, 'brands', {
-    configurable: true,
-    enumerable: true,
-    get: makeNative(function brandsGetter() {
-      return brands;
-    }, 'get brands'),
-  });
-
-  const origGet = (uaData['getHighEntropyValues'] as (hints: string[]) => Promise<Record<string, unknown>>).bind(
-    uaData,
-  );
-  const wrapped = async function getHighEntropyValues(hints: string[]): Promise<Record<string, unknown>> {
-    const base = await origGet(hints);
-    return { ...base, fullVersionList, uaFullVersion: v.full };
-  };
-  uaData['getHighEntropyValues'] = makeNative(wrapped, 'getHighEntropyValues');
-};
-
-/**
- * `navigator.userAgentData` 보강 — T2 와 동일 (중복 최소화를 Phase 5 과제로 남김).
- */
-async function injectUserAgentData(context: BrowserContext): Promise<void> {
-  const version = await detectChromeVersion();
-  await context.addInitScript(userAgentDataInitScript, { major: version.major, full: version.full });
 }
 
 /**

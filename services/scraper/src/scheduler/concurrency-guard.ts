@@ -29,11 +29,11 @@
  *   tmp 디렉토리 + fake pid set 조합으로 격리 테스트.
  */
 
-import { access, mkdir, readFile, rename, unlink, writeFile } from 'node:fs/promises';
+import { access, mkdir, readFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
-import type { SourceSite } from '@pokopia-wiki/shared';
+import { atomicWriteJson, type SourceSite } from '@pokopia-wiki/shared';
 import lockfile from 'proper-lockfile';
 
 import type { Notifier } from '../notifier/index.js';
@@ -139,12 +139,26 @@ export class ConcurrencyGuard {
 
   /** §6.4.1 4 규칙 검사 + 통과 시 등록. canStart↔register 가 단일 lock 안에서 원자적. */
   async acquire(args: { source: SourceSite; tier: SessionTier; persona?: BrowserPersona }): Promise<AcquireResult> {
-    return this.withLock(async () => {
+    type Outcome =
+      | {
+          kind: 'rejected';
+          result: AcquireResult;
+          pendingConflict?: { requested: string; active: string };
+        }
+      | { kind: 'accepted'; session: ActiveSession };
+
+    const outcome = await this.withLock<Outcome>(async () => {
       const { live: active } = await this.readReconciled();
       const now = this.nowISO();
 
-      const rejection = await this.evaluateRules(active, args);
-      if (rejection) return rejection;
+      const evaluation = this.evaluateRules(active, args);
+      if (evaluation !== null) {
+        return {
+          kind: 'rejected',
+          result: evaluation.rejection,
+          ...(evaluation.pendingConflict ? { pendingConflict: evaluation.pendingConflict } : {}),
+        };
+      }
 
       const session: ActiveSession = {
         source: args.source,
@@ -156,9 +170,19 @@ export class ConcurrencyGuard {
         lastRequestAt: now,
       };
       const next = [...active, session];
-      await this.atomicWrite(JSON.stringify(next, null, 2));
-      return { ok: true, session };
+      await atomicWriteJson(this.statePath, next);
+      return { kind: 'accepted', session };
     });
+
+    // 락 해제 후 notify — Phase 5 ARCH-506: persona_conflict 알림은 Rule 3 판정과
+    // 분리해 Telegram 지연이 lock 보유 시간을 늘리지 않도록 (Phase 4 PERF-405 패턴).
+    if (outcome.kind === 'rejected' && outcome.pendingConflict !== undefined && this.notifier !== undefined) {
+      await this.notifier.notify('scheduler.persona_conflict', outcome.pendingConflict).catch(() => {
+        /* best-effort */
+      });
+    }
+
+    return outcome.kind === 'rejected' ? outcome.result : { ok: true, session: outcome.session };
   }
 
   /** 세션 종료 시 호출 — 같은 pid + source 매칭 엔트리 제거. */
@@ -167,7 +191,7 @@ export class ConcurrencyGuard {
       const { live } = await this.readReconciled();
       const myPid = this.currentPid();
       const remaining = live.filter((s) => !(s.source === source && s.pid === myPid));
-      await this.atomicWrite(JSON.stringify(remaining, null, 2));
+      await atomicWriteJson(this.statePath, remaining);
     });
   }
 
@@ -187,23 +211,30 @@ export class ConcurrencyGuard {
           updated.push(s);
         }
       }
-      await this.atomicWrite(JSON.stringify(updated, null, 2));
+      await atomicWriteJson(this.statePath, updated);
     });
   }
 
   // ── 내부 구현 ────────────────────────────────────────────────────────────────
 
-  private async evaluateRules(
+  /**
+   * 4 규칙 순수 평가 — notify 호출은 하지 않는다 (Phase 5 ARCH-506).
+   *
+   * Rule 3 발동 시 `pendingConflict` 로 Notifier payload 만 반환하고, 실제 `notify`
+   * 호출은 `acquire()` 가 락 해제 후 수행한다. 이로써 Telegram 10s timeout 이 lock
+   * 보유 시간을 늘리지 않는다.
+   */
+  private evaluateRules(
     active: readonly ActiveSession[],
     args: { source: SourceSite; tier: SessionTier; persona?: BrowserPersona },
-  ): Promise<AcquireResult | null> {
+  ): { rejection: AcquireResult; pendingConflict?: { requested: string; active: string } } | null {
     // Rule 1: 같은 소스
     if (active.some((s) => s.source === args.source)) {
-      return { ok: false, reason: 'same_source_active' };
+      return { rejection: { ok: false, reason: 'same_source_active' } };
     }
     // Rule 2: 같은 페르소나
     if (args.persona !== undefined && active.some((s) => s.personaId === args.persona?.id)) {
-      return { ok: false, reason: 'same_persona_active' };
+      return { rejection: { ok: false, reason: 'same_persona_active' } };
     }
     // Rule 3: 다른 페르소나 활성 — 스케줄러 버그
     const personaId = args.persona?.id;
@@ -212,12 +243,10 @@ export class ConcurrencyGuard {
         .map((s) => s.personaId)
         .filter((x): x is string => x !== undefined)
         .join(',');
-      await this.notifier
-        ?.notify('scheduler.persona_conflict', { requested: personaId, active: activeIds })
-        .catch(() => {
-          /* best-effort */
-        });
-      return { ok: false, reason: 'persona_conflict' };
+      return {
+        rejection: { ok: false, reason: 'persona_conflict' },
+        pendingConflict: { requested: personaId, active: activeIds },
+      };
     }
     // Rule 4: T0 ↔ T1+ stagger
     if (args.tier >= 1) {
@@ -226,9 +255,11 @@ export class ConcurrencyGuard {
         const since = Date.parse(this.nowISO()) - Date.parse(t0.lastRequestAt);
         if (since < this.t0T1StaggerMs) {
           return {
-            ok: false,
-            reason: 't0_t1_stagger',
-            retryAfterMs: this.t0T1StaggerMs - Math.max(0, since),
+            rejection: {
+              ok: false,
+              reason: 't0_t1_stagger',
+              retryAfterMs: this.t0T1StaggerMs - Math.max(0, since),
+            },
           };
         }
       }
@@ -242,7 +273,7 @@ export class ConcurrencyGuard {
     try {
       await access(this.statePath);
     } catch {
-      await this.atomicWrite('[]');
+      await atomicWriteJson(this.statePath, []);
     }
     const release = await lockfile.lock(this.statePath, {
       retries: { retries: 10, minTimeout: 100, maxTimeout: 1000 },
@@ -265,7 +296,7 @@ export class ConcurrencyGuard {
       (this.isAliveSession(s) ? live : reaped).push(s);
     }
     if (reaped.length > 0) {
-      await this.atomicWrite(JSON.stringify(live, null, 2));
+      await atomicWriteJson(this.statePath, live);
     }
     return { live, reaped };
   }
@@ -283,19 +314,5 @@ export class ConcurrencyGuard {
   private isAliveSession(s: ActiveSession): boolean {
     if (s.hostname !== this.hostname()) return true;
     return this.isAlivePid(s.pid);
-  }
-
-  /** Phase 4 OPS-403 패턴: tmp write + rename 원자 교체. */
-  private async atomicWrite(data: string): Promise<void> {
-    const tmp = `${this.statePath}.tmp.${this.currentPid()}.${Date.now()}`;
-    try {
-      await writeFile(tmp, data, 'utf8');
-      await rename(tmp, this.statePath);
-    } catch (err) {
-      await unlink(tmp).catch(() => {
-        /* best-effort */
-      });
-      throw err;
-    }
   }
 }

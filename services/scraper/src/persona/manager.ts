@@ -19,11 +19,12 @@
  *     공유로 인한 프로필 손상 사고 조기 실패 (§5.2 경고 사항).
  */
 
-import { mkdir, readFile, rename, unlink, writeFile } from 'node:fs/promises';
+import { realpathSync } from 'node:fs';
+import { mkdir, readFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
-import type { SourceSite } from '@pokopia-wiki/shared';
+import { atomicWriteJson, type SourceSite } from '@pokopia-wiki/shared';
 
 import { repoPath } from '../paths.js';
 import { PERSONAS } from './definitions.js';
@@ -133,20 +134,11 @@ export class PersonaManager {
     }
   }
 
-  /** 런타임 상태 영속 — atomic write (tmp + rename, Phase 4 OPS-403 패턴). */
+  /** 런타임 상태 영속 — shared atomic write helper (Phase 5 STYLE-501 공용화). */
   async saveState(state: PersonaRuntimeState): Promise<void> {
     const filePath = this.stateFilePath(state.id);
     await mkdir(path.dirname(filePath), { recursive: true });
-    const tmp = `${filePath}.tmp.${process.pid}.${Date.now()}`;
-    try {
-      await writeFile(tmp, JSON.stringify(state, null, 2), 'utf8');
-      await rename(tmp, filePath);
-    } catch (err) {
-      await unlink(tmp).catch(() => {
-        /* best-effort */
-      });
-      throw err;
-    }
+    await atomicWriteJson(filePath, state);
   }
 
   /** 세션 시작 시 `lastUsed` 갱신. 상태 파일이 없으면 자동 생성. */
@@ -255,9 +247,25 @@ export class PersonaManager {
     // repo root 기준 상대라도 실제 해석은 절대 경로로 — resolve() 가 현재 cwd 를
     // 합치므로 `data/browser-profiles/*` 는 안전 위치로 해석된다.
     const resolved = path.resolve(persona.profilePath);
+    this.assertNotUserChromePath(persona.id, resolved);
+
+    // Phase 5 SEC-501 — symlink 우회 방어: 경로가 실존한다면 realpath 로 symlink
+    // 를 풀어 유저 Chrome 경로와 재검증. 파일이 없으면(첫 실행) 정상이며, 이후
+    // 디렉토리 생성이 symlink 로 일어나도 다음 인스턴스 생성 시 잡힌다.
+    try {
+      const realResolved = realpathSync(resolved);
+      if (realResolved !== resolved) {
+        this.assertNotUserChromePath(persona.id, realResolved);
+      }
+    } catch {
+      // 경로 미존재 — 무시 (정상적인 워밍 전 상태).
+    }
+  }
+
+  private assertNotUserChromePath(personaId: string, candidate: string): void {
     for (const dangerous of USER_CHROME_PATHS) {
-      if (resolved === dangerous || resolved.startsWith(dangerous + path.sep)) {
-        throw new InvalidProfilePathError(persona.id, resolved);
+      if (candidate === dangerous || candidate.startsWith(dangerous + path.sep)) {
+        throw new InvalidProfilePathError(personaId, candidate);
       }
     }
   }

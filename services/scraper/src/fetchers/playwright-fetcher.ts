@@ -28,7 +28,8 @@ import { createHash } from 'node:crypto';
 import type { SourceSite } from '@pokopia-wiki/shared';
 import { chromium, type BrowserContext, type Page } from 'playwright';
 
-import { detectChromeVersion, getSystemChromeUserAgent } from '../browser/chrome-version.js';
+import { getSystemChromeUserAgent } from '../browser/chrome-version.js';
+import { injectUserAgentData } from '../browser/ua-init-script.js';
 import { attachFingerprint } from '../fingerprint/inject.js';
 import type { BrowserPersona } from '../persona/types.js';
 import { PersonaRequiredError, SkippedByRobotsError } from './errors.js';
@@ -48,71 +49,6 @@ const DEFAULT_VIEWPORT = { width: 1440, height: 900 };
  */
 function isHeadless(): boolean {
   return process.env['SCRAPER_HEADED'] === '0';
-}
-
-/**
- * 브라우저 컨텍스트에서 실행될 initScript 본문 — 세션 시작 시 1회.
- *
- * 파일 상단에서 변수로 묶어 두는 이유: addInitScript 에 넘길 함수가
- * Playwright 의 마샬링 대상이 되어 **클로저 캡처가 허용되지 않는다**. 실행
- * 컨텍스트는 페이지 렌더러 프로세스이므로 외부 스코프 의존은 불가. 그래서
- * `arg` 객체(`major`, `full`)로 필요한 값을 명시적으로 넘긴다.
- *
- * max-lines-per-function 룰 회피를 위해 script 본문을 const 로 추출했다.
- */
-const userAgentDataInitScript = (v: { major: number; full: string }): void => {
-  if (!('userAgentData' in navigator)) return;
-
-  const native = Function.prototype.toString.call(isNaN);
-  const makeNative = <F extends (...args: never[]) => unknown>(fn: F, name: string): F => {
-    Object.defineProperty(fn, 'name', { value: name, configurable: true });
-    const str = native.replace('isNaN', name);
-    Object.defineProperty(fn, 'toString', {
-      configurable: true,
-      writable: true,
-      value: () => str,
-    });
-    return fn;
-  };
-
-  const brands = [
-    { brand: 'Chromium', version: String(v.major) },
-    { brand: 'Google Chrome', version: String(v.major) },
-    { brand: 'Not/A)Brand', version: '99' },
-  ];
-  const fullVersionList = brands.map((b) => ({ brand: b.brand, version: v.full }));
-
-  const uaData = (navigator as unknown as { userAgentData?: Record<string, unknown> }).userAgentData;
-  if (!uaData) return;
-
-  Object.defineProperty(uaData, 'brands', {
-    configurable: true,
-    enumerable: true,
-    get: makeNative(function brandsGetter() {
-      return brands;
-    }, 'get brands'),
-  });
-
-  const origGet = (uaData['getHighEntropyValues'] as (hints: string[]) => Promise<Record<string, unknown>>).bind(
-    uaData,
-  );
-  const wrapped = async function getHighEntropyValues(hints: string[]): Promise<Record<string, unknown>> {
-    const base = await origGet(hints);
-    return { ...base, fullVersionList, uaFullVersion: v.full };
-  };
-  uaData['getHighEntropyValues'] = makeNative(wrapped, 'getHighEntropyValues');
-};
-
-/**
- * `navigator.userAgentData` 고엔트로피 값 주입 (§9.2 B5).
- *
- * Playwright 가 자동 발행하는 userAgentData 는 brands/fullVersionList 에 build/patch
- * 정보가 누락될 수 있다. 세션 시작 시 1회 init script 로 보강. defineProperty
- * 서술자에 configurable/enumerable 명시 → 네이티브 속성과 diff 최소화.
- */
-async function injectUserAgentData(context: BrowserContext): Promise<void> {
-  const version = await detectChromeVersion();
-  await context.addInitScript(userAgentDataInitScript, { major: version.major, full: version.full });
 }
 
 /**

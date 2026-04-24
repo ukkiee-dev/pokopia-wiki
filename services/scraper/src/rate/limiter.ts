@@ -27,10 +27,10 @@
  *   - Notifier 호출은 락 외부에서 수행 — Phase 4 audit PERF-405.
  */
 
-import { mkdir, readFile, rename, unlink, writeFile } from 'node:fs/promises';
+import { mkdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 
-import type { SourceSite } from '@pokopia-wiki/shared';
+import { atomicWriteJson, type SourceSite } from '@pokopia-wiki/shared';
 import lockfile from 'proper-lockfile';
 
 import { RateLimitExceededError } from '../fetchers/errors.js';
@@ -73,26 +73,6 @@ function todayInSeoul(): string {
     day: '2-digit',
   });
   return fmt.format(new Date());
-}
-
-/**
- * tmp 파일에 먼저 쓰고 rename 으로 타겟을 atomic 하게 교체.
- *
- * POSIX 보장: 같은 파일시스템 내 rename 은 원자적. 크래시가 writeFile 도중 끊어져도
- * 기존 파일은 손상되지 않는다 (Phase 4 audit OPS-403 근거).
- */
-async function atomicWriteJson(filePath: string, data: unknown): Promise<void> {
-  const serialized = JSON.stringify(data, null, 2);
-  const tmpPath = `${filePath}.tmp.${process.pid}.${Date.now()}`;
-  try {
-    await writeFile(tmpPath, serialized, 'utf8');
-    await rename(tmpPath, filePath);
-  } catch (err) {
-    await unlink(tmpPath).catch(() => {
-      /* best-effort — tmp 가 없을 수 있음 */
-    });
-    throw err;
-  }
 }
 
 /** `isHigherTierActive` 결과 캐시 ttl — acquire 마다 파일 I/O 방지 (§6.4.1). */
