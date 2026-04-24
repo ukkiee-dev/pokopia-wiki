@@ -7,7 +7,7 @@
  */
 import { describe, expect, expectTypeOf, it } from 'vitest';
 
-import type { Prisma } from '../../prisma-client';
+import type { $Enums, Prisma } from '../../prisma-client';
 import { ItemSchema, type ItemInput } from './item';
 
 /** 모든 safeParse 테스트가 공유하는 SourceMetadata 페이로드 (fixture). */
@@ -79,5 +79,16 @@ describe('ItemInput — Prisma type compatibility', () => {
     expectTypeOf<ItemInput['isPaintable']>().toExtend<NonNullable<Prisma.ItemCreateInput['isPaintable']>>();
     expectTypeOf<ItemInput['isPatternable']>().toExtend<NonNullable<Prisma.ItemCreateInput['isPatternable']>>();
     expectTypeOf<ItemInput['isMagnetRiseOnly']>().toExtend<NonNullable<Prisma.ItemCreateInput['isMagnetRiseOnly']>>();
+  });
+
+  // Why: W-005 (Phase 2/3/4 감사 누적) 재대응 — Zod 로컬 ENUM 이 Prisma `$Enums` 와
+  // 동기 상태인지 category 외 다른 필드도 컴파일 타임 가드로 잡는다 (STYLE-401 권고 A).
+  // 이 가드가 있으면 SCHEMA §2.2 ENUM 확장 시 테스트가 먼저 실패해 drift 를 차단한다.
+  it('ItemInput.tags element type stays in sync with Prisma.$Enums.ItemTagName', () => {
+    expectTypeOf<ItemInput['tags'][number]>().toExtend<$Enums.ItemTagName>();
+  });
+
+  it('ItemInput.locations[].method stays in sync with Prisma.$Enums.ItemLocationMethod', () => {
+    expectTypeOf<ItemInput['locations'][number]['method']>().toExtend<$Enums.ItemLocationMethod>();
   });
 });

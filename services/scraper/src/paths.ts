@@ -11,6 +11,7 @@
  * repo root 를 추론한다 (`services/scraper/src/paths.ts` → `../../..`).
  */
 
+import { existsSync } from 'node:fs';
 import path from 'node:path';
 
 /**
@@ -22,6 +23,16 @@ import path from 'node:path';
  * 환경이므로 안전하게 사용 가능.
  */
 export const REPO_ROOT = path.resolve(import.meta.dirname, '../../..');
+
+// Why: worktree, CI container, dist 번들 등 예상 밖 배치에서 REPO_ROOT 가 다른 곳을
+// 가리켜도 module load 시점에 조기 실패시켜 `data/`·`docs/`·`.env` 산출물이 잘못된
+// 디렉토리에 쌓이는 것을 차단 (Phase 4 audit OPS-002).
+if (!existsSync(path.join(REPO_ROOT, 'pnpm-workspace.yaml'))) {
+  throw new Error(
+    `REPO_ROOT sanity check failed: pnpm-workspace.yaml not found at ${REPO_ROOT}. ` +
+      'services/scraper/src/paths.ts 의 REPO_ROOT 상수가 모노레포 루트를 가리키지 않습니다 (import.meta.dirname 기반 추론 실패).',
+  );
+}
 
 /** 레포 루트 기준 상대 경로를 절대 경로로 해석. */
 export function repoPath(...segments: readonly string[]): string {

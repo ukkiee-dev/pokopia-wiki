@@ -4,26 +4,30 @@
  * 책임:
  *   - navigation / resource / direct 3종 카운터 분리 누적.
  *   - 일별(UTC+9 자정 기준) 자동 리셋.
- *   - `data/state/rate/<source>/<kind>.json` 영속.
+ *   - `data/state/rate/<source>/<kind>.json` 영속 (atomic write).
  *   - proper-lockfile 로 쓰기 보호 (재시작/멀티 프로세스 대비).
- *   - 80% 도달 시 `rate_limit.approaching` 알림 (Notifier 주입 시).
+ *   - 80% 도달 시 `rate_limit.approaching` 알림 (Notifier 주입 시) — 락 해제 후 호출.
  *   - T1+ 활성 시 T0 50% 감속 (§6.4.1) — 현재는 ConcurrencyGuard 미구현이므로
  *     `isHigherTierActive` 스텁이 항상 false 반환. Phase 5 에서 연결.
  *
  * acquire 흐름:
  *   1. 오늘 날짜와 저장된 date 비교 → 다르면 0 으로 리셋.
  *   2. `count + 1 > maxPerDay` 면 `RateLimitExceededError`.
- *   3. 80% 임계 교차 감지 시 Notifier 알림 (best-effort, 실패는 무시).
- *   4. count 를 +1 해 영속화 (lock 으로 보호).
+ *   3. 80% 임계 교차 감지 시 payload 준비 (실제 호출은 락 해제 후).
+ *   4. count 를 +1 해 영속화 (lock + atomic write 로 보호).
+ *   5. 락 해제 후 notifier 호출 (10s blocking 이 락 보유 시간을 늘리지 않도록).
  *
  * ★ 주의:
  *   - `acquire()` 는 **즉시 반환**. 요청 간 sleep 은 Phase 5 BehaviorSimulator
  *     가 가우시안 샘플로 별도 처리. 본 Limiter 는 한도 관리만 책임.
  *   - `resource` 카운터는 §14.1 정의대로 "카운트하지 않음" 이 원칙이지만, 미래
  *     모니터링용으로 타입만 받도록 API 를 열어 둔다 (no-op 로 처리).
+ *   - state 파일 쓰기는 `atomicWriteJson` (tmp write + rename) — Phase 4 audit OPS-403.
+ *     크래시 중 count=0 재초기화 리스크 제거.
+ *   - Notifier 호출은 락 외부에서 수행 — Phase 4 audit PERF-405.
  */
 
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, rename, unlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import type { SourceSite } from '@pokopia-wiki/shared';
@@ -44,6 +48,20 @@ type RateStateRecord = {
   approachingAlertSent: boolean;
 };
 
+/**
+ * 80% 임계 교차 시 호출자가 Notifier 로 발행할 페이로드.
+ *
+ * `bumpUnderLock` 은 락 보유 시간 단축을 위해 직접 notify 하지 않고 이 객체만 반환 —
+ * `acquire()` 가 락 해제 **후** 실제 notify 를 호출한다 (Phase 4 audit PERF-405).
+ */
+type ApproachingAlertPayload = {
+  source: SourceSite;
+  kind: 'navigation' | 'direct';
+  count: number;
+  dailyLimit: number;
+  percent: number;
+};
+
 /** Asia/Seoul 기준 오늘 날짜 문자열. */
 function todayInSeoul(): string {
   // Intl.DateTimeFormat 'Asia/Seoul' 로 YYYY-MM-DD 포맷 생성.
@@ -54,6 +72,26 @@ function todayInSeoul(): string {
     day: '2-digit',
   });
   return fmt.format(new Date());
+}
+
+/**
+ * tmp 파일에 먼저 쓰고 rename 으로 타겟을 atomic 하게 교체.
+ *
+ * POSIX 보장: 같은 파일시스템 내 rename 은 원자적. 크래시가 writeFile 도중 끊어져도
+ * 기존 파일은 손상되지 않는다 (Phase 4 audit OPS-403 근거).
+ */
+async function atomicWriteJson(filePath: string, data: unknown): Promise<void> {
+  const serialized = JSON.stringify(data, null, 2);
+  const tmpPath = `${filePath}.tmp.${process.pid}.${Date.now()}`;
+  try {
+    await writeFile(tmpPath, serialized, 'utf8');
+    await rename(tmpPath, filePath);
+  } catch (err) {
+    await unlink(tmpPath).catch(() => {
+      /* best-effort — tmp 가 없을 수 있음 */
+    });
+    throw err;
+  }
 }
 
 /**
@@ -88,14 +126,23 @@ export class RateLimiter {
     await mkdir(path.dirname(statePath), { recursive: true });
     await this.ensureFile(statePath);
 
+    let alertPayload: ApproachingAlertPayload | undefined;
     const release = await lockfile.lock(statePath, {
       stale: 10_000,
       retries: { retries: 5, minTimeout: 50, maxTimeout: 500 },
     });
     try {
-      await this.bumpUnderLock(source, kind, statePath, budget.maxPerDay);
+      alertPayload = await this.bumpUnderLock(source, kind, statePath, budget.maxPerDay);
     } finally {
       await release();
+    }
+
+    // 락 해제 후 Notifier 호출 — Telegram 10s timeout 이 다른 acquire 를 차단하지
+    // 않도록 (Phase 4 audit PERF-405).
+    if (alertPayload && this.notifier) {
+      await this.notifier.notify('rate_limit.approaching', alertPayload).catch(() => {
+        /* best-effort — events.jsonl 측에 기록 */
+      });
     }
   }
 
@@ -105,13 +152,17 @@ export class RateLimiter {
     return kind === 'navigation' ? config.navigation : config.directFetch;
   }
 
-  /** 락 보호된 영역의 핵심: 오늘 카운트 +1, 80% 교차 시 알림. */
+  /**
+   * 락 보호된 영역: 오늘 카운트 +1, 필요 시 임계 교차 payload 반환.
+   *
+   * notify 는 호출하지 않는다 (acquire 가 락 해제 후 수행).
+   */
   private async bumpUnderLock(
     source: SourceSite,
     kind: 'navigation' | 'direct',
     statePath: string,
     baseDailyLimit: number,
-  ): Promise<void> {
+  ): Promise<ApproachingAlertPayload | undefined> {
     const today = todayInSeoul();
     const record = await this.readRecord(statePath);
     const current: RateStateRecord =
@@ -134,21 +185,17 @@ export class RateLimiter {
       count: nextCount,
       approachingAlertSent: current.approachingAlertSent || crossedApproaching,
     };
-    await writeFile(statePath, JSON.stringify(next, null, 2), 'utf8');
+    await atomicWriteJson(statePath, next);
 
-    if (crossedApproaching && this.notifier) {
-      await this.notifier
-        .notify('rate_limit.approaching', {
+    return crossedApproaching
+      ? {
           source,
           kind,
           count: nextCount,
           dailyLimit: effectiveDailyLimit,
           percent: Math.round((nextCount / effectiveDailyLimit) * 100),
-        })
-        .catch(() => {
-          /* best-effort — events.jsonl 측에 기록 */
-        });
-    }
+        }
+      : undefined;
   }
 
   /**
@@ -190,7 +237,7 @@ export class RateLimiter {
         count: 0,
         approachingAlertSent: false,
       };
-      await writeFile(statePath, JSON.stringify(initial, null, 2), 'utf8');
+      await atomicWriteJson(statePath, initial);
     }
   }
 
