@@ -17,6 +17,7 @@
     "dry-session": "tsx --env-file-if-exists=../../.env scripts/dry-session.ts",
     "status": "tsx --env-file-if-exists=../../.env scripts/status.ts",
     "validate": "tsx --env-file-if-exists=../../.env scripts/validate.ts",
+    "capture-fixture": "tsx --env-file-if-exists=../../.env scripts/capture-fixture.ts",
     "test": "vitest",
     "test:run": "vitest run --passWithNoTests",
     "lint": "oxlint",
