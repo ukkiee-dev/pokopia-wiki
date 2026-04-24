@@ -194,15 +194,14 @@ export class SessionManager {
       await this.safeNotify('scraper.crashed', { source: args.source, reason: safe });
       return { kind: 'aborted', reason: safe };
     } finally {
-      // X-509 #4 — fetcher.close 강제 (best-effort).
-      await this.safeCloseFetcher(fetcher);
-      // Guard release (best-effort) — 락 누수보다 명시적 실패 노출 우선이라 redact + 로그.
-      await this.safeReleaseGuard(args.source);
-      // CrawlState 세션 종료.
-      await this.crawlState.endSession().catch(() => {
-        /* best-effort */
-      });
-      await this.safeNotify('session.end', { source: args.source });
+      // PERF-602: 정리 4 단계 병렬화 — 상호 순서 의존 없음.
+      // X-509 #4 (fetcher.close) + Guard release + CrawlState 종료(+flush) + session.end notify.
+      await Promise.allSettled([
+        this.safeCloseFetcher(fetcher),
+        this.safeReleaseGuard(args.source),
+        this.safeEndSession(),
+        this.safeNotify('session.end', { source: args.source }),
+      ]);
     }
   }
 
@@ -254,6 +253,22 @@ export class SessionManager {
       const reason = releaseErr instanceof Error ? releaseErr.message : String(releaseErr);
       // eslint-disable-next-line no-console
       console.error(`[session-manager] guard.release failed: ${redact(reason)}`);
+    }
+  }
+
+  /**
+   * 세션 마킹 해제 + debounce 모드 pending write flush (PERF-601 보완).
+   *
+   * CrawlState 가 `debounceMs>0` 으로 초기화됐을 때 `endSession` 의 update 는
+   * 메모리 캐시만 바꾸고 write 는 지연된다. finally 가 끝나면 세션 루프 자체가
+   * 해제되므로 여기서 flush 를 강제해 pending write 유실을 막는다.
+   */
+  private async safeEndSession(): Promise<void> {
+    try {
+      await this.crawlState.endSession();
+      await this.crawlState.flush();
+    } catch {
+      /* best-effort */
     }
   }
 

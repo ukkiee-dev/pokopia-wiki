@@ -25,6 +25,7 @@
  */
 
 import type { SourceSite } from '@pokopia-wiki/shared';
+import type { Page as PlaywrightPage } from 'playwright';
 
 /**
  * 드라이버 식별자.
@@ -167,4 +168,27 @@ export function asDriverPage(page: unknown): DriverPage {
  */
 export function asDriverContext<Arg = unknown>(context: unknown): DriverContext<Arg> {
   return context as DriverContext<Arg>;
+}
+
+/**
+ * `ghost-cursor-playwright.createCursor` 가 요구하는 `playwright.Page` 타입으로
+ * DriverPage 캐스트. 외부 경계 캐스트 단일 진입점 (ARCH-602 + STYLE-603).
+ *
+ * 구현 메모:
+ *   - scraper 가 이미 `playwright` 를 dep 로 보유. type-only import 라 런타임 번들
+ *     영향 없음.
+ *   - 캐스트 한 곳으로 모아 각 호출부에서 `as never` 가 흩뿌려지는 것을 막음.
+ */
+export function asGhostCursorPage(page: DriverPage): PlaywrightPage {
+  return page as unknown as PlaywrightPage;
+}
+
+/**
+ * 구조적 Locator capability 로 캐스트. navigation / ghost-cursor 가 모두 호출.
+ *
+ * 제네릭 매개변수로 호출부 원하는 세부 Locator 타입(BehaviorLocator 등) 을 지정.
+ * 사용처: `asBehaviorLocator<BehaviorLocator>(page.locator(selector))`.
+ */
+export function asBehaviorLocator<L>(locator: unknown): L {
+  return locator as L;
 }

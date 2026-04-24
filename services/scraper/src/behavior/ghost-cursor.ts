@@ -23,7 +23,7 @@
 
 import { createCursor } from 'ghost-cursor-playwright';
 
-import type { DriverPage } from '../browser/driver-page.js';
+import { asGhostCursorPage, type DriverPage } from '../browser/driver-page.js';
 
 /**
  * 행동 모듈이 사용하는 최소 Locator API.
@@ -71,9 +71,8 @@ const defaultSleep = (ms: number): Promise<void> =>
  * 캐스트 위치를 한 곳에 모음으로써 행동 모듈 호출부에서는 `as` 사용을 피한다.
  */
 const defaultCursorFactory: CursorFactory = async (page) => {
-  // playwright-core.Page 와 정확히 일치하지 않더라도 런타임 형상이 동일하므로
-  // unknown 경유 캐스트로 단일 진입.
-  const cursor = (await createCursor(page as never)) as unknown as CursorLike;
+  // 외부 경계 캐스트는 `asGhostCursorPage` 에 위임 (ARCH-602 단일 진입점).
+  const cursor = (await createCursor(asGhostCursorPage(page))) as unknown as CursorLike;
   return cursor;
 };
 
@@ -81,11 +80,31 @@ export class HumanBehavior {
   private readonly cursorFactory: CursorFactory;
   private readonly sleep: (ms: number) => Promise<void>;
   private readonly random: () => number;
+  /**
+   * 페이지당 Cursor 인스턴스 재사용 캐시 (PERF-603).
+   *
+   * WeakMap 선택 이유: 페이지가 닫혀 참조가 사라지면 cursor 도 자동 GC.
+   * 명시적 invalidate 호출 없이 메모리 누수 방지.
+   *
+   * 부수 효과: 마우스 연속성 유지 → 탐지 품질 ↑ (매 클릭마다 새 cursor 이면
+   * 초기 좌표가 튐).
+   */
+  private readonly cursorCache = new WeakMap<object, CursorLike>();
 
   constructor(options: HumanBehaviorOptions = {}) {
     this.cursorFactory = options.cursorFactory ?? defaultCursorFactory;
     this.sleep = options.sleep ?? defaultSleep;
     this.random = options.random ?? Math.random;
+  }
+
+  /** 페이지 cursor 를 캐시에서 얻거나 factory 로 생성 후 캐싱. */
+  private async getCursor(page: DriverPage): Promise<CursorLike> {
+    const key = page as unknown as object;
+    const cached = this.cursorCache.get(key);
+    if (cached) return cached;
+    const cursor = await this.cursorFactory(page);
+    this.cursorCache.set(key, cursor);
+    return cursor;
   }
 
   /**
@@ -123,7 +142,7 @@ export class HumanBehavior {
     const box = await locator.boundingBox();
     if (!box) return;
 
-    const cursor = await this.cursorFactory(page);
+    const cursor = await this.getCursor(page);
     const offsetX = HumanBehavior.gaussianRandom(box.width / 2, box.width / 6, this.random);
     const offsetY = HumanBehavior.gaussianRandom(box.height / 2, box.height / 6, this.random);
     const x = box.x + clamp(offsetX, 5, Math.max(5, box.width - 5));

@@ -81,6 +81,14 @@ export type CrawlStateOptions = {
   statePath?: string;
   /** 기본: `() => new Date().toISOString()`. */
   nowISO?: () => string;
+  /**
+   * Debounced write 간격 (ms). 기본 0 — 매 update 마다 즉시 flush (기존 동작 유지).
+   *
+   * 0 초과 시 update 는 memoryCache 만 갱신하고 write 를 debounceMs 후 배치로 모음.
+   * 호출자(SessionManager) 는 finally 에서 `flush()` 를 명시 호출해 마지막 상태
+   * 영속 보장 (PERF-601).
+   */
+  debounceMs?: number;
 };
 
 const EMPTY_STATE: CrawlStateData = {
@@ -96,34 +104,84 @@ const EMPTY_STATE: CrawlStateData = {
 export class CrawlState {
   private readonly statePath: string;
   private readonly nowISO: () => string;
+  private readonly debounceMs: number;
+  /**
+   * PERF-601 — read/write 반복 비용 절감용 in-memory 캐시.
+   *
+   * 첫 read 시 파일 → cache. 이후 read 는 cache. update 는 cache 갱신 + (debounceMs
+   * 설정 시) 지연 write. 단일 프로세스 전제이므로 외부 수정은 가정하지 않음.
+   */
+  private cache: CrawlStateData | null = null;
+  private pendingFlush: ReturnType<typeof setTimeout> | null = null;
 
   constructor(options: CrawlStateOptions = {}) {
     this.statePath = options.statePath ?? repoPath('data', 'state', 'crawl.json');
     this.nowISO = options.nowISO ?? (() => new Date().toISOString());
+    this.debounceMs = options.debounceMs ?? 0;
   }
 
-  /** 현재 상태 read (파일 없거나 깨졌으면 EMPTY_STATE 반환 — write 는 없음). */
+  /** 현재 상태 read — cache 우선, 없으면 파일 → cache 세팅. */
   async read(): Promise<CrawlStateData> {
+    if (this.cache !== null) return cloneState(this.cache);
     const raw = await readFile(this.statePath, 'utf8').catch(() => null);
-    if (raw === null) return cloneState(EMPTY_STATE);
+    if (raw === null) {
+      this.cache = cloneState(EMPTY_STATE);
+      return cloneState(this.cache);
+    }
     try {
       const parsed = JSON.parse(raw) as unknown;
-      return normalizeState(parsed);
+      this.cache = normalizeState(parsed);
     } catch {
-      return cloneState(EMPTY_STATE);
+      this.cache = cloneState(EMPTY_STATE);
     }
+    return cloneState(this.cache);
   }
 
   /**
-   * mutator 로 부분 업데이트 후 atomic write. 핵심 mutation 진입점 — 다른
-   * helper 메서드는 모두 이 함수 위에 빌드된다 (read-modify-write 일관성).
+   * mutator 로 부분 업데이트. debounceMs=0 이면 즉시 atomic write, >0 이면 memoryCache
+   * 갱신 후 debounceMs 뒤 단일 write 로 배치 (PERF-601).
+   *
+   * 배치 모드 호출자는 finally 에서 `flush()` 필수 — 프로세스 종료 전 pending write
+   * 유실 방지.
    */
   async update(mutator: (data: CrawlStateData) => CrawlStateData): Promise<CrawlStateData> {
     const current = await this.read();
     const next = mutator(current);
-    await mkdir(path.dirname(this.statePath), { recursive: true });
-    await atomicWriteJson(this.statePath, next);
+    this.cache = next;
+    if (this.debounceMs <= 0) {
+      await this.writeNow(next);
+      return next;
+    }
+    this.scheduleFlush();
     return next;
+  }
+
+  /**
+   * 지연된 write 를 즉시 반영. 배치 모드(debounceMs>0) 에서 호출자가 세션 종료
+   * 시점에 명시 호출해야 한다. debounceMs=0 에서는 no-op 에 가깝다 (pending 없음).
+   */
+  async flush(): Promise<void> {
+    if (this.pendingFlush !== null) {
+      clearTimeout(this.pendingFlush);
+      this.pendingFlush = null;
+    }
+    if (this.cache === null) return;
+    await this.writeNow(this.cache);
+  }
+
+  private scheduleFlush(): void {
+    if (this.pendingFlush !== null) return;
+    this.pendingFlush = setTimeout(() => {
+      this.pendingFlush = null;
+      void this.flush().catch(() => {
+        /* best-effort — 다음 update 시 재시도 */
+      });
+    }, this.debounceMs);
+  }
+
+  private async writeNow(data: CrawlStateData): Promise<void> {
+    await mkdir(path.dirname(this.statePath), { recursive: true });
+    await atomicWriteJson(this.statePath, data);
   }
 
   // ── 페이지 완료 ────────────────────────────────────────────────────────────

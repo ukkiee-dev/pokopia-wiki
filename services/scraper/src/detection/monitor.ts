@@ -37,23 +37,25 @@ export type DetectionSignal = {
 };
 
 /**
- * CF challenge 마크업 — 페이지 본문에 등장하면 'challenge/high' 시그널.
+ * CF challenge 마크업 정규식 — Cloudflare 가 보내는 변형 메시지 커버.
  *
- * 정확 일치가 아니라 부분 문자열 검사 — Cloudflare 의 변형 메시지를 폭넓게 커버.
+ * case-sensitive: CF 응답은 문자열이 고정이라 i flag 불필요.
+ * Phase 6 감사 PERF-604: 기존 배열 + 반복 `content.includes` → 단일 `RegExp.test` 로 통합.
  */
-const CF_CHALLENGE_MARKERS = ['Just a moment...', 'Checking your browser', 'cf-challenge'] as const;
+const CF_CHALLENGE_RE = /Just a moment\.\.\.|Checking your browser|cf-challenge/;
 
 /**
- * 봇 차단 키워드 — 명시적 차단 메시지. 발견되면 critical.
+ * 봇 차단 키워드 정규식 — case-insensitive + global.
  *
- * 케이스 무관 검사를 위해 toLowerCase 비교.
+ * `i` flag 로 toLowerCase 복제(260KB 페이지에서 문자열 1개 추가 할당) 회피.
+ * `g` flag 로 같은 응답에 여러 키워드가 등장해도 각각 signal push.
  */
-const BOT_BLOCK_KEYWORDS = ['access denied', 'bot detected', 'automated traffic', 'suspicious activity'] as const;
+const BOT_BLOCK_RE = /access denied|bot detected|automated traffic|suspicious activity/gi;
 
 /**
- * CAPTCHA 식별 토큰 — iframe src·script 등 어디든 등장하면 critical.
+ * CAPTCHA 식별 토큰 — iframe src·script 등. case-insensitive.
  */
-const CAPTCHA_MARKERS = ['captcha', 'recaptcha', 'turnstile'] as const;
+const CAPTCHA_RE = /captcha|recaptcha|turnstile/i;
 
 const SOFT_BLOCK_THRESHOLD = 500;
 
@@ -87,11 +89,9 @@ export async function detectBotFlags(
   // Body 검사 — content() 는 비싸므로 단일 호출로 모든 패턴 검사.
   const content = await page.content();
 
-  for (const marker of CF_CHALLENGE_MARKERS) {
-    if (content.includes(marker)) {
-      push({ type: 'challenge', severity: 'high', evidence: `cf_marker:${marker}` });
-      break; // 한 응답에 여러 마커가 있어도 1 회만 신호.
-    }
+  const cfMatch = CF_CHALLENGE_RE.exec(content);
+  if (cfMatch) {
+    push({ type: 'challenge', severity: 'high', evidence: `cf_marker:${cfMatch[0]}` });
   }
 
   // content-length 헤더 확인 — 비정상 작은 응답은 soft block 후보.
@@ -103,18 +103,14 @@ export async function detectBotFlags(
     }
   }
 
-  const lower = content.toLowerCase();
-  for (const kw of BOT_BLOCK_KEYWORDS) {
-    if (lower.includes(kw)) {
-      push({ type: 'block', severity: 'critical', evidence: kw });
-    }
+  // 여러 키워드 동시 등장 시 각각 signal — BOT_BLOCK_RE 에 g flag.
+  for (const match of content.matchAll(BOT_BLOCK_RE)) {
+    push({ type: 'block', severity: 'critical', evidence: match[0].toLowerCase() });
   }
 
-  for (const marker of CAPTCHA_MARKERS) {
-    if (lower.includes(marker)) {
-      push({ type: 'captcha', severity: 'critical', evidence: `captcha_marker:${marker}` });
-      break; // 첫 매칭만 — 동일 응답에서 여러 종류 markup 이 같이 등장 가능하지만 한 신호로 충분.
-    }
+  const captchaMatch = CAPTCHA_RE.exec(content);
+  if (captchaMatch) {
+    push({ type: 'captcha', severity: 'critical', evidence: `captcha_marker:${captchaMatch[0].toLowerCase()}` });
   }
 
   return signals;

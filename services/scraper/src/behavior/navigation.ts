@@ -24,7 +24,7 @@
  *   - `random`: maybeGoBack 의 80% 확률 deterministic 테스트용.
  */
 
-import type { DriverPage } from '../browser/driver-page.js';
+import { asBehaviorLocator, type DriverPage } from '../browser/driver-page.js';
 import type { BehaviorLocator, HumanBehavior, ScrollStyle } from './ghost-cursor.js';
 
 /**
@@ -60,7 +60,10 @@ export class NavigationPlanner {
    */
   async clickLink(page: DriverPage, selector: string): Promise<void> {
     const locator = page.locator(selector);
-    const first = ((locator as unknown as { first?: () => unknown }).first?.() ?? locator) as BehaviorLocator;
+    // playwright/patchright Locator 모두 `.first()` 를 제공하지만 generic 차이로
+    // 구조적 통합 불가 — asBehaviorLocator 단일 진입점으로 캐스트 (ARCH-602).
+    const withFirst = asBehaviorLocator<{ first?: () => unknown }>(locator);
+    const first = asBehaviorLocator<BehaviorLocator>(withFirst.first?.() ?? locator);
     await this.behavior.humanClick(page, first);
     await page.waitForLoadState('networkidle');
     await this.behavior.humanDwell(5000, 12000);
@@ -73,7 +76,7 @@ export class NavigationPlanner {
   async clickListItem(page: DriverPage, hrefSubstring: string, scrollStyle: ScrollStyle = 'read-through'): Promise<void> {
     await this.behavior.humanScroll(page, scrollStyle);
     const selector = `a[href$="${hrefSubstring}"]`;
-    const locator = page.locator(selector) as unknown as BehaviorLocator;
+    const locator = asBehaviorLocator<BehaviorLocator>(page.locator(selector));
     await this.behavior.humanClick(page, locator);
     await page.waitForLoadState('networkidle');
     await this.behavior.humanDwell(5000, 12000);
