@@ -39,8 +39,10 @@ import { SourceMetadataSchema } from './_base';
  */
 export const HabitatSchema = z
   .object({
+    slug: z.string().min(1),
     habitatNo: z.number().int().positive().nullable(),
     nameEn: z.string().min(1),
+    descriptionEn: z.string().min(1).optional(),
     isEvent: z.boolean().default(false),
     pokemonSlugs: z.array(z.string().min(1)).default([]),
     imageUrl: z.url().optional(),

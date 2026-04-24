@@ -10,7 +10,12 @@
 import { describe, expect, expectTypeOf, it } from 'vitest';
 
 import type { Prisma } from '../../prisma-client';
-import { LocationSchema, type LocationInput } from './geography';
+import {
+  HabitatSchema,
+  LocationSchema,
+  type HabitatInput,
+  type LocationInput,
+} from './geography';
 
 const SOURCE_META = {
   sourceSite: 'serebii' as const,
@@ -115,5 +120,78 @@ describe('LocationSchema.safeParse()', () => {
 describe('LocationInput — Prisma type compatibility', () => {
   it('LocationInput.slug is assignable to Prisma.LocationCreateInput.sourceSlug', () => {
     expectTypeOf<LocationInput['slug']>().toExtend<Prisma.LocationCreateInput['sourceSlug']>();
+  });
+});
+
+describe('HabitatSchema.safeParse()', () => {
+  const HABITAT_URL = 'https://www.serebii.net/pokemonpokopia/habitats.shtml';
+
+  it('accepts a habitat list entry (slug + habitatNo + description)', () => {
+    const result = HabitatSchema.safeParse({
+      slug: 'tallgrass',
+      habitatNo: 1,
+      nameEn: 'Tall Grass',
+      descriptionEn: 'Four tufts of tall grass bunched together in a plot.',
+      imageUrl: 'https://www.serebii.net/pokemonpokopia/habitatdex/1.png',
+      sourceUrl: HABITAT_URL,
+      ...SOURCE_META,
+    });
+
+    expect(result.success).toBe(true);
+    if (!result.success) return;
+    expect(result.data.slug).toBe('tallgrass');
+    expect(result.data.habitatNo).toBe(1);
+    expect(result.data.isEvent).toBe(false);
+    expect(result.data.pokemonSlugs).toEqual([]);
+  });
+
+  it('accepts event habitat with null habitatNo', () => {
+    const result = HabitatSchema.safeParse({
+      slug: 'eventhabitat',
+      habitatNo: null,
+      nameEn: 'Event Habitat',
+      isEvent: true,
+      sourceUrl: HABITAT_URL,
+      ...SOURCE_META,
+    });
+
+    expect(result.success).toBe(true);
+    if (!result.success) return;
+    expect(result.data.habitatNo).toBeNull();
+    expect(result.data.isEvent).toBe(true);
+  });
+
+  it('rejects missing required slug', () => {
+    const result = HabitatSchema.safeParse({
+      habitatNo: 1,
+      nameEn: 'Tall Grass',
+      sourceUrl: HABITAT_URL,
+      ...SOURCE_META,
+    });
+
+    expect(result.success).toBe(false);
+    if (result.success) return;
+    expect(result.error.issues.some((issue) => issue.path.includes('slug'))).toBe(true);
+  });
+
+  it('rejects empty descriptionEn (must be min 1 char when provided)', () => {
+    const result = HabitatSchema.safeParse({
+      slug: 'tallgrass',
+      habitatNo: 1,
+      nameEn: 'Tall Grass',
+      descriptionEn: '',
+      sourceUrl: HABITAT_URL,
+      ...SOURCE_META,
+    });
+
+    expect(result.success).toBe(false);
+    if (result.success) return;
+    expect(result.error.issues.some((issue) => issue.path.includes('descriptionEn'))).toBe(true);
+  });
+});
+
+describe('HabitatInput — Prisma type compatibility', () => {
+  it('HabitatInput.slug is assignable to Prisma.HabitatCreateInput.sourceSlug', () => {
+    expectTypeOf<HabitatInput['slug']>().toExtend<Prisma.HabitatCreateInput['sourceSlug']>();
   });
 });
