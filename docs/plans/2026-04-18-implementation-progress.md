@@ -4,8 +4,9 @@
 > 새 세션을 시작할 때는 (1) 이 문서의 "다음에 할 일", (2) 로드맵 해당 Phase, (3) `_workspace/` 잔여물 순서로 읽는다.
 >
 > **최종 갱신:** 2026-04-24
-> **현재 Phase:** Phase 7 (Notifier worker + CLI 대시보드) 🟡 **코드 완성, 감사 대기**
+> **현재 Phase:** Phase 7 (Notifier worker + CLI 대시보드) ✅ **완료** (감사 PASS + Warning 5건 해소)
 > **직전 Phase:** Phase 6 ✅ 완료 (감사 PASS + Warning 6건 해소)
+> **다음 Phase:** Phase 8 (Serebii T0 파서) — 착수 가능
 > **총 Phase 수:** 17개 (Phase 0 ~ Phase 16)
 
 ---
@@ -201,8 +202,8 @@
 | 4 — Fetcher 인프라              | ✅ 완료    | 2026-04-19 | 2026-04-19 | ✅   | 감사 Loop 0 PASS (2026-04-24, Phase 3 Loop 1 merged). Critical 0, Warning 11, Info 19. 선결 5항목 보완 완료. |
 | 5 — 페르소나·워밍               | ✅ 완료    | 2026-04-24 | 2026-04-24 | ✅   | 감사 Loop 0 PASS. Critical 0, Warning 10, Info 19. TKTK #1~#4 resolved, #5/#6 Phase 6 이월. 마감 4항목 보완 완료. Task 5.7 (사용자 실제 워밍) 이월. |
 | 6 — 세션/행동 루프              | ✅ 완료    | 2026-04-24 | 2026-04-24 | ✅   | 감사 PASS + Warning 6건 해소 (PERF-601~604 / ARCH-602+STYLE-603 / ARCH-607+STYLE-606). 잔존 Warning 2건(STYLE-601 test fixtures / STYLE-602 oxlint 튜닝) Phase 8+ 이월. |
-| 7 — Notifier/CLI 대시보드       | 🟡 감사    | 2026-04-24 | —    | 🟡   | §13.3.5 Notifier 완성: queue/immediateQueue/worker/dedup 5m 영속/shutdown grace. telegram.ts + macos.ts 분리, daily-summary (node-cron 23:55 KST), `pnpm status` 대시보드. 172 tests / 0 lint errors / 3/3 type-check. 감사 대기 (ops 프로파일). |
-| 8 — Serebii T0 파서             | ⏳ 대기    | —          | —    | —    | 35+ 파서             |
+| 7 — Notifier/CLI 대시보드       | ✅ 완료    | 2026-04-24 | 2026-04-24 | ✅   | 감사 PASS (Critical 0 / Warning 9 / Info 21) + 핵심 Warning 5건 해소 (SEC-701 atomicWriteJson / ARCH-701+STYLE-701 EVENTS_LOG_PATH·KST_OFFSET_MS 공용 / PERF-704 Promise.all / ARCH-703 notifier 미사용 제거). 잔존 Warning 4건(PERF-701 싱글톤 / PERF-702 event-driven worker / PERF-703 events.jsonl 로테이션 / ARCH-702 formatTelegramText 이동) Phase 8+ 이월. |
+| 8 — Serebii T0 파서             | 🏗️ 준비   | —          | —    | —    | 35+ 파서 (DATA_COLLECTION_PLAN §6 Phase 1~5). 예상 3~5일. 팀 B (code-builder + schema-architect + qa-analyst). |
 | 9 — Serebii 드라이런·크롤       | ⏳ 대기    | —          | —    | —    | —                    |
 | 10 — PokopiaGuide API Discovery | ⏳ 대기    | —          | —    | —    | —                    |
 | 11 — PokopiaGuide T1 + i18n     | ⏳ 대기    | —          | —    | —    | —                    |
@@ -680,57 +681,65 @@
 
 ---
 
-## 다음 세션 바로 시작 카드 — Phase 7 감사 + Phase 8 준비
+## 다음 세션 바로 시작 카드 — Phase 8 (Serebii T0 파서)
 
-Phase 7 코드 완성. 다음 단계는 **Phase 7 감사 (ops 프로파일)** → 감사 결과 반영 → **Phase 8 (Serebii T0 파서)** 착수.
+Phase 7 ✅ 완료 (감사 PASS + Warning 5건 해소). Phase 8 착수 가능.
 
-### 첫 15분 체크리스트 (세션 재개 직후)
+### 1. 첫 15분 체크리스트 (세션 재개 직후)
 
 ```bash
 cd /Users/ukyi/workspace/pokopia-wiki
-git log --oneline -8                        # Phase 7 커밋 확인
-git status                                   # clean 확인
+git log --oneline -10                       # Phase 7 감사 PASS + Warning 해소 커밋 확인
+git status                                   # clean
 pnpm -r --parallel test:run                  # 172/172 pass
 pnpm -r --parallel type-check                # 3/3 PASS
 pnpm --filter @pokopia-wiki/scraper status   # 대시보드 실행 확인
+docker compose -f docker-compose.local.yml ps postgres  # healthy
 ```
 
-### 2. Phase 7 감사 실행 (최우선)
-
-```
-스킬: /pokopia-phase-review-harness phase=7 type=crawler
-프로파일: ops + security (로드맵 §Phase 7 지정)
-```
-
-감사 범위:
-- §13.3.5 Notifier 구현 완성도 (queue/worker/dedup/shutdown)
-- AppleScript 인젝션 방어선 (macos.ts)
-- Telegram API `ok=false` 패턴 검증 (telegram.ts)
-- dedup 파일 경합 / 무한 성장 방지
-- daily-summary cron 복구 로직
-- status 대시보드 파일 I/O 안전성 (data/invalid 순회)
-
-### 3. Phase 7 후속 TODO (감사 후 병행)
-
-- notifier / telegram / macos / daily-summary 단위 테스트 보강 (HTTP/IO mock 주입)
-- Phase 6 잔존 Warning: STYLE-601 (test fixtures 추출), STYLE-602 (oxlint 튜닝)
-
-### 4. Phase 8 착수 준비 — 로드맵 §Phase 8 (라인 1072~)
+### 2. Phase 8 착수 — 로드맵 §Phase 8 (라인 1072~)
 
 **Goal:** Serebii T0 파서·매퍼·로더 구현. 35+ 페이지 (DATA_COLLECTION_PLAN §6 Phase 1~5).
 
 **예상 기간:** 3~5일 (별도 세션 권장).
 
+**관련 SSoT:** DATA_COLLECTION_PLAN §2 / §6 / §8, CRAWLING_STRATEGY §15.1, SCHEMA.md §2 전체.
+
+**에이전트 팀:** 팀 B (구현) = `pokopia-code-builder` + `pokopia-schema-architect` + `pokopia-qa-analyst`.
+
 **주 산출물:**
 
 - `services/scraper/src/parsers/serebii/` — 35+ 파서 모듈 (TDD 사이클)
 - `services/scraper/src/parsers/serebii/__fixtures__/` — HTML 고정화 (라이선스 메타 YAML 동반)
-- `services/scraper/src/loaders/upsert-loader.ts` — Prisma upsert (source_slug 기반)
-- `services/scraper/src/validators/run-validation.ts` — Zod safeParse + `data/invalid/` 격리
+- `services/scraper/src/parsers/base.ts` — Parser 추상 클래스 + `SELECTOR_VERSION`
+- `services/scraper/src/loaders/upsert-loader.ts` — Prisma upsert (source_slug 기반, content_hash 변경 시만 updated_at)
+- `services/scraper/src/validators/run-validation.ts` — Zod safeParse + `data/invalid/` 격리 + chmod 600
 
-**에이전트 팀:** 팀 B (구현) = `pokopia-code-builder` + `pokopia-schema-architect` + `pokopia-qa-analyst`.
+**Task 순서 (DATA_COLLECTION_PLAN §6 Phase 1~5 단계 1~35):**
+
+Phase 1 (기초): pokemon / specialty / location / item / habitat (5 파서)
+Phase 2 (가공): furniture / favorites / crafting / cooking / flavors (5)
+Phase 3 (빌딩): building / abilities / magnetrise / paint / electricity+water (6)
+Phase 4 (환경): environment / pokemon-center / friendship / mosslax / stampcard / jumprope+hideandsneak / gameplay (8)
+Phase 5 (퀘스트/이벤트): quests / team-challenge / legendary / unique-pokemon / cds / lost-relics / human-records / customization / plants / pokedex-milestone / trade / collect / litter (13)
 
 **감사 프로파일:** `parser` → `pokopia-quality-gate` + `pokopia-i18n-mapper` + `codereview-performance-auditor` + `codereview-style-auditor`.
+
+### 3. Phase 7 잔존 Warning (Phase 8 중 병행)
+
+- **PERF-701 + ARCH-708** Notifier 싱글톤 — `createNotifier()` 헬퍼 + dry-session/status/notifier-test 통합
+- **PERF-702** immediateWorker event-driven 전환
+- **PERF-703 + SEC-706** events.jsonl 일별 로테이션 정책
+- **ARCH-702** formatTelegramText → telegram.ts 이동
+- **ARCH-704** logNotifierError 헬퍼
+- **Phase 6 STYLE-601** `__tests__/fixtures/` 추출 (Phase 8 파서 테스트에서 필요)
+- **Phase 6 STYLE-602** oxlint `max-lines-per-function: 60` 튜닝
+
+### 4. 운영 체크
+
+- SEC-603 후속: `pnpm audit` 실행 (ghost-cursor-playwright 공급망 점검)
+- Task 5.7 사용자 실제 워밍 (`pnpm warm:persona <id>`)
+- Telegram 토큰 (.env TELEGRAM_BOT_TOKEN/CHAT_ID) 설정 시 실측 알림 확인
 
 ### 4. (선택) Phase 5 잔존 Warning 일부 처리
 
