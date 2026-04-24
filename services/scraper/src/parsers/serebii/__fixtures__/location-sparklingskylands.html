@@ -1,0 +1,1683 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<title>Sparkling Skylands Locations - Pok&eacute;mon Pokopia</title>
+
+<script data-cfasync="false">
+  window.ramp = window.ramp || {};
+  window.ramp.que = window.ramp.que || [];
+</script>
+
+<meta http-equiv="imagetoolbar" CONTENT="no">
+	<link rel="stylesheet" type="text/css" href="/style/layout.css" />
+<meta name="viewport" content="width=device-width,initial-scale=1" id="viewport-meta">
+
+<!-- GDPR Compliancy -->
+<style>
+body {
+	--cmpBgColor: #507C36;
+	--cmpTextColor: #000000;
+	--cmpLinkColor: #ffffff;
+	--cmpPurposesColor: #000000;
+	--cmpBrandColor: #000000;
+	--cmpLogo: url('https://www.serebii.net/extralogo.png');
+}
+</style>
+<!-- GDPR Compliancy -->
+
+<link rel="search" href="/serebii-opensearch.xml" type="application/opensearchdescription+xml" title="Serebii Open Search" />
+<link rel="shortcut icon" href="/favicon.ico" />
+
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-128947957-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-128947957-1');
+</script>
+<!-- Place the below code anywhere you like in the <head> (higher is better) -->
+
+
+
+<meta name="keywords" content="Serebii, Pokemon, Pok&eacute;mon, New, Generation Eight, Gen VII, Gen 8,  Pokopia, locations" />
+<link rel="stylesheet" type="text/css" HREF="/style/tablenew.css">	<link rel="stylesheet" href="Leaflet-1.7.1/leaflet.css" />
+	<script src="Leaflet-1.7.1/leaflet.js"></script><link rel="canonical" href="https://www.serebii.net/pokemonpokopia/locations/sparklingskylands.shtml" />
+<meta property="og:image" content="https://www.serebii.net/pokemonpokopia/locations/sparklingskylands.jpg">
+<meta property="og:title" content="Sparkling Skylands  - Pok&eacute;mon Pokopia">
+<meta property="og:description" content="Sparkling Skylands  in Pok&eacute;mon Pokopia for Nintendo Switch 2. Lists all the details of the area, available materials and more">
+<meta name="description" content="Sparkling Skylands in Pok&eacute;mon Pokopia for Nintendo Switch 2. Lists all the details of the area, available materials and more">
+<meta name="twitter:card" content="summary_large_image">
+<style type="text/css">h1 {font-size:12pt;font-weight:bold;margin-top:0px;margin-bottom:0px;} h2 {font-size:14pt;font-weight:bold;text-decoration:underline;margin-top:0px;margin-bottom:0px;} h3 {font-size:12pt;font-weight:bold;margin-top:0px;margin-bottom:0px;}		#map {
+			margin: auto;
+			margin-bottom:20px;
+
+			height: 768px;
+			max-height: 100vh;
+			width: 85%;
+			max-width: 1024px;
+			border: 1px solid black;
+		}
+		#map-controls {
+			text-align: center;
+			width: 85%;
+			max-width:1024px;
+			margin:auto;
+		}
+
+
+		#pokefilter a {
+			display:block;
+		}
+
+		#pokefilter a.selected {
+			background-color: #507C36;
+			border:1px solid black;
+		}
+
+		.icon {
+			width: 64px;
+			height: 64px;
+		}
+
+		.icon.disabled {
+			filter: grayscale(100%);
+		}
+
+@media (max-width:1011px){
+
+		#map {
+
+			width: 100%;		}
+		#map-controls {
+
+			width: 100%;		}
+
+}
+</style>
+
+
+
+</head>
+<body>
+<script type="text/javascript">
+	var viewport_meta = document.getElementById('viewport-meta');
+	var viewport_timer;
+
+	// these body*Class are reused in the lbar mobile menu
+	function bodyAddClass(className){
+		if(document.body) document.body.classList.add(className);
+	}
+	function bodyRemoveClass(className){
+		if(document.body) document.body.className = document.body.className.replace(className,"");
+	}
+
+	function viewport_set() {
+		// Define our viewport meta values
+		var viewports = {
+			default: viewport_meta.getAttribute('content'),
+			mobileL: 'width=device-width,initial-scale=0.75',
+			mobileM: 'width=device-width,initial-scale=0.5',
+			mobileS: 'width=device-width,initial-scale=0.4'
+		};
+
+		// Change the viewport value based on screen.width
+		if(screen.width < 370){
+			viewport_meta.setAttribute('content', viewports.mobileS);
+			bodyAddClass("nav_mobileS");
+			bodyRemoveClass("nav_mobileM");
+			bodyRemoveClass("nav_mobileL");
+		} else if(screen.width < 505){
+			viewport_meta.setAttribute('content', viewports.mobileM);
+			bodyRemoveClass("nav_mobileS");
+			bodyAddClass("nav_mobileM");
+			bodyRemoveClass("nav_mobileL");
+		} else if (screen.width < 760){
+			viewport_meta.setAttribute('content', viewports.mobileL);
+			bodyRemoveClass("nav_mobileS");
+			bodyRemoveClass("nav_mobileM");
+			bodyAddClass("nav_mobileL");
+		} else{
+			viewport_meta.setAttribute('content', viewports.default);
+			bodyRemoveClass("nav_mobileS");
+			bodyRemoveClass("nav_mobileM");
+			bodyRemoveClass("nav_mobileL");
+		}
+	}
+
+	// Set the correct viewport value on page load
+	viewport_set();
+
+	/* attach listener to (delay) set the correct viewport after device orientation change or resize. also onload so the nav_mobile* class gets added to body AFTER <body> has loaded */
+	if(window.addEventListener){
+		window.addEventListener('load', viewport_set);
+		window.addEventListener('resize', function(){
+			clearTimeout(viewport_timer);
+			viewport_timer = setTimeout(viewport_set, 100);
+		})
+	} else{
+		window.attachEvent('onload', viewport_set)
+		window.attachEvent('onresize', function(){
+			clearTimeout(viewport_timer);
+			viewport_timer = setTimeout(viewport_set, 100);
+		})
+	}
+
+</script>
+
+
+<header id="header">
+	<div class="banner">
+		<a href="/"><img src="/Banner.jpg" alt="Serebii.net Header" style="height:139px"></a>
+	</div>
+
+	<nav class="quicklinks">
+		<ul>
+			<li><b>Quick Links</b></li>
+			<li><a href="/index2.shtml">Home</a></li>
+			<li><a href="https://forums.serebii.net/" target="blank">Forums</a></li>
+			<li><a href="mailto:webmaster@serebii.net">Contact</a></li>
+			<li><a href="/discord.shtml">Discord</a></li>
+			<li><a href="/pokemon">Pok�dex Hub</a></li>
+			<li><a href="/pokedex-sv">Scarlet & Violet Pok�dex</a></li>
+			<li><a href="/pokedex-champions">Champions Pok�dex</a></li>
+			<li><a href="/pokearth">Pok�arth</a></li>
+
+			<li class="search">
+				<form id="searchbox_018410473690156091934:6gahkiyodbi" action="/search.shtml" style="margin:0px;">
+					<input type="hidden" name="cx" value="018410473690156091934:6gahkiyodbi" />
+					<input type="hidden" name="cof" value="FORID:11" />
+					<input name="q" type="text" size="20" />
+					<input type="submit" name="sa" value="Search" />
+				</form>
+				<script type="text/javascript" src="//www.google.com/coop/cse/brand?form=searchbox_018410473690156091934%3A6gahkiyodbi"></script>
+			</li>
+		</ul>
+	</nav>
+</header>
+
+
+
+
+<div id="wrapper">
+
+<ul id="tbar_sticky">
+	<li>
+		<a href="#lbar" class="navheader" id="tbar_lbar_open"><img src="/hidden/2019-04/burger.svg"></a>
+	</li>
+	<li>
+		<form id="searchbox_018410473690156091934:6gahkiyodbi" action="/search.shtml" style="margin:0px;">
+			<input type="hidden" name="cx" value="018410473690156091934:6gahkiyodbi" />
+			<input type="hidden" name="cof" value="FORID:11" />
+			<input name="q" type="search" placeholder="Search Serebii.net..." />
+		</form>
+	</li>
+	<li>
+		<a href="#rbar" class="navheader" id="tbar_rbar_open" style="padding-right:20px"><img src="/hidden/2019-04/burger.svg"></a>
+	</li>
+</ul>
+<div id="tbar_backdrop"></div>
+
+<nav id="lbar">
+	<ul id="lbar_ul">
+		<li>
+			<a href="/" class="navheader">Databases</a>
+			<ul>
+				<li><a href="/index2.shtml">News</a>
+				<li><a href="/archive.shtml">Archived news</a></li>
+				<li><a href="/pokemon/"><b>Pok�dex</b></a></li>
+				<li><a href="/pokedex/">-Red/Blue Pok�dex</a></li>
+				<li><a href="/pokedex-gs/">-Gold/Silver Pok�dex</a></li>
+				<li><a href="/pokedex-rs/">-Ruby/Sapphire Pok�dex</a></li>
+				<li><a href="/pokedex-dp/">-Diamond/Pearl Pok�dex</a></li>
+				<li><a href="/pokedex-bw/">-Black/White Pok�dex</a></li>
+				<li><a href="/pokedex-xy/">-X & Y Pok�dex</a></li>
+				<li><a href="/pokedex-sm/">-Sun & Moon Pok�dex</a></li>
+				<li><a href="/pokedex-sm/">-Let's Go Pok�dex</a></li>
+				<li><a href="/pokedex-swsh/">-Sword & Shield Pok�dex</a></li>
+				<li><a href="/pokedex-swsh/">-BDSP Pok�dex</a></li>
+				<li><a href="/pokedex-swsh/">-Legends: Arceus Pok�dex</a></li>
+				<li><a href="/pokemongo/pokemon/">-GO Pok�dex</a></li>
+				<li><a href="/pokedex-sv/">-Scarlet & Violet Pok�dex</a></li>
+				<li><a href="/pokedex-sv/">-Legends: Z-A Pok�dex</a></li>
+				<li><a href="/pokedex-champions/">-Champions Pok�dex</a></li>
+
+				<li><strong>Attackdex</strong></li>
+				<li><a href="/attackdex-rby/">-Gen 1 Attackdex</a></li>
+				<li><a href="/attackdex-gs/">-Gen 2 Attackdex</a></li>
+				<li><a href="/attackdex/">-Gen 3 Attackdex</a></li>
+				<li><a href="/attackdex-dp/">-Gen 4 Attackdex</a></li>
+				<li><a href="/attackdex-bw/">-Gen 5 Attackdex</a></li>
+				<li><a href="/attackdex-xy/">-Gen 6 Attackdex</a></li>
+				<li><a href="/attackdex-sm/">-Gen 7 Attackdex</a></li>
+				<li><a href="/attackdex-swsh/">-Gen 8 Attackdex</a></li>
+				<li><a href="/attackdex-sv/">-Gen 9 Attackdex</a></li>
+				<li><a href="/attackdex-champions/">-Champions Attackdex</a></li>
+				<li><a href="/itemdex/">ItemDex</a></li>
+				<li><a href="/pokearth/">Pok�arth</a></li>
+				<li><a href="/abilitydex/">Abilitydex</a></li>
+				<li><a href="/spindex/">Spin-Off Pok�dex</a></li>
+				<li><a href="/spindex-dp/">Spin-Off Pok�dex DP</a></li>
+				<li><a href="/spindex-bw/">Spin-Off Pok�dex BW</a></li>
+				<li><a href="/card/dex/">Cardex</a></li>
+				<li><a href="/movies/dex/">Cinematic Pok�dex</a></li>
+				<li><a href="/games/mechanics.shtml">Game Mechanics</a></li>
+				<li><a href="/games/iv-calcsv.shtml">-Scarlet/Violet IV Calc.</a></li>
+				<li><a href="/potw-champions">Pok�mon of the Week</a></li>
+				<li><a href="/potw-champions/">-Champions</a></li>
+				<li><a href="/potw-sv/">-9th Gen</a></li>
+				<li><a href="/potw-swsh/">-8th Gen</a></li>
+				<li><a href="/potw-sm/">-7th Gen</a></li>
+				<li><a href="/pokemon/timeline.shtml">Pok�mon Timeline</a></li>
+				<li><a href="/pokemoncenter/">Pok�mon Centers</a></li>
+				<li><a href="/playpokemon">Pok�mon Championship Series</a></li>
+				<li><a href="/pokemonxp/">Pok�monXP</a></li>
+
+				<li><a href="/music/projectvoltage">Hatsune Miku Project Voltage</a></li>
+				<li><a href="/museums/">Pok�mon in Museums & Exhibitions</a></li>
+				<li><a href="/pokemon/vangoghmuseum/">-Pok�mon x Van Gogh</a></li>
+				<li><a href="/pokemonday/">Pok�mon Day</a></li>
+				<li><a href="/presentations">Pok�mon Presentations</a></li>
+				<li><a href="/lego/">LEGO Pok�mon</a></li>
+				<li><a href="/pokemonshirts/">Pok�mon Shirts</a></li>
+				<li><a href="/themeparks/">Theme Parks</a></li>
+				<li><a href="https://forums.serebii.net" target="blank">Forums</a></li>
+				<li><a href="/discord.shtml">Discord Chat</a></li>		
+				<li><a href="/games/currentevents.shtml">Current & Upcoming Events</a></li>
+				<li><a href="/events">Event Database</a></li>
+				<li><a href="/scarletviolet/pokemon.shtml">9th Generation Pok�mon</a></li>
+				<li><a href="/scarletviolet/dlc-pokemon.shtml">-New Pok�mon in DLC</a></li>
+				<li><a href="/scarletviolet/paldeanforms.shtml">-Paldean Form Pok�mon</a></li>
+
+			</ul>
+		</li>
+
+
+		<li>
+			<a href="/anime/" class="navheader">Anime & TV</a>
+			<ul>
+				<li><a href="/anime/epiguide/">Episode Listings & Pictures</a></li>
+				<li><a href="/anime/dex/">Anim�Dex</a></li>
+				<li><a href="/anime/characters/">Character Bios</a></li>
+				<li><a href="/anime/epiguide/indigo/">The Indigo League</a></li>
+				<li><a href="/anime/epiguide/orange/">The Orange League</a></li>
+				<li><a href="/anime/epiguide/johto/">The Johto Saga</a></li>
+				<li><a href="/anime/epiguide/houen/">The Saga in Hoenn!</a></li>
+				<li><a href="/anime/epiguide/kanto/">Kanto Battle Frontier Saga!</a></li>
+				<li><a href="/anime/epiguide/shinou/">The Sinnoh Saga!</a></li>
+				<li><a href="/anime/epiguide/bestwishes/">Best Wishes - Unova Saga</a></li>
+				<li><a href="/anime/epiguide/xy/">XY - Kalos Saga</a></li>
+				<li><a href="/anime/epiguide/sunmoon/">Sun & Moon - Alola Saga</a></li>
+				<li><a href="/anime/epiguide/pokemon/">Pok�mon Journeys - Galar Saga</a></li>
+				<li><a href="/anime/epiguide/pokemonmaster/">Pok�mon Aim To Be A Pok�mon Master</a></li>
+				<li><a href="/anime/epiguide/pokemon2023/">Pok�mon Horizons - Paldea Saga</a></li>
+				<li><a href="/anime/epiguide/chronicles/">Pok�mon Chronicles</a></li>	
+				<li><a href="/anime/epiguide/specials/">The Special Episodes</a></li>
+				<li><a href="/anime/banned.shtml">The Banned Episodes</a></li>
+				<li><a href="/anime/shiny/">Shiny Pok�mon</a></li>
+<li><b>Other Web Series</b></li>
+				<li><a href="/anime/epiguide/generations/">Pok�mon Generations</a></li>
+				<li><a href="/anime/epiguide/twilightwings/">Pok�mon Twilight Wings</a></li>
+				<li><a href="/anime/epiguide/evolutions/">Pok�mon Evolutions</a></li>
+				<li><a href="/anime/hisuiansnow/">Pok�mon: Hisuian Snow</a></li>
+				<li><a href="/anime/paldeanwinds/">Pok�mon: Paldean Winds</a></li>
+				<li><a href="/anime/poketoon/">Pok�Toon</a></li>
+				<li><a href="/anime/other/pathtothepeak/">Path to the Peak</a></li>
+				<li><a href="/anime/other/pokeminutes/">Pok�Minutes</a></li>
+				<li><a href="/anime/other/pokevideodex/">Pok�VideoDex</a></li>
+				<li><a href="/anime/other/goodmorningwithpokemon/">Good Morning with Pok�mon</a></li>
+				<li><a href="/anime/other/">Other Animations</a></li>
+				<li><b>Other Series</b></li>
+				<li><a href="/pokemonconcierge/">Pok�mon Concierge</a></li>
+				<li><a href="/pokemontales/">Pok�mon Tales: The Misadventures of Sirfetch'd & Pichu</a></li>
+
+				<li><b>Live Action</b></li>
+				<li><a href="/poketsume/">Pok�Tsume</a></li>
+
+
+			</ul>
+		</li>
+
+		<li>
+			<a href="/games/" class="navheader">Video Games</a>
+			<ul>
+				<li><a href="/pokemon/generation10.shtml"><b>Gen X</b></li>
+				<li><a href="/windswaves/">Winds & Waves</a></li>
+
+				<li><a href="/pokemon/generation9.shtml"><b>Gen IX</b></a></li>
+				<li><a href="/scarletviolet/">Scarlet & Violet</a></li>
+				<li><a href="/legendsz-a/">Legends: Z-A</a></li>
+				<li><a href="/pokemonchampions/">Pok�mon Champions</a></li>
+				<li><a href="/pokemonpokopia/">Pok�mon Pokopia</a></li>
+				<li><a href="/pokemonfriends/">Pok�mon Friends</a></li>
+				<li><a href="/pokemongo/">Pok�mon GO</a></li>
+				<li><a href="/cafemix/">Pok�mon Caf� ReMix</a></li>
+				<li><a href="/pokemonmasters/">Pok�mon Masters EX</a></li>
+				<li><a href="/pokemonunite/">Pok�mon UNITE</a></li>
+				<li><a href="/pokemonsleep/">Pok�mon Sleep</a></li>
+				<li><a href="/detectivepikachureturns/">Detective Pikachu Returns</a></li>
+				<li><a href="/tcgpocket/">Pok�mon TCG Pocket</a></li>
+
+				<li><a href="/pokemon/generation8.shtml"><b>Gen VIII</b></a></li>
+				<li><a href="/swordshield/">Sword & Shield</a></li>
+				<li><a href="/brilliantdiamondshiningpearl/">Brilliant Diamond & Shining Pearl</a></li>
+				<li><a href="/legendsarceus/">Pok�mon Legends: Arceus</a></li>
+				<li><a href="/pokemonhome/">Pok�mon HOME</a></li>
+				<li><a href="/pokemongo/">Pok�mon GO</a></li>
+				<li><a href="/pokemonmasters/">Pok�mon Masters EX</a></li>
+				<li><a href="/dungeonrescueteamdx/">Pok�mon Mystery Dungeon Rescue Team DX</a></li>
+				<li><a href="/pokemonsmile/">Pok�mon Smile</a></li>
+				<li><a href="/cafemix/">Pok�mon Caf� ReMix</a></li>
+				<li><a href="/newpokemonsnap/">New Pok�mon Snap</a></li>
+				<li><a href="/pokemonunite/">Pok�mon UNITE</a></li>
+				<li><a href="/tcglive/">Pok�mon TCG Live</a></li>
+
+				<li><a href="/pokemon/generation7.shtml"><b>Gen VII</b></a></li>
+				<li><a href="/sunmoon/">Sun & Moon</a></li>
+				<li><a href="/ultrasunultramoon/">Ultra Sun & Ultra Moon</a></li>
+				<li><a href="/letsgopikachueevee/">Let's Go, Pikachu! & Let's Go, Eevee!</a></li>
+				<li><a href="/pokemongo/">Pok�mon GO</a></li>
+				<li><a href="/magikarpjump/">Pok�mon: Magikarp Jump</a></li>
+				<li><a href="/rumblerush/">Pok�mon Rumble Rush</a></li>
+				<li><a href="/pokkendx/">Pokk�n Tournament DX</a></li>
+				<li><a href="/detective/">Detective Pikachu</a></li>
+				<li><a href="/quest/">Pok�mon Quest</a></li>
+				<li><a href="/smashbrosultimate/">Super Smash Bros. Ultimate</a></li>
+				<li><a href="/pokemon/generation6.shtml"><b>Gen VI</b></a></li>
+				<li><a href="/xy/">X & Y</a></li>
+				<li><a href="/omegarubyalphasapphire/">Omega Ruby & Alpha Sapphire</a></li>
+				<li><a href="/bank/">Pok�mon Bank</a></li>
+				<li><a href="/battletrozei/">Pok�mon Battle TrozeiPok�mon Link: Battle</a></li>
+				<li><a href="/artacademy/">Pok�mon Art Academy</a></li>
+				<li><a href="/bandofthieves/">The Band of Thieves & 1000 Pok�mon</a></li>
+				<li><a href="/shuffle/">Pok�mon Shuffle</a></li>
+				<li><a href="/rumbleworld/">Pok�mon Rumble World</a></li>
+				<li><a href="/supermysterydungeon/">Pok�mon Super Mystery Dungeon</a></li>
+				<li><a href="/picross/">Pok�mon Picross</a></li>
+				<li><a href="/detective/">Detective Pikachu</a></li>
+				<li><a href="/pokken/">Pokk�n Tournament</a></li>
+				<li><a href="/duel/">Pok�mon Duel</a></li>
+				<li><a href="/smashbros3dswiiu/">Smash Bros for 3DS/Wii U</a></li>
+				<li><a href="/games/badge/">Nintendo Badge Arcade</a></li>
+				<li><a href="/pokemon/generation5.shtml"><b>Gen V</b></a></li>
+				<li><a href="/blackwhite/">Black & White</a></li>
+				<li><a href="/black2white2/">Black 2 & White 2</a></li>
+				<li><a href="/dreamradar/">Pok�mon Dream Radar</a></li>
+				<li><a href="/trettalab/">Pok�mon Tretta Lab</a></li>
+				<li><a href="/rumbleu/">Pok�mon Rumble U</a></li>
+				<li><a href="/dungeoninfinity/">Mystery Dungeon: Gates to Infinity</a></li>
+				<li><a href="/conquest/">Pok�mon Conquest</a></li>
+				<li><a href="/pokepark2/">Pok�Park 2: Wonders Beyond</a></li>
+				<li><a href="/rumble2/">Pok�mon Rumble Blast</a></li>
+				<li><a href="/pokedex3d/">Pok�dex 3D</a></li>
+				<li><a href="/pokedex3dpro/">Pok�dex 3D Pro</a></li>
+				<li><a href="/typingds/">Learn With Pok�mon: Typing Adventure</a></li>
+				<li><a href="/card/howtoplayds/">TCG How to Play DS</a></li>
+				<li><a href="/pokedexios/">Pok�dex for iOS</a></li>
+				<li><a href="/pokemon/generation4.shtml"><b>Gen IV</b></a></li>
+				<li><a href="/diamondpearl/">Diamond & Pearl</a></li>
+				<li><a href="/platinum/">Platinum</a></li>
+				<li><a href="/heartgoldsoulsilver/">Heart Gold & Soul Silver</a></li>
+				<li><a href="/ranger3/">Pok�mon Ranger: Guardian Signs</a></li>
+				<li><a href="/melee/">Pok�mon Rumble</a></li>
+				<li><a href="/dungeon3/">Mystery Dungeon: Blazing, Stormy & Light Adventure Squad</a></li>
+				<li><a href="/pokepark/">Pok�Park Wii - Pikachu's  Adventure</a></li>
+				<li><a href="/battle/">Pok�mon Battle Revolution</a></li>
+				<li><a href="/dungeonsky/">Mystery Dungeon - Explorers of Sky</a></li>
+				<li><a href="/ranger2/">Pok�mon Ranger: Shadows of Almia</a></li>
+				<li><a href="/dungeon2/">Mystery Dungeon - Explorers of Time & Darkness</a></li>
+				<li><a href="/ranch/">My Pok�mon Ranch</a></li>
+				<li><a href="/ssbb/">Smash Bros Brawl</a></li>
+				<li><a href="/pokemon/generation3.shtml"><b>Gen III</b></a></li>
+				<li><a href="/rubysapphire/">Ruby & Sapphire</a></li>
+				<li><a href="/fireredleafgreen/">Fire Red & Leaf Green</a></li>
+				<li><a href="/emerald/">Emerald</a></li>
+				<li><a href="/colosseum/">Pok�mon Colosseum</a></li>
+				<li><a href="/xd/">Pok�mon XD: Gale of Darkness</a></li>
+				<li><a href="/dash/">Pok�mon Dash</a></li>
+				<li><a href="/pokemon_channel/">Pok�mon Channel</a></li>
+				<li><a href="/pokemon_box/">Pok�mon Box: RS</a></li>
+				<li><a href="/pinball_rs/">Pok�mon Pinball RS</a></li>
+				<li><a href="/ranger/">Pok�mon Ranger</a></li>
+				<li><a href="/mysteriousdungeon/">Mystery Dungeon Red & Blue</a></li>
+				<li><a href="/torouze/">Pok�monTrozei</a></li>
+				<li><a href="/pikachu/">Pikachu DS Tech Demo</a></li>
+				<li><a href="/pokeparkfish/">Pok�Park Fishing Rally</a></li>
+				<li><a href="/e-reader/">The E-Reader</a></li>
+				<li><a href="/pokemate/">Pok�Mate</a></li>
+				<li><a href="/pokemon/generation2.shtml"><b>Gen II</b></a></li>
+				<li><a href="/gs/">Gold/Silver</a></li>
+				<li><a href="/crystal/">Crystal</a></li>
+				<li><a href="/stadium2/">Pok�mon Stadium 2</a></li>
+				<li><a href="/puzzlechallenge/">Pok�mon Puzzle Challenge</a></li>
+				<li><a href="/mini/">Pok�mon Mini</a></li>
+				<li><a href="/smash_bros_2/">Super Smash Bros. Melee</a></li>
+				<li><a href="/pokemon/generation1.shtml"><b>Gen I</b></a></li>
+				<li><a href="/rb/">Red, Blue & Green</a></li>
+				<li><a href="/yellow/">Yellow</a></li>
+				<li><a href="/puzzleleague/">Pok�mon Puzzle League</a></li>
+				<li><a href="/snap/">Pok�mon Snap</a></li>
+				<li><a href="/pinball/">Pok�mon Pinball</a></li>
+				<li><a href="/stadiumjp/">Pok�mon Stadium (Japanese)</a></li>
+				<li><a href="/stadium/">Pok�mon Stadium</a></li>
+				<li><a href="/tradingcardgamegb/">Pok�mon Trading Card Game GB</a></li>
+				<li><a href="/smash_bros/">Super Smash Bros.</a></li>
+
+				<li><strong>Miscellaneous</strong></li>
+				<li><a href="/games/mechanics.shtml">Game Mechanics</a></li>
+				<li><a href="/playpokemon">Pok�mon Championship Series</a></li>
+				<li><a href="/games/others.shtml">In Other Games</a></li>
+				<li><a href="/games/virtualconsole.shtml">Virtual Console</a></li>
+				<li><a href="/games/consoles.shtml">Special Edition Consoles</a></li>
+				<li><a href="/games/themes.shtml">Pok�mon 3DS Themes</a></li>
+				<li><a href="/apps">Smartphone & Tablet Apps</a></li>
+				<li><a href="/virtualpet">Virtual Pets</a></li>
+				<li><a href="/amiibo">amiibo</a></li>
+				<li><a href="/nintendoswitchonline/">Nintendo Switch Online & Icons</a></li>
+				<li><strong>Board Game</strong></li>
+				<li><a href="/pokemongoita">Pok�mon Goita</a></li>
+				<li><strong>Arcade</strong></li>
+				<li><a href="/frienda">Pok�mon FRIENDA</a></li>
+			</ul>
+		</li>
+
+		<li>
+			<a href="/manga/" class="navheader">Manga</a>
+			<ul>
+				<li><a href="/manga/">General Information</a>
+				<li><a href="/manga/dex">MangaDex</a></li>
+				<li><a href="/manga/characters">Character BIOs</a></li>
+				<li><a href="/manga/characters-new">Detailed BIOs</a></li>
+				<li><a href="/manga/chapter.shtml">Chapter Guides</a></li>
+				<li><a href="/manga/volume.shtml">Volume Guides</a></li>
+				<li><a href="/manga/rby/">RBG Series</a></li>
+				<li><a href="/manga/yellow/">Yellow Series</a></li>
+				<li><a href="/manga/gsc/">GSC Series</a></li>
+				<li><a href="/manga/rs/">RS Series</a></li>
+				<li><a href="/manga/frlg/">FRLG Series</a></li>
+				<li><a href="/manga/bf/">Emerald Series</a></li>
+				<li><a href="/manga/dp/">DP Series</a></li>
+				<li><a href="/manga/pt/">Platinum Series</a></li>
+				<li><a href="/manga/hgss/">HGSS Series</a></li>
+				<li><a href="/manga/bw/">BW Series</a></li>
+				<li><a href="/manga/b2w2/">B2W2 Series</a></li>
+				<li><a href="/manga/xy/">XY Series</a></li>
+				<li><a href="/manga/oras/">ORAS Series</a></li>
+				<li><a href="/manga/sunmoon/">SM Series</a></li>
+			</ul>
+		</li>
+
+		<li>
+			<a href="/movies/" class="navheader">Movies</a>
+			<ul>
+				<li><strong>Anime</strong></li>
+				<li><a href="/movies/mewtwo/origin/">The Origin of Mewtwo</a></li>
+				<li><a href="/movies/mewtwo/">Mewtwo Strikes Back</a></li>
+				<li><a href="/movies/lugia/">The Power of One</a></li>
+				<li><a href="/movies/entei/">Spell Of The Unown</a></li>
+				<li><a href="/anime/epiguide/specials/002.shtml">Mewtwo Returns</a></li>
+				<li><a href="/movies/serebii/">Celebi: Voice of the Forest</a></li>
+				<li><a href="/movies/latias_latios/">Pok�mon Heroes</a></li>
+				<li><a href="/movies/jirachi/">Jirachi - Wish Maker</a></li>
+				<li><a href="/movies/deoxys/">Destiny Deoxys!</a></li>
+				<li><a href="/movies/mew/">Lucario and the Mystery of Mew!</a></li>
+				<li><a href="/movies/kyogre/">Pok�mon Ranger & The Temple of the Sea!</a></li>
+				<li><a href="/movies/dp/">The Rise of Darkrai!</a></li>
+				<li><a href="/movies/giratina/">Giratina & The Sky Warrior!</a></li>
+				<li><a href="/movies/arceus/">Arceus and the Jewel of Life</a></li>
+				<li><a href="/movies/celebi/">Zoroark - Master of Illusions</a></li>
+				<li><a href="/movies/victini/">Black: Victini & ReshiramWhite: Victini & Zekrom</a></li>
+				<li><a href="/movies/kyurem/">Kyurem VS The Sword of Justice</a></li>
+				<li><a href="/movies/meloetta/">-Meloetta's Midnight Serenade</a></li>
+				<li><a href="/movies/genesect/">Genesect and the Legend Awakened</a></li>
+				<li><a href="/movies/xy/">Diancie & The Cocoon of Destruction</a></li>
+				<li><a href="/movies/hoopa/">Hoopa & The Clash of Ages</a></li>
+				<li><a href="/movies/volcanion/">Volcanion and the Mechanical Marvel</a></li>
+				<li><a href="/movies/pokemon20/">Pok�mon I Choose You!</a></li>
+				<li><a href="/movies/thepowerofus/">Pok�mon The Power of Us</a></li>
+				<li><a href="/movies/mewtwoevolution/">Mewtwo Strikes Back Evolution</a></li>
+				<li><a href="/movies/secretsofthejungle/">Secrets of the Jungle</a></li>
+				<li><strong>Live Action</strong></li>
+				<li><a href="/movies/detectivepikachu/">Pok�mon Detective Pikachu</a></li>
+			</ul>
+		</li>
+
+		<li>
+			<a href="/movies/" class="navheader">Pikachu Shorts</a>
+			<ul>
+				<li><a href="/movies/pikachu1/">Pikachu's Summer Vacation</a></li>
+				<li><a href="/movies/pikachu2/">Pikachu's Rescue Adventure</a></li>
+				<li><a href="/movies/pikachu3/">Pikachu And Pichu</a></li>
+				<li><a href="/movies/pikachu4/">Pikachu's PikaBoo</a></li>
+				<li><a href="/movies/pikachu5/">Camp Pikachu!</a></li>
+				<li><a href="/movies/pikachu6/">Gotta Dance!!</a></li>
+				<li><a href="/movies/pikachu7/">Pikachu's Summer Festival!</a></li>
+				<li><a href="/movies/pikachu8/">Pikachu's Ghost Festival!</a></li>
+				<li><a href="/movies/pikachu9/">Pikachu's Island Adventure!</a></li>
+				<li><a href="/movies/pikachu10/">Pikachu's Exploration Club</a></li>
+				<li><a href="/movies/pikachu11/">Pikachu's Great Ice Adventure</a></li>
+				<li><a href="/movies/pikachu12/">Pikachu's Sparkling Search</a></li>
+				<li><a href="/movies/pikachu13/">Pikachu's Really Mysterious Adventure</a></li>
+				<li><a href="/movies/eevee/">Eevee & Friends</a></li>
+				<li><a href="/movies/klefki/">Pikachu, What's This Key?</a></li>
+				<li><a href="/movies/pikachumusic/">Pikachu & The Pok�mon Music Squad</a></li>
+			</ul>
+		</li>
+
+		<li>
+			<a href="/card/" class="navheader">Trading Cards</a>
+			<ul>
+				<li><a href="/tcglive/">Pok�mon TCG Live</a></li>
+				<li><a href="/card/dex/">Cardex</a></li>
+				<li><a href="/card/dex/extra">-Extra Pok�mon Types</a></li>
+				<li><a href="/card/dex/trainers">Trainer Cards</a></li>
+				<li><a href="/card/dex/energy">Energy Cards</a></li>
+				<li><a href="/card/dex/extra/altart.shtml">Alternate Art Cards</a></li>
+				<li><a href="/card/raidbattles">Raid Battles</a></li>
+				<li><a href="/card/classic/">Pok�mon TCG Classic</a></li>
+				<li><a href="/card/english.shtml"><b>English Sets</b></a></li>
+				<li><a href="/card/perfectorder/">-Perfect Order</a></li>
+				<li><a href="/card/ascendedheroes/">-Ascended Heroes</a></li>
+				<li><a href="/card/phantasmalflames/">-Phantasmal Flames</a></li>
+				<li><a href="/card/megaevolution/">-Mega Evolution</a></li>
+				<li><a href="/card/blackbolt/">-Black Bolt</a></li>
+				<li><a href="/card/whiteflare/">-White Flare</a></li>
+				<li><a href="/card/destinedrivals/">-Destined Rivals</a></li>
+				<li><a href="/card/journeytogether/">-Journey Together</a></li>
+				<li><a href="/card/prismaticevolutions/">-Prismatic Evolutions</a></li>
+				<li><a href="/card/surgingsparks/">-Surging Sparks</a></li>
+				<li><a href="/card/stellarcrown/">-Stellar Crown</a></li>
+				<li><a href="/card/shroudedfable/">-Shrouded Fable</a></li>
+				<li><a href="/card/twilightmasquerade/">-Twilight Masquerade</a></li>
+				<li><a href="/card/temporalforces/">-Temporal Forces</a></li>
+				<li><a href="/card/paldeanfates/">-Paldean Fates</a></li>
+				<li><a href="/card/paradoxrift/">-Paradox Rift</a></li>
+				<li><a href="/card/151/">-151</a></li>
+				<li><a href="/card/obsidianflames/">-Obsidian Flames</a></li>
+				<li><a href="/card/paldeaevolved/">-Paldea Evolved</a></li>
+				<li><a href="/card/scarletviolet/">-Scarlet Violet</a></li>
+				<li><a href="/card/swsh.shtml">-SWSH Series</a></li>
+				<li><a href="/card/sm.shtml">-SM Series</a></li>
+				<li><a href="/card/xy.shtml">-XY Series</a></li>
+				<li><a href="/card/bw.shtml">-BW Series</a></li>
+				<li><a href="/card/dpt.shtml">-DPtHS Series</a></li>
+				<li><a href="/card/ex.shtml">-EX Series</a></li>
+				<li><a href="/card/neo.shtml">-Neo/eSeries</a></li>
+				<li><a href="/card/first.shtml">-First Gen Series</a></li>
+				<li><a href="/card/engpromo.shtml"><b>English Promos</b></a></li>
+				<li><a href="/card/megapromos">-Mega Promos</a></li>
+				<li><a href="/card/svpromos">-SV Promos</a></li>
+				<li><a href="/card/swshpromos">-SWSH Promos</a></li>
+				<li><a href="/card/smpromos">-SM Promos</a></li>
+				<li><a href="/card/xypromos">-XY Promos</a></li>
+				<li><a href="/card/popseries.shtml">-POP Series</a></li>
+				<li><a href="/card/japanese.shtml"><b>Japanese Sets</b></a></li>
+				<li><a href="/card/abysseye/">-Abyss Eye</a></li>
+				<li><a href="/card/ninjaspinner/">-Ninja Spinner</a></li>
+				<li><a href="/card/nihilzero/">-Nihil Zero</a></li>
+				<li><a href="/card/megadreamex/">-Mega Dream ex</a></li>
+				<li><a href="/card/infernox/">-Inferno X</a></li>
+				<li><a href="/card/megabrave/">-Mega Brave</a></li>
+				<li><a href="/card/megasymphonia/">-Mega Symphonia</a></li>
+				<li><a href="/card/blackbolt-jp/">-Black Bolt</a></li>
+				<li><a href="/card/whiteflare-jp/">-White Flare</a></li>
+				<li><a href="/card/gloryofteamrocket/">-Glory of Team Rocket</a></li>
+				<li><a href="/card/hotairarena/">-Hot Air Arena</a></li>
+				<li><a href="/card/battlepartners/">-Battle Partners</a></li>
+				<li><a href="/card/terastalfestivalex/">-Terastal Festival ex</a></li>
+				<li><a href="/card/superelectricbreaker/">-Super Electric Breaker</a></li>
+				<li><a href="/card/paradisedragona/">-Paradise Dragona</a></li>
+				<li><a href="/card/stellarmiracle/">-Stellar Miracle</a></li>
+				<li><a href="/card/nightwanderer/">-Night Wanderer</a></li>
+				<li><a href="/card/maskofchange/">-Mask of Change</a></li>
+				<li><a href="/card/crimsonhaze/">-Crimson Haze</a></li>
+				<li><a href="/card/wildforce/">-Wild Force</a></li>
+				<li><a href="/card/cyberjudge/">-Cyber Judge</a></li>
+				<li><a href="/card/vstaruniverse/">-VSTAR Universe</a></li>
+				<li><a href="/card/vs">-Pok�mon VS</a></li>
+				<li><a href="/card/jppromo.shtml"><b>Japanese Promos</b></a></li>
+				<li><a href="/card/svpromo">-SV Promos</a></li>
+				<li><a href="/card/spromo">-S Promos</a></li>
+				<li><a href="/card/smpromo">-SM Promos</a></li>
+
+			</ul>
+		</li>
+	</ul>
+</nav>
+
+
+<script type="text/javascript">
+
+function loadMobileLbar(){
+	var tbar_lbar_open=document.getElementById('tbar_lbar_open'),
+		tbar_backdrop=document.getElementById('tbar_backdrop'),
+		lbar=document.getElementById('lbar'),
+		lbarLIs=document.querySelectorAll("#lbar_ul>li .navheader"),
+		lbarLIULs=document.querySelectorAll("#lbar_ul>li>ul");
+
+	/* lbar display/hide */
+	tbar_lbar_open.onclick=function() {
+		if (lbar.className.indexOf("show") > -1){//hide
+			lbar.className = lbar.className.replace("show","");
+			bodyRemoveClass("nav_modal");
+		} else{//show
+			lbar.classList.add("show");
+			bodyAddClass("nav_modal");
+		}
+
+		return false;
+	}
+
+
+	/* background clicked when bar shown */
+	tbar_backdrop.onclick=function() {// if the backdrop is clicked, hide menus
+		lbar.className = lbar.className.replace("show","");
+		rbar.className = rbar.className.replace("show","");
+		bodyRemoveClass("nav_modal");
+		return false;
+	}
+
+	/* handle expand/collapse sub-menus in lbar by attaching click events */
+	for(i=0; i<lbarLIs.length; i++){
+		lbarLIs[i].onclick=function(i) {
+			var elem=this.parentNode.getElementsByTagName("UL")[0];
+			var elemDisp=(elem.className.indexOf("show") === -1)
+
+			// hide all ul, then open one if clicked
+			for(i2=0; i2<lbarLIULs.length; i2++){
+				lbarLIULs[i2].className = lbarLIULs[i2].className.replace("show","");
+			}
+
+			if(elemDisp){
+				elem.classList.add("show");
+			}
+
+			return false;
+		}
+	}
+}
+function loadMobileRbar(){
+	var tbar_rbar_open=document.getElementById('tbar_rbar_open'),
+		rbar=document.getElementById('rbar');
+
+	/* rbar display/hide */
+	tbar_rbar_open.onclick=function() {
+		if (rbar.className.indexOf("show") > -1){//hide
+			rbar.className = rbar.className.replace("show","");
+			bodyRemoveClass("nav_modal");
+		} else{//show
+			rbar.classList.add("show");
+			bodyAddClass("nav_modal");
+		}
+
+		return false;
+	}
+}
+
+loadMobileLbar();
+
+/* attach listener to for rbar events AFTER page loads (because #rbar hasn't loaded at this point in page ) */
+if(window.addEventListener){
+	window.addEventListener('load', loadMobileRbar)
+} else{
+	window.attachEvent('onload', loadMobileRbar)
+}
+</script>
+
+
+
+<div id="content">
+		<div class="center" style="margin-top:16px;height:100px"><div id="nn_lb1"></div><div id="nn_mobile_lb1"></div></div>
+<main>
+
+
+<div align="center"><FORM NAME="index"><DIV><SELECT NAME="SelectURL" onChange="document.location.href=document.index.SelectURL.options[document.index.SelectURL.selectedIndex].value" style="color:#383838; font-size: 8pt; background:#CEBC77" size=1>
+
+ <option value="/pokemonpokopia/locations.shtml">Pok&eacute;mon Pokopia - Locations Database</option><option value="/pokemonpokopia/locations/witheredwastelands.shtml">Withered Wastelands</option><option value="/pokemonpokopia/locations/bleakbeach.shtml">Bleak Beach</option><option value="/pokemonpokopia/locations/rockyridges.shtml">Rocky Ridges</option><option value="/pokemonpokopia/locations/sparklingskylands.shtml">Sparkling Skylands</option><option value="/pokemonpokopia/locations/palettetown.shtml">Palette Town</option><option value="/pokemonpokopia/locations/cloudisland.shtml">Cloud Island</option></SELECT></DIV> </FORM></div>
+
+<table class="tab" align="center">
+<tr>
+<td class="fooleft" colspan="2"><h1>Sparkling Skylands</h1></td>
+</tr>
+<td class="foocontent" valign="top">
+<p>The Sparkling Skylands are a giant area that focused around what used to be Celadon and Saffron Cities. The catastrophe caused the ground to shoot up into the sky.</p><p>With the Pok&eacute;mon you find here, your task is to rebuild Silph Co. into a new building to bring back humans and Pok&eacute;mon</p>
+</td>
+<td class="picturetd" width="300" valign="top"><img src="sparklingskylands.jpg" alt="Sparkling Skylands in Pok&eacute;mon Pokopia Image" class="contentpic" loading="lazy" /></td>
+</tr>
+</table><br /><br />
+<p><h2>Interactive Map</h2></p>
+
+
+
+<script type="text/javascript">
+function SwitchTable(tOff, tOn){
+	if(document.getElementById(tOff).style.display=="none"){
+		document.getElementById(tOn).style.display="none";
+		document.getElementById(tOff).style.display="table";
+	} else{
+		document.getElementById(tOff).style.display="none";
+		document.getElementById(tOn).style.display="table";// or "block" or "inline-block"
+	}
+	return false;
+}
+</script>
+	<div id="map-controls">
+		<table class="extradextable" id="mainfilter" align="center" width="100%"><tr><td class="fooevo" style="font-size:16pt" colspan="20">Filters</td></tr>
+
+		<tr>
+		<td valign="top" width="33%" colspan="3"><img src="/itemdex/sprites/sv/pokeball.png" width="60" height="60" alt="Pok&eacute;Ball" onClick="layerToggle(layItem,map,this);" class="icon disabled" /><br />Items</td>
+			<td valign="top" width="33%" colspan="3"><img src="/itemdex/sprites/sv/parkball.png" width="60" height="60" alt="Items" onClick="layerToggle(layRecipe,map,this);" class="icon disabled" /><br />Recipes</td>
+			<td valign="top" width="33%" colspan="3"><img src="/pokemonpokopia/items/grubbybook.png" width="60" height="60" alt="Human Records" onClick="layerToggle(layHuman,map,this);" class="icon disabled" /><br />Human Records</td>
+			
+</tr>
+		</tr>
+			</table>
+
+	</div>
+
+	<div id="map"></div>
+
+	<script type="text/javascript">
+		// toggle layer on/off
+		function layerToggle(layer, attachPoint, self) {
+			if (attachPoint.hasLayer(layer)) {
+				layer.removeFrom(attachPoint);
+				self.classList.add("disabled");
+			} else {
+				layer.addTo(attachPoint);
+				self.className = self.className.replace("disabled", "");
+			}
+		}
+
+
+		// toggle pokemon on/off
+		function pokeToggle(pokemonID, self) {
+			var tableIDs = pokeFilter[ pokemonID ].tableIDs;
+
+			// turn off any default markers
+			map.eachLayer(function(layer) {
+				if (layer instanceof L.LayerGroup) {
+					map.removeLayer(layer);
+				}
+			});
+			var domMapControls = document.querySelectorAll("#map-controls .icon");
+			for (var i in domMapControls) {
+				if (domMapControls[ i ].classList) {
+					domMapControls[ i ].classList.add("disabled")
+				}
+			};
+			var domLink = document.querySelectorAll("#pokefilter a");
+			for (var i in domLink) {
+				if (domLink[ i ].classList && domLink[ i ].classList.value == "selected") {
+					domLink[ i ].className = domLink[ i ].className.replace("selected", "");
+				}
+			};
+
+			layPokeFilter.clearLayers();
+
+			// go through the markers, see if they match tableID from this pokemon
+			for (var idx in pmarkers) {
+				for (var tidx in tableIDs) {
+					var tid = parseInt(tableIDs[ tidx ]);
+
+					if (pmarkers[ idx ].tableID == tid) {
+						L.marker(cvert(pmarkers[ idx ].coords), { icon: pmarkers[ idx ].icon, tableID: pmarkers[ idx ].tableID })
+							.addTo(layPokeFilter)
+							.on("click", onMapClick);
+						break;//for(tableIDs)
+					}
+				}
+			};
+
+			self.classList.add("selected");
+			layPokeFilter.addTo(map);
+			return false;
+		}
+
+		function itemToggle(itemID, self) {
+			var tableIDs = itemFilter[ itemID ].tableIDs;
+
+			// turn off any default markers
+			map.eachLayer(function(layer) {
+				if (layer instanceof L.LayerGroup) {
+					map.removeLayer(layer);
+				}
+			});
+			var domMapControls = document.querySelectorAll("#map-controls .icon");
+			for (var i in domMapControls) {
+				if (domMapControls[ i ].classList) {
+					domMapControls[ i ].classList.add("disabled")
+				}
+			};
+			var domLink = document.querySelectorAll("#itemfilter a");
+			for (var i in domLink) {
+				if (domLink[ i ].classList && domLink[ i ].classList.value == "selected") {
+					domLink[ i ].className = domLink[ i ].className.replace("selected", "");
+				}
+			};
+
+			layItemFilter.clearLayers();
+
+			// go through the markers, see if they match tableID from this item
+			for (var idx in imarkers) {
+				for (var tidx in tableIDs) {
+					var tid = parseInt(tableIDs[ tidx ]);
+
+					if (imarkers[ idx ].tableID == tid) {
+						L.marker(cvert(imarkers[ idx ].coords), { icon: imarkers[ idx ].icon, tableID: imarkers[ idx ].tableID })
+							.addTo(layItemFilter)
+							.on("click", onMapClick);
+						break;//for(tableIDs)
+					}
+				}
+			};
+
+			self.classList.add("selected");
+			layItemFilter.addTo(map);
+			return false;
+		}
+
+		// convert origin coords to leaflet coords
+		function cvert(orig) {
+			const x = orig[ 0 ] * (512/2048);
+			//const z = orig[1];
+			const y = orig[ 2 ] * -1 * (512/2048);
+
+			return [ y, x ]; //Coordinates in CRS.Simple take the form of [y, x]
+		}
+
+		// load pokemon data
+		function onMapClick(e) {
+			const tableID = e.target.options.tableID;
+
+			if (!tableID) {
+				e.target.bindPopup("Pok&eacute;mon to load not set").openPopup();
+				return;
+			}
+
+			var xhr = new XMLHttpRequest();
+			xhr.open(
+					"GET",
+					"/pokemonpokopia/locations/" + tableID + ".txt",
+					true
+				);
+			xhr.send(null);
+			xhr.onload = function() {
+				if (xhr.status === 200 && xhr.responseText.length > 0) {
+					document.getElementById("table-popup").innerHTML = xhr.responseText;
+				} else {
+					e.target
+						.bindPopup("Unable to properly load Pok&eacute;mon information")
+						.openPopup();
+				}
+			};
+		}
+
+		var map = L.map("map", {
+			minZoom: 0,
+			maxZoom: 2,
+			crs: L.CRS.Simple,
+		}).setView([ 0, 0 ], 1); //setView([lat, long], default zoom level)
+
+		var abandonedpowerplantkit = L.icon({
+			iconUrl: "/pokemonpokopia/items/abandonedpowerplantkit.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var adorablehedgeseeds = L.icon({
+			iconUrl: "/pokemonpokopia/items/adorable-hedgeseeds.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var agedstonewall = L.icon({
+			iconUrl: "/pokemonpokopia/items/aged-stonewall.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var alarmclock = L.icon({
+			iconUrl: "/pokemonpokopia/items/alarmclock.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var altaroftheflamekit = L.icon({
+			iconUrl: "/pokemonpokopia/items/altaroftheflamekit.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var archedtiling = L.icon({
+			iconUrl: "/pokemonpokopia/items/archedtiling.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var balloons = L.icon({
+			iconUrl: "/pokemonpokopia/items/balloons.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var beanseeds = L.icon({
+			iconUrl: "/pokemonpokopia/items/beanseeds.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var beautifulflowerseeds = L.icon({
+			iconUrl: "/pokemonpokopia/items/beautifulflowerseeds.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var brickwall = L.icon({
+			iconUrl: "/pokemonpokopia/items/brickwall.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var bridgeplank = L.icon({
+			iconUrl: "/pokemonpokopia/items/bridgeplanks.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var cashregister = L.icon({
+			iconUrl: "/pokemonpokopia/items/cashregister.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var ceilingfan = L.icon({
+			iconUrl: "/pokemonpokopia/items/ceilingfan.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var chestotreeseeds = L.icon({
+			iconUrl: "/pokemonpokopia/items/chestoseeds.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var cleaningsupplies = L.icon({
+			iconUrl: "/pokemonpokopia/items/cleaningsupplies.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var communitybox = L.icon({
+			iconUrl: "/pokemonpokopia/items/communitybox.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var cookingpot = L.icon({
+			iconUrl: "/pokemonpokopia/items/cookingpot.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var damphedgeseeds = L.icon({
+			iconUrl: "/pokemonpokopia/items/damp-hedgeseeds.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var dowsingmachine = L.icon({
+			iconUrl: "/pokemonpokopia/items/dowsingmachine.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var elegantflowerseed = L.icon({
+			iconUrl: "/pokemonpokopia/items/elegant-flowerseeds.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var fan = L.icon({
+			iconUrl: "/pokemonpokopia/items/fan.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var firstaidkit = L.icon({
+			iconUrl: "/pokemonpokopia/items/firstaidkit.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var fluff = L.icon({
+			iconUrl: "/pokemonpokopia/items/fluff.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var freezingchamberskit = L.icon({
+			iconUrl: "/pokemonpokopia/items/freezingchamberskit.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var freshwater = L.icon({
+			iconUrl: "/pokemonpokopia/items/freshwater.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var garbagebin = L.icon({
+			iconUrl: "/pokemonpokopia/items/garbagebin.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var goldingot = L.icon({
+			iconUrl: "/pokemonpokopia/items/goldingot.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var haypile = L.icon({
+			iconUrl: "/pokemonpokopia/items/haypile.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var healthyhedgeseeds = L.icon({
+			iconUrl: "/pokemonpokopia/items/healthy-hedgeseeds.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var hotspringspout = L.icon({
+			iconUrl: "/pokemonpokopia/items/hot-springspout.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var industrialbed = L.icon({
+			iconUrl: "/pokemonpokopia/items/industrialbed.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var industrialchair = L.icon({
+			iconUrl: "/pokemonpokopia/items/industrialchair.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var ironchair = L.icon({
+			iconUrl: "/pokemonpokopia/items/ironchair.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var irontable = L.icon({
+			iconUrl: "/pokemonpokopia/items/irontable.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var limestone = L.icon({
+			iconUrl: "/pokemonpokopia/items/limestone.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var microscope = L.icon({
+			iconUrl: "/pokemonpokopia/items/microscope.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var munnabank = L.icon({
+			iconUrl: "/pokemonpokopia/items/munnabank.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var mushroomstreetlight = L.icon({
+			iconUrl: "/pokemonpokopia/items/mushroomstreetlight.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var officecabinet = L.icon({
+			iconUrl: "/pokemonpokopia/items/officecabinet.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var officechair = L.icon({
+			iconUrl: "/pokemonpokopia/items/officechair.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var officedesk = L.icon({
+			iconUrl: "/pokemonpokopia/items/officedesk.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var officetable = L.icon({
+			iconUrl: "/pokemonpokopia/items/officetable.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var pechatreeseed = L.icon({
+			iconUrl: "/pokemonpokopia/items/pechatreeseed.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var perch = L.icon({
+			iconUrl: "/pokemonpokopia/items/perch.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var pikachusofa = L.icon({
+			iconUrl: "/pokemonpokopia/items/pikachusofa.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var pinkhutkit = L.icon({
+			iconUrl: "/pokemonpokopia/items/pinkhutkit.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var plainbed = L.icon({
+			iconUrl: "/pokemonpokopia/items/plainbed.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var plainchair = L.icon({
+			iconUrl: "/pokemonpokopia/items/plainchair.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var plaincloset = L.icon({
+			iconUrl: "/pokemonpokopia/items/plaincloset.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var plaintable = L.icon({
+			iconUrl: "/pokemonpokopia/items/plaintable.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var pokemetal = L.icon({
+			iconUrl: "/pokemonpokopia/items/pokemetal.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var popartbed = L.icon({
+			iconUrl: "/pokemonpokopia/items/popartbed.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var railwaytrack = L.icon({
+			iconUrl: "/pokemonpokopia/items/railwaytrack.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var rarepokemetal = L.icon({
+			iconUrl: "/pokemonpokopia/items/rarepokemetal.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var resortlight = L.icon({
+			iconUrl: "/pokemonpokopia/items/resortlight.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var resorttable = L.icon({
+			iconUrl: "/pokemonpokopia/items/resorttable.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var rowletclock = L.icon({
+			iconUrl: "/pokemonpokopia/items/rowletclock.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var rusticdoor = L.icon({
+			iconUrl: "/pokemonpokopia/items/rusticdoor.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var sandbox = L.icon({
+			iconUrl: "/pokemonpokopia/items/sandbox.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var scienceexperiment = L.icon({
+			iconUrl: "/pokemonpokopia/items/scienceexperiment.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var scrapcube = L.icon({
+			iconUrl: "/pokemonpokopia/items/scrapcube.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var securitycamera = L.icon({
+			iconUrl: "/pokemonpokopia/items/securitycamera.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var sewerholecover = L.icon({
+			iconUrl: "/pokemonpokopia/items/sewer-holecover.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var shipswheel = L.icon({
+			iconUrl: "/pokemonpokopia/items/ship'swheel.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var slendercandle = L.icon({
+			iconUrl: "/pokemonpokopia/items/slendercandle.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var slowpokerug = L.icon({
+			iconUrl: "/pokemonpokopia/items/slowpokerug.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var smallstage = L.icon({
+			iconUrl: "/pokemonpokopia/items/smallstage.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var smeltingfurnace = L.icon({
+			iconUrl: "/pokemonpokopia/items/smeltingfurnace.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var smoothrock = L.icon({
+			iconUrl: "/pokemonpokopia/items/smoothrock.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var spotlight = L.icon({
+			iconUrl: "/pokemonpokopia/items/spotlight.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var squaretiling = L.icon({
+			iconUrl: "/pokemonpokopia/items/squaretiling.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var stonehousekit = L.icon({
+			iconUrl: "/pokemonpokopia/items/stonehousekit.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var stonesteps = L.icon({
+			iconUrl: "/pokemonpokopia/items/stonesteps.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var storagebox = L.icon({
+			iconUrl: "/pokemonpokopia/items/storagebox.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var strawbed = L.icon({
+			iconUrl: "/pokemonpokopia/items/strawbed.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var strawtable = L.icon({
+			iconUrl: "/pokemonpokopia/items/strawtable.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var stylishhedgeseeds = L.icon({
+			iconUrl: "/pokemonpokopia/items/stylish-hedgeseeds.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var torch = L.icon({
+			iconUrl: "/pokemonpokopia/items/torch.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var utilitypole = L.icon({
+			iconUrl: "/pokemonpokopia/items/utilitypole.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var vinerope = L.icon({
+			iconUrl: "/pokemonpokopia/items/vinerope.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var walkway = L.icon({
+			iconUrl: "/pokemonpokopia/items/walkway.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var wallswitch = L.icon({
+			iconUrl: "/pokemonpokopia/items/wallswitch.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var woodenbasin = L.icon({
+			iconUrl: "/pokemonpokopia/items/waterbasin.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var woodenbed = L.icon({
+			iconUrl: "/pokemonpokopia/items/woodenbed.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var woodenladder = L.icon({
+			iconUrl: "/pokemonpokopia/items/woodenladder.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var yellowhutkit = L.icon({
+			iconUrl: "/pokemonpokopia/items/yellowhutkit.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		
+		var grubbybook = L.icon({			iconUrl: "/pokemonpokopia/items/grubbybook.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var grubbycellphone = L.icon({			iconUrl: "/pokemonpokopia/items/grubbycellphone.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var grubbyletter = L.icon({			iconUrl: "/pokemonpokopia/items/grubbyletter.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var grubbynewspaper = L.icon({			iconUrl: "/pokemonpokopia/items/grubbynewspaper.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var grubbynotepad = L.icon({			iconUrl: "/pokemonpokopia/items/grubbynotepad.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var grubbypapers = L.icon({			iconUrl: "/pokemonpokopia/items/grubbypapers.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+		var grubbytablet = L.icon({			iconUrl: "/pokemonpokopia/items/grubbytablet.png",
+			iconSize: [ 32, 32 ], // size of the icon
+			iconAnchor: [ 16, 16 ], // point of the icon which will correspond to marker's location
+		});
+
+
+		var southWest = map.unproject([0, 2048], map.getMaxZoom());
+		var northEast = map.unproject([2048, 0], map.getMaxZoom());
+		map.setMaxBounds(new L.LatLngBounds(southWest, northEast));
+
+		L.tileLayer("/pokemonpokopia/locations/sparklingskylands/tile_{z}-{x}-{y}.png", {
+			minZoom: 0,
+			maxZoom: 3,
+			noWrap: true,
+			attribution: "Pok&eacute;mon Pokopia Sparkling Skylands - Serebii Map",//map label in bottom right
+		}).addTo(map);
+
+		var layPokeball = L.layerGroup();
+		var layAlpha = L.layerGroup();
+		var layViolet = L.layerGroup();
+		var layOgre = L.layerGroup();
+		var layTrainer = L.layerGroup();
+		var layTera = L.layerGroup();
+		var laySymbol = L.layerGroup();
+		var layOnare = L.layerGroup();
+		var layOgerpon = L.layerGroup();
+		var layFezandipiti = L.layerGroup();
+		var layOkidogi = L.layerGroup();
+		var layWZ = L.layerGroup();
+		var layMunkidori = L.layerGroup();
+		var layFly = L.layerGroup();
+		var layCoin = L.layerGroup();
+		var layItem = L.layerGroup();
+		var layRecipe = L.layerGroup();
+		var layHuman = L.layerGroup();
+		
+		
+		var layPokeFilter = L.featureGroup();// pokemon search results are displayed on this layer
+var pmarkers = [
+{ coords: [1045.12, 127, 1138.12], icon: beautifulflowerseeds,  tableID: 76, layer: layItem },  
+{ coords: [959.12, 127, 1242.12], icon: cleaningsupplies,  tableID: 74, layer: layItem },  
+{ coords: [1125.12, 127, 408.12], icon: fluff,  tableID: 89, layer: layItem },  
+{ coords: [1247.12, 127, 230.12], icon: goldingot,  tableID: 90, layer: layItem },  
+{ coords: [1558.62, 127, 1280.12], icon: limestone,  tableID: 82, layer: layItem },  
+{ coords: [1077.12, 127, 890.12], icon: microscope,  tableID: 86, layer: layItem },  
+{ coords: [1323.12, 127, 1226.12], icon: officecabinet,  tableID: 80, layer: layRecipe },  
+{ coords: [1765.12, 127, 912.12], icon: officechair,  tableID: 85, layer: layRecipe },  
+{ coords: [767.12, 127, 1292.12], icon: officedesk,  tableID: 73, layer: layRecipe },  
+{ coords: [1123.12, 127, 462.12], icon: officetable,  tableID: 88, layer: layRecipe },  
+{ coords: [963.12, 127, 1180.12], icon: popartbed,  tableID: 77, layer: layItem },  
+{ coords: [1183.12, 127, 438.12], icon: rarepokemetal,  tableID: 91, layer: layItem },  
+{ coords: [1027.62, 127, 729.12], icon: scienceexperiment,  tableID: 92, layer: layItem },  
+{ coords: [1481.12, 127, 1248.12], icon: scrapcube,  tableID: 84, layer: layRecipe },  
+{ coords: [1517.12, 127, 1180.12], icon: sewerholecover,  tableID: 81, layer: layItem },  
+{ coords: [1421.12, 127, 1260.12], icon: smeltingfurnace,  tableID: 79, layer: layItem },  
+{ coords: [1485.12, 127, 1310.12], icon: stylishhedgeseeds,  tableID: 78, layer: layItem },  
+{ coords: [911.12, 127, 902.12], icon: wallswitch,  tableID: 87, layer: layItem },  
+{ coords: [1435.12, 127, 1198.12], icon: woodenladder,  tableID: 83, layer: layItem },  
+{ coords: [1057.12, 127, 1338.12], icon: yellowhutkit,  tableID: 75, layer: layItem },  
+{ coords: [826.2, 127, 1269.3], icon: grubbytablet,  tableID: 1006, layer: layHuman },
+{ coords: [1630.2, 127, 1249.3], icon: grubbynewspaper,  tableID: 1007, layer: layHuman },
+{ coords: [1698.2, 127, 877.3], icon: grubbynewspaper,  tableID: 1008, layer: layHuman },
+{ coords: [1262.2, 127, 515.3], icon: grubbytablet,  tableID: 1009, layer: layHuman },
+{ coords: [404.2, 127, 431.3], icon: grubbybook,  tableID: 1020, layer: layHuman },
+{ coords: [1668.2, 127, 991.3], icon: grubbybook,  tableID: 1021, layer: layHuman },
+{ coords: [1138.2, 127, 1227.3], icon: grubbybook,  tableID: 1026, layer: layHuman },
+{ coords: [1098.2, 127, 1089.3], icon: grubbybook,  tableID: 1027, layer: layHuman },
+{ coords: [456.2, 127, 557.3], icon: grubbybook,  tableID: 1045, layer: layHuman },
+{ coords: [1248.2, 127, 285.3], icon: grubbybook,  tableID: 1046, layer: layHuman },
+{ coords: [1046.2, 127, 819.3], icon: grubbytablet,  tableID: 1074, layer: layHuman },
+{ coords: [1534.2, 127, 1203.3], icon: grubbytablet,  tableID: 1075, layer: layHuman },
+{ coords: [1020.2, 127, 893.3], icon: grubbytablet,  tableID: 1081, layer: layHuman },
+{ coords: [1768.7, 127, 910.3], icon: grubbytablet,  tableID: 1085, layer: layHuman },
+{ coords: [698.7, 127, 1260.3], icon: grubbynotepad,  tableID: 1091, layer: layHuman },
+{ coords: [1476.7, 127, 986.3], icon: grubbyletter,  tableID: 1100, layer: layHuman },
+{ coords: [1502.7, 127, 874.3], icon: grubbypapers,  tableID: 1107, layer: layHuman },
+{ coords: [644.7, 127, 478.3], icon: grubbytablet,  tableID: 1114, layer: layHuman },
+{ coords: [967.7, 127, 1199.3], icon: grubbytablet,  tableID: 1115, layer: layHuman },
+
+];
+		// create all the markers
+		for (var idx in pmarkers) {
+			L.marker(cvert(pmarkers[ idx ].coords), { icon: pmarkers[ idx ].icon, tableID: pmarkers[ idx ].tableID })
+				.addTo(pmarkers[ idx ].layer)
+				.on("click", onMapClick);
+		}
+
+		// default layers shown
+	</script>
+
+
+
+	<div id="table-popup"></div>
+<p><h2>Naturally Occuring Materials</h2></p>
+
+<table class="dextable" align="center">
+	<tr>
+		<td class="fooevo">Sturdy stick</td><td class="fooevo">Stone</td><td class="fooevo">Vine</td><td class="fooevo">Vine rope</td><td class="fooevo">Glowing mushrooms</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/sturdystick.png" loading="lazy" alt="Sturdy stick" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/stone.png" loading="lazy" alt="Stone" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/vine.png" loading="lazy" alt="Vine" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/vinerope.png" loading="lazy" alt="Vine rope" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/glowingmushrooms.png" loading="lazy" alt="Glowing mushrooms" style="height:120px" /></td></tr>	<tr>
+		<td class="fooevo">Iron ore</td><td class="fooevo">Pok&eacute;metal fragment</td><td class="fooevo">Tomato</td><td class="fooevo">Wheat</td><td class="fooevo">Bean</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/ironore.png" loading="lazy" alt="Iron ore" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/pokemetalfragment.png" loading="lazy" alt="Pok&eacute;metal fragment" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/tomato.png" loading="lazy" alt="Tomato" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/wheat.png" loading="lazy" alt="Wheat" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/bean.png" loading="lazy" alt="Bean" style="height:120px" /></td></tr>	<tr>
+		<td class="fooevo">Twine</td><td class="fooevo">Nonburnable garbage</td><td class="fooevo">Wastepaper</td><td class="fooevo">Small log</td><td class="fooevo">Lumber</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/twine.png" loading="lazy" alt="Twine" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/nonburnablegarbage.png" loading="lazy" alt="Nonburnable garbage" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/wastepaper.png" loading="lazy" alt="Wastepaper" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/smalllog.png" loading="lazy" alt="Small log" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/lumber.png" loading="lazy" alt="Lumber" style="height:120px" /></td></tr>	<tr>
+		<td class="fooevo">Leppa Berry</td><td class="fooevo">Rare Pok&eacute;metal fragment</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/leppaberry.png" loading="lazy" alt="Leppa Berry" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/rarepokemetalfragment.png" loading="lazy" alt="Rare Pok&eacute;metal fragment" style="height:120px" /></td></tr></table><p><h2>Naturally Occuring Plants & Blocks</h2></p>
+
+<table class="dextable" align="center">
+	<tr>
+		<td class="fooevo">Red Tall grass</td><td class="fooevo">Yellow Tall grass</td><td class="fooevo">Pink Tall grass</td><td class="fooevo">Moss</td><td class="fooevo">Leppa Tree</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/redtallgrass.png" loading="lazy" alt="Red Tall grass" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/yellowtallgrass.png" loading="lazy" alt="Yellow Tall grass" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/pinktallgrass.png" loading="lazy" alt="Pink Tall grass" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/moss.png" loading="lazy" alt="Moss" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/leppatree.png" loading="lazy" alt="Leppa Tree" style="height:120px" /></td></tr>	<tr>
+		<td class="fooevo">Pointy tree</td><td class="fooevo">Skyland flowers</td><td class="fooevo">Skyland flowers (blue)</td><td class="fooevo">Skyland flowers (orange)</td><td class="fooevo">Skyland flowers (pink)</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/pointytree.png" loading="lazy" alt="Pointy tree" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/skylandflowers.png" loading="lazy" alt="Skyland flowers" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/skylandflowers(blue).png" loading="lazy" alt="Skyland flowers (blue)" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/skylandflowers(orange).png" loading="lazy" alt="Skyland flowers (orange)" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/skylandflowers(pink).png" loading="lazy" alt="Skyland flowers (pink)" style="height:120px" /></td></tr>	<tr>
+		<td class="fooevo">Skyland flowers (yellow)</td><td class="fooevo">Seashore flowers</td><td class="fooevo">Seashore flowers (blue)</td><td class="fooevo">Seashore flowers (orange)</td><td class="fooevo">Seashore flowers (white)</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/skylandflowers(yellow).png" loading="lazy" alt="Skyland flowers (yellow)" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/seashoreflowers.png" loading="lazy" alt="Seashore flowers" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/seashoreflowers(blue).png" loading="lazy" alt="Seashore flowers (blue)" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/seashoreflowers(orange).png" loading="lazy" alt="Seashore flowers (orange)" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/seashoreflowers(white).png" loading="lazy" alt="Seashore flowers (white)" style="height:120px" /></td></tr>	<tr>
+		<td class="fooevo">Seashore flowers (yellow)</td><td class="fooevo">Mountain flowers</td><td class="fooevo">Mountain flowers (pink)</td><td class="fooevo">Mountain flowers (purple)</td><td class="fooevo">Mountain flowers (red)</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/seashoreflowers(yellow).png" loading="lazy" alt="Seashore flowers (yellow)" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/mountainflowers.png" loading="lazy" alt="Mountain flowers" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/mountainflowers(pink).png" loading="lazy" alt="Mountain flowers (pink)" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/mountainflowers(purple).png" loading="lazy" alt="Mountain flowers (purple)" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/mountainflowers(red).png" loading="lazy" alt="Mountain flowers (red)" style="height:120px" /></td></tr>	<tr>
+		<td class="fooevo">Mountain flowers (white)</td><td class="fooevo">Yellow-green shoots</td><td class="fooevo">Dry yellow-green shoots</td><td class="fooevo">Verdant shoots</td><td class="fooevo">Dry verdant shoots</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/mountainflowers(white).png" loading="lazy" alt="Mountain flowers (white)" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/yellow-greenshoots.png" loading="lazy" alt="Yellow-green shoots" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/dryyellow-greenshoots.png" loading="lazy" alt="Dry yellow-green shoots" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/verdantshoots.png" loading="lazy" alt="Verdant shoots" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/dryverdantshoots.png" loading="lazy" alt="Dry verdant shoots" style="height:120px" /></td></tr>	<tr>
+		<td class="fooevo">Blue-green shoots</td><td class="fooevo">Dry blue-green shoots</td><td class="fooevo">Robust flower</td><td class="fooevo">Robust flower (blue)</td><td class="fooevo">Robust flower (orange)</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/blue-greenshoots.png" loading="lazy" alt="Blue-green shoots" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/dryblue-greenshoots.png" loading="lazy" alt="Dry blue-green shoots" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/robustflower.png" loading="lazy" alt="Robust flower" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/robustflower(blue).png" loading="lazy" alt="Robust flower (blue)" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/robustflower(orange).png" loading="lazy" alt="Robust flower (orange)" style="height:120px" /></td></tr>	<tr>
+		<td class="fooevo">Robust flower (purple)</td><td class="fooevo">Robust flower (white)</td><td class="fooevo">Stylish hedge</td><td class="fooevo">Stylish hedge (blue)</td><td class="fooevo">Stylish hedge (orange)</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/robustflower(purple).png" loading="lazy" alt="Robust flower (purple)" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/robustflower(white).png" loading="lazy" alt="Robust flower (white)" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/stylishhedge.png" loading="lazy" alt="Stylish hedge" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/stylishhedge(blue).png" loading="lazy" alt="Stylish hedge (blue)" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/stylishhedge(orange).png" loading="lazy" alt="Stylish hedge (orange)" style="height:120px" /></td></tr>	<tr>
+		<td class="fooevo">Stylish hedge (purple)</td><td class="fooevo">Stylish hedge (white)</td><td class="fooevo">Seashore grass</td><td class="fooevo">Alpine grass</td><td class="fooevo">Sky-high grass</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/stylishhedge(purple).png" loading="lazy" alt="Stylish hedge (purple)" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/stylishhedge(white).png" loading="lazy" alt="Stylish hedge (white)" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/seashoregrass.png" loading="lazy" alt="Seashore grass" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/alpinegrass.png" loading="lazy" alt="Alpine grass" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/sky-highgrass.png" loading="lazy" alt="Sky-high grass" style="height:120px" /></td></tr>	<tr>
+		<td class="fooevo">Seashell soil</td><td class="fooevo">Striped soil</td><td class="fooevo">Pure-white soil</td><td class="fooevo">Barren pure-white soil</td><td class="fooevo">Ordinary sand</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/seashellsoil.png" loading="lazy" alt="Seashell soil" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/stripedsoil.png" loading="lazy" alt="Striped soil" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/pure-whitesoil.png" loading="lazy" alt="Pure-white soil" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/barrenpure-whitesoil.png" loading="lazy" alt="Barren pure-white soil" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/ordinarysand.png" loading="lazy" alt="Ordinary sand" style="height:120px" /></td></tr>	<tr>
+		<td class="fooevo">Skyland sand</td><td class="fooevo">Skyland sandstone</td><td class="fooevo">Cracked sandstone</td><td class="fooevo">Red cliff rock</td><td class="fooevo">Red spotted cliff rock</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/skylandsand.png" loading="lazy" alt="Skyland sand" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/skylandsandstone.png" loading="lazy" alt="Skyland sandstone" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/crackedsandstone.png" loading="lazy" alt="Cracked sandstone" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/redcliffrock.png" loading="lazy" alt="Red cliff rock" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/redspottedcliffrock.png" loading="lazy" alt="Red spotted cliff rock" style="height:120px" /></td></tr>	<tr>
+		<td class="fooevo">Black cliff rock</td><td class="fooevo">Black spotted cliff rock</td><td class="fooevo">Skyland cliff rock</td><td class="fooevo">Skyland spotted cliff rock</td><td class="fooevo">Skyland sand</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/blackcliffrock.png" loading="lazy" alt="Black cliff rock" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/blackspottedcliffrock.png" loading="lazy" alt="Black spotted cliff rock" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/skylandcliffrock.png" loading="lazy" alt="Skyland cliff rock" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/skylandspottedcliffrock.png" loading="lazy" alt="Skyland spotted cliff rock" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/skylandsand.png" loading="lazy" alt="Skyland sand" style="height:120px" /></td></tr>	<tr>
+		<td class="fooevo">Large boulder</td><td class="fooevo">Mossy boulder</td><td class="fooevo">Mysterious stone</td><td class="fooevo">Light brown rock</td><td class="fooevo">Metal debris</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/largeboulder.png" loading="lazy" alt="Large boulder" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/mossyboulder.png" loading="lazy" alt="Mossy boulder" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/mysteriousstone.png" loading="lazy" alt="Mysterious stone" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/lightbrownrock.png" loading="lazy" alt="Light brown rock" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/metaldebris.png" loading="lazy" alt="Metal debris" style="height:120px" /></td></tr>	<tr>
+		<td class="fooevo">Stone debris</td><td class="fooevo">Worn lumber</td><td class="fooevo">Scrap cube</td><td class="fooevo">Coarse rock</td><td class="fooevo">Cave rock</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/stonedebris.png" loading="lazy" alt="Stone debris" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/wornlumber.png" loading="lazy" alt="Worn lumber" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/scrapcube.png" loading="lazy" alt="Scrap cube" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/coarserock.png" loading="lazy" alt="Coarse rock" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/caverock.png" loading="lazy" alt="Cave rock" style="height:120px" /></td></tr>	<tr>
+		<td class="fooevo">Mossy soil</td><td class="fooevo">Stone brick wall</td><td class="fooevo">Stone fragments</td><td class="fooevo">Metal fragments</td><td class="fooevo">Stalagmites</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/mossysoil.png" loading="lazy" alt="Mossy soil" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/stonebrickwall.png" loading="lazy" alt="Stone brick wall" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/stonefragments.png" loading="lazy" alt="Stone fragments" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/metalfragments.png" loading="lazy" alt="Metal fragments" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/stalagmites.png" loading="lazy" alt="Stalagmites" style="height:120px" /></td></tr>	<tr>
+		<td class="fooevo">Limestone</td><td class="fooevo">Levee</td><td class="fooevo">Rough wall</td><td class="fooevo">Stone pillar (middle)</td><td class="fooevo">Stylish brick wall (lower)</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/limestone.png" loading="lazy" alt="Limestone" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/levee.png" loading="lazy" alt="Levee" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/roughwall.png" loading="lazy" alt="Rough wall" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/stonepillar(middle).png" loading="lazy" alt="Stone pillar (middle)" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/stylishbrickwall(lower).png" loading="lazy" alt="Stylish brick wall (lower)" style="height:120px" /></td></tr>	<tr>
+		<td class="fooevo">Brick wall</td><td class="fooevo">Stylish brick wall (upper)</td><td class="fooevo">Concrete wall</td><td class="fooevo">Striped wall</td><td class="fooevo">Neon flooring</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/brickwall.png" loading="lazy" alt="Brick wall" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/stylishbrickwall(upper).png" loading="lazy" alt="Stylish brick wall (upper)" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/concretewall.png" loading="lazy" alt="Concrete wall" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/stripedwall.png" loading="lazy" alt="Striped wall" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/neonflooring.png" loading="lazy" alt="Neon flooring" style="height:120px" /></td></tr>	<tr>
+		<td class="fooevo">Square tiling</td><td class="fooevo">Damaged square tiling</td><td class="fooevo">Iron-plate flooring</td><td class="fooevo">Rusted iron-plate flooring</td><td class="fooevo">Warning wall</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/squaretiling.png" loading="lazy" alt="Square tiling" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/damagedsquaretiling.png" loading="lazy" alt="Damaged square tiling" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/iron-plateflooring.png" loading="lazy" alt="Iron-plate flooring" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/rustediron-plateflooring.png" loading="lazy" alt="Rusted iron-plate flooring" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/warningwall.png" loading="lazy" alt="Warning wall" style="height:120px" /></td></tr>	<tr>
+		<td class="fooevo">Asphalt road</td><td class="fooevo">Damaged asphalt road</td><td class="fooevo">Marked road (horizontal)</td><td class="fooevo">Muddy tiling</td><td class="fooevo">Cyber flooring</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/asphaltroad.png" loading="lazy" alt="Asphalt road" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/damagedasphaltroad.png" loading="lazy" alt="Damaged asphalt road" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/markedroad(horizontal).png" loading="lazy" alt="Marked road (horizontal)" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/muddytiling.png" loading="lazy" alt="Muddy tiling" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/cyberflooring.png" loading="lazy" alt="Cyber flooring" style="height:120px" /></td></tr>	<tr>
+		<td class="fooevo">Damaged wooden flooring</td><td class="fooevo">Foundation</td><td class="fooevo">Iron tiling</td><td class="fooevo">Protruding wall</td><td class="fooevo">Gray circle flooring</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/damagedwoodenflooring.png" loading="lazy" alt="Damaged wooden flooring" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/foundation.png" loading="lazy" alt="Foundation" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/irontiling.png" loading="lazy" alt="Iron tiling" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/protrudingwall.png" loading="lazy" alt="Protruding wall" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/graycircleflooring.png" loading="lazy" alt="Gray circle flooring" style="height:120px" /></td></tr>	<tr>
+		<td class="fooevo">Mosaic tiling</td><td class="fooevo">Damaged mosaic tiling</td><td class="fooevo">Woven carpeting</td><td class="fooevo">Pop art wall (upper)</td><td class="fooevo">Pop art wall (middle)</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/mosaictiling.png" loading="lazy" alt="Mosaic tiling" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/damagedmosaictiling.png" loading="lazy" alt="Damaged mosaic tiling" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/wovencarpeting.png" loading="lazy" alt="Woven carpeting" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/popartwall(upper).png" loading="lazy" alt="Pop art wall (upper)" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/popartwall(middle).png" loading="lazy" alt="Pop art wall (middle)" style="height:120px" /></td></tr>	<tr>
+		<td class="fooevo">Pop art wall (lower)</td><td class="fooevo">Strength rock</td><td class="fooevo">Iron beam</td><td class="fooevo">Iron column</td><td class="fooevo">Iron plating</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/popartwall(lower).png" loading="lazy" alt="Pop art wall (lower)" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/strengthrock.png" loading="lazy" alt="Strength rock" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/ironbeam.png" loading="lazy" alt="Iron beam" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/ironcolumn.png" loading="lazy" alt="Iron column" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/ironplating.png" loading="lazy" alt="Iron plating" style="height:120px" /></td></tr>	<tr>
+		<td class="fooevo">Extravagant carpeting</td><td class="fooevo">Light marble flooring</td><td class="fooevo">Wooden wall</td><td class="fooevo">Modern carpeting</td><td class="fooevo">Grass flooring</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/extravagantcarpeting.png" loading="lazy" alt="Extravagant carpeting" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/lightmarbleflooring.png" loading="lazy" alt="Light marble flooring" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/woodenwall.png" loading="lazy" alt="Wooden wall" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/moderncarpeting.png" loading="lazy" alt="Modern carpeting" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/grassflooring.png" loading="lazy" alt="Grass flooring" style="height:120px" /></td></tr>	<tr>
+		<td class="fooevo">Cube light</td><td class="fooevo">Wooden flooring</td><td class="fooevo">Crisscross wooden flooring</td><td class="fooevo">Antique wall (lower)</td><td class="fooevo">Antique wall (middle)</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/cubelight.png" loading="lazy" alt="Cube light" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/woodenflooring.png" loading="lazy" alt="Wooden flooring" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/crisscrosswoodenflooring.png" loading="lazy" alt="Crisscross wooden flooring" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/antiquewall(lower).png" loading="lazy" alt="Antique wall (lower)" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/antiquewall(middle).png" loading="lazy" alt="Antique wall (middle)" style="height:120px" /></td></tr>	<tr>
+		<td class="fooevo">Antique wall (upper)</td><td class="fooevo">Plaster wall</td><td class="fooevo">Stylish tiling</td><td class="fooevo">Simple square tiling</td><td class="fooevo">Broken-tiling wall</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/antiquewall(upper).png" loading="lazy" alt="Antique wall (upper)" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/plasterwall.png" loading="lazy" alt="Plaster wall" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/stylishtiling.png" loading="lazy" alt="Stylish tiling" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/simplesquaretiling.png" loading="lazy" alt="Simple square tiling" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/broken-tilingwall.png" loading="lazy" alt="Broken-tiling wall" style="height:120px" /></td></tr>	<tr>
+		<td class="fooevo">Cushy wall</td><td class="fooevo">Light wooden wall</td><td class="fooevo">Wooden pillar (upper)</td><td class="fooevo">Wooden pillar (middle)</td><td class="fooevo">Wooden pillar (lower)</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/cushywall.png" loading="lazy" alt="Cushy wall" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/lightwoodenwall.png" loading="lazy" alt="Light wooden wall" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/woodenpillar(upper).png" loading="lazy" alt="Wooden pillar (upper)" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/woodenpillar(middle).png" loading="lazy" alt="Wooden pillar (middle)" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/woodenpillar(lower).png" loading="lazy" alt="Wooden pillar (lower)" style="height:120px" /></td></tr>	<tr>
+		<td class="fooevo">Hardwood flooring</td><td class="fooevo">Cloth wall</td><td class="fooevo">Grubby rags</td><td class="fooevo">Copper deposit (Skyland)</td><td class="fooevo">Iron deposit</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/hardwoodflooring.png" loading="lazy" alt="Hardwood flooring" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/clothwall.png" loading="lazy" alt="Cloth wall" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/grubbyrags.png" loading="lazy" alt="Grubby rags" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/copperdeposit(skyland).png" loading="lazy" alt="Copper deposit (Skyland)" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/irondeposit.png" loading="lazy" alt="Iron deposit" style="height:120px" /></td></tr>	<tr>
+		<td class="fooevo">Pok&eacute;metal deposit</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/pokemetaldeposit.png" loading="lazy" alt="Pok&eacute;metal deposit" style="height:120px" /></td></tr></table><p><h2>Items Found in Area</h2></p>
+
+<table class="dextable" align="center">
+	<tr>
+		<td class="fooevo">Workbench</td><td class="fooevo">Storage box</td><td class="fooevo">Stone steps</td><td class="fooevo">Harbor pole</td><td class="fooevo">Iron steps</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/workbench.png" loading="lazy" alt="Workbench" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/storagebox.png" loading="lazy" alt="Storage box" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/stonesteps.png" loading="lazy" alt="Stone steps" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/harborpole.png" loading="lazy" alt="Harbor pole" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/ironsteps.png" loading="lazy" alt="Iron steps" style="height:120px" /></td></tr>	<tr>
+		<td class="fooevo">Broken iron steps</td><td class="fooevo">Grate flooring</td><td class="fooevo">Double streetlight</td><td class="fooevo">Metal drum</td><td class="fooevo">Utility pole</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/brokenironsteps.png" loading="lazy" alt="Broken iron steps" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/grateflooring.png" loading="lazy" alt="Grate flooring" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/doublestreetlight.png" loading="lazy" alt="Double streetlight" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/metaldrum.png" loading="lazy" alt="Metal drum" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/utilitypole.png" loading="lazy" alt="Utility pole" style="height:120px" /></td></tr>	<tr>
+		<td class="fooevo">Spotlight</td><td class="fooevo">Gaming light</td><td class="fooevo">Raichu sign</td><td class="fooevo">Fire hydrant</td><td class="fooevo">Lift platform</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/spotlight.png" loading="lazy" alt="Spotlight" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/gaminglight.png" loading="lazy" alt="Gaming light" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/raichusign.png" loading="lazy" alt="Raichu sign" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/firehydrant.png" loading="lazy" alt="Fire hydrant" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/liftplatform.png" loading="lazy" alt="Lift platform" style="height:120px" /></td></tr>	<tr>
+		<td class="fooevo">Metal fencing</td><td class="fooevo">Wooden fencing</td><td class="fooevo">Wooden path</td><td class="fooevo">Industrial bench</td><td class="fooevo">Cardboard boxes</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/metalfencing.png" loading="lazy" alt="Metal fencing" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/woodenfencing.png" loading="lazy" alt="Wooden fencing" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/woodenpath.png" loading="lazy" alt="Wooden path" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/industrialbench.png" loading="lazy" alt="Industrial bench" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/cardboardboxes.png" loading="lazy" alt="Cardboard boxes" style="height:120px" /></td></tr>	<tr>
+		<td class="fooevo">Towel rack</td><td class="fooevo">Kitchen table</td><td class="fooevo">Cooking stove</td><td class="fooevo">Cutting board</td><td class="fooevo">Twisted potted plant</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/towelrack.png" loading="lazy" alt="Towel rack" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/kitchentable.png" loading="lazy" alt="Kitchen table" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/cookingstove.png" loading="lazy" alt="Cooking stove" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/cuttingboard.png" loading="lazy" alt="Cutting board" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/twistedpottedplant.png" loading="lazy" alt="Twisted potted plant" style="height:120px" /></td></tr>	<tr>
+		<td class="fooevo">Industrial chair</td><td class="fooevo">Industrial desk</td><td class="fooevo">Science experiment</td><td class="fooevo">Microscope</td><td class="fooevo">Papers</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/industrialchair.png" loading="lazy" alt="Industrial chair" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/industrialdesk.png" loading="lazy" alt="Industrial desk" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/scienceexperiment.png" loading="lazy" alt="Science experiment" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/microscope.png" loading="lazy" alt="Microscope" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/papers.png" loading="lazy" alt="Papers" style="height:120px" /></td></tr>	<tr>
+		<td class="fooevo">Office locker</td><td class="fooevo">Computer</td><td class="fooevo">Rope</td><td class="fooevo">Garbage bin</td><td class="fooevo">Railway track</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/officelocker.png" loading="lazy" alt="Office locker" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/computer.png" loading="lazy" alt="Computer" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/rope.png" loading="lazy" alt="Rope" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/garbagebin.png" loading="lazy" alt="Garbage bin" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/railwaytrack.png" loading="lazy" alt="Railway track" style="height:120px" /></td></tr>	<tr>
+		<td class="fooevo">Beach parasol</td><td class="fooevo">Iron pipes</td><td class="fooevo">Iron scaffold</td><td class="fooevo">Excavation tools</td><td class="fooevo">Folding chair</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/beachparasol.png" loading="lazy" alt="Beach parasol" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/ironpipes.png" loading="lazy" alt="Iron pipes" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/ironscaffold.png" loading="lazy" alt="Iron scaffold" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/excavationtools.png" loading="lazy" alt="Excavation tools" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/foldingchair.png" loading="lazy" alt="Folding chair" style="height:120px" /></td></tr>	<tr>
+		<td class="fooevo">Balloons</td><td class="fooevo">Lantern</td><td class="fooevo">Mirror ball</td><td class="fooevo">String lights</td><td class="fooevo">Worn wooden crate</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/balloons.png" loading="lazy" alt="Balloons" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/lantern.png" loading="lazy" alt="Lantern" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/mirrorball.png" loading="lazy" alt="Mirror ball" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/stringlights.png" loading="lazy" alt="String lights" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/wornwoodencrate.png" loading="lazy" alt="Worn wooden crate" style="height:120px" /></td></tr>	<tr>
+		<td class="fooevo">Office chair</td><td class="fooevo">Office table</td><td class="fooevo">Plain sofa</td><td class="fooevo">Office shelf</td><td class="fooevo">Office desk</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/officechair.png" loading="lazy" alt="Office chair" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/officetable.png" loading="lazy" alt="Office table" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/plainsofa.png" loading="lazy" alt="Plain sofa" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/officeshelf.png" loading="lazy" alt="Office shelf" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/officedesk.png" loading="lazy" alt="Office desk" style="height:120px" /></td></tr>	<tr>
+		<td class="fooevo">Laptop</td><td class="fooevo">Planter</td><td class="fooevo">Vending machine</td><td class="fooevo">CD player</td><td class="fooevo">Pop art sofa</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/laptop.png" loading="lazy" alt="Laptop" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/planter.png" loading="lazy" alt="Planter" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/vendingmachine.png" loading="lazy" alt="Vending machine" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/cdplayer.png" loading="lazy" alt="CD player" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/popartsofa.png" loading="lazy" alt="Pop art sofa" style="height:120px" /></td></tr>	<tr>
+		<td class="fooevo">Jumbled cords</td><td class="fooevo">Tea set</td><td class="fooevo">Office cabinet</td><td class="fooevo">Humidifier</td><td class="fooevo">Stylish cooking pot</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/jumbledcords.png" loading="lazy" alt="Jumbled cords" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/teaset.png" loading="lazy" alt="Tea set" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/officecabinet.png" loading="lazy" alt="Office cabinet" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/humidifier.png" loading="lazy" alt="Humidifier" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/stylishcookingpot.png" loading="lazy" alt="Stylish cooking pot" style="height:120px" /></td></tr>	<tr>
+		<td class="fooevo">Modern sink</td><td class="fooevo">Plain table</td><td class="fooevo">Garden chair</td><td class="fooevo">Garden table</td><td class="fooevo">Spectator chair</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/modernsink.png" loading="lazy" alt="Modern sink" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/plaintable.png" loading="lazy" alt="Plain table" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/gardenchair.png" loading="lazy" alt="Garden chair" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/gardentable.png" loading="lazy" alt="Garden table" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/spectatorchair.png" loading="lazy" alt="Spectator chair" style="height:120px" /></td></tr>	<tr>
+		<td class="fooevo">Pok&eacute; Ball lamp</td><td class="fooevo">Team Rocket wall hanging</td><td class="fooevo">CD rack</td><td class="fooevo">Fluorescent light</td><td class="fooevo">Grate fencing</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/pokeballlamp.png" loading="lazy" alt="Pok&eacute; Ball lamp" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/teamrocketwallhanging.png" loading="lazy" alt="Team Rocket wall hanging" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/cdrack.png" loading="lazy" alt="CD rack" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/fluorescentlight.png" loading="lazy" alt="Fluorescent light" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/gratefencing.png" loading="lazy" alt="Grate fencing" style="height:120px" /></td></tr>	<tr>
+		<td class="fooevo">Iron ladder</td><td class="fooevo">Elevator platform</td><td class="fooevo">Metallic smelting furnace</td><td class="fooevo">Simple cushion</td><td class="fooevo">Simple curtain (left)</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/ironladder.png" loading="lazy" alt="Iron ladder" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/elevatorplatform.png" loading="lazy" alt="Elevator platform" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/metallicsmeltingfurnace.png" loading="lazy" alt="Metallic smelting furnace" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/simplecushion.png" loading="lazy" alt="Simple cushion" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/simplecurtain(left).png" loading="lazy" alt="Simple curtain (left)" style="height:120px" /></td></tr>	<tr>
+		<td class="fooevo">Simple curtain (right)</td><td class="fooevo">Eerie candle</td><td class="fooevo">Window pane</td><td class="fooevo">Broken window pane</td><td class="fooevo">Hanging scroll</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/simplecurtain(right).png" loading="lazy" alt="Simple curtain (right)" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/eeriecandle.png" loading="lazy" alt="Eerie candle" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/windowpane.png" loading="lazy" alt="Window pane" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/brokenwindowpane.png" loading="lazy" alt="Broken window pane" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/hangingscroll.png" loading="lazy" alt="Hanging scroll" style="height:120px" /></td></tr>	<tr>
+		<td class="fooevo">Sloped tile roof</td><td class="fooevo">Wooden partition</td><td class="fooevo">Punching bag</td><td class="fooevo">Horsea fountain</td><td class="fooevo">Whiteboard</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/slopedtileroof.png" loading="lazy" alt="Sloped tile roof" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/woodenpartition.png" loading="lazy" alt="Wooden partition" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/punchingbag.png" loading="lazy" alt="Punching bag" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/horseafountain.png" loading="lazy" alt="Horsea fountain" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/whiteboard.png" loading="lazy" alt="Whiteboard" style="height:120px" /></td></tr>	<tr>
+		<td class="fooevo">Sewer-hole cover</td><td class="fooevo">Garbage bags</td><td class="fooevo">Chic sofa</td><td class="fooevo">Recycling bin</td><td class="fooevo">Surface light</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/sewer-holecover.png" loading="lazy" alt="Sewer-hole cover" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/garbagebags.png" loading="lazy" alt="Garbage bags" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/chicsofa.png" loading="lazy" alt="Chic sofa" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/recyclingbin.png" loading="lazy" alt="Recycling bin" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/surfacelight.png" loading="lazy" alt="Surface light" style="height:120px" /></td></tr>	<tr>
+		<td class="fooevo">Tall potted plant</td><td class="fooevo">Corrugated metal</td><td class="fooevo">Concrete mixer</td><td class="fooevo">Glass window</td><td class="fooevo">First aid kit</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/tallpottedplant.png" loading="lazy" alt="Tall potted plant" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/corrugatedmetal.png" loading="lazy" alt="Corrugated metal" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/concretemixer.png" loading="lazy" alt="Concrete mixer" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/glasswindow.png" loading="lazy" alt="Glass window" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/firstaidkit.png" loading="lazy" alt="First aid kit" style="height:120px" /></td></tr>	<tr>
+		<td class="fooevo">Slide</td><td class="fooevo">Berry clock</td><td class="fooevo">Wooden posts</td><td class="fooevo">Balloons</td><td class="fooevo">Pok&eacute; Ball bed</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/slide.png" loading="lazy" alt="Slide" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/berryclock.png" loading="lazy" alt="Berry clock" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/woodenposts.png" loading="lazy" alt="Wooden posts" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/balloons.png" loading="lazy" alt="Balloons" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/pokeballbed.png" loading="lazy" alt="Pok&eacute; Ball bed" style="height:120px" /></td></tr>	<tr>
+		<td class="fooevo">Tire toy</td><td class="fooevo">Pop art table</td><td class="fooevo">Toy blocks</td><td class="fooevo">Pop art chair</td><td class="fooevo">Flat-leaf plant</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/tiretoy.png" loading="lazy" alt="Tire toy" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/poparttable.png" loading="lazy" alt="Pop art table" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/toyblocks.png" loading="lazy" alt="Toy blocks" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/popartchair.png" loading="lazy" alt="Pop art chair" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/flat-leafplant.png" loading="lazy" alt="Flat-leaf plant" style="height:120px" /></td></tr>	<tr>
+		<td class="fooevo">Simple door</td><td class="fooevo">Pop art lamp</td><td class="fooevo">Menu board</td><td class="fooevo">Swinging doors</td><td class="fooevo">Corkboard</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/simpledoor.png" loading="lazy" alt="Simple door" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/popartlamp.png" loading="lazy" alt="Pop art lamp" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/menuboard.png" loading="lazy" alt="Menu board" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/swingingdoors.png" loading="lazy" alt="Swinging doors" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/corkboard.png" loading="lazy" alt="Corkboard" style="height:120px" /></td></tr>	<tr>
+		<td class="fooevo">Air conditioner</td><td class="fooevo">Cash register</td><td class="fooevo">Wall-mounted table</td><td class="fooevo">Pitcher-plant pot</td><td class="fooevo">Bookcase</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/airconditioner.png" loading="lazy" alt="Air conditioner" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/cashregister.png" loading="lazy" alt="Cash register" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/wall-mountedtable.png" loading="lazy" alt="Wall-mounted table" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/pitcher-plantpot.png" loading="lazy" alt="Pitcher-plant pot" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/bookcase.png" loading="lazy" alt="Bookcase" style="height:120px" /></td></tr>	<tr>
+		<td class="fooevo">Control unit</td><td class="fooevo">Step stool</td><td class="fooevo">Decorative storage shelf</td><td class="fooevo">Magazine rack</td><td class="fooevo">Chic chair</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/controlunit.png" loading="lazy" alt="Control unit" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/stepstool.png" loading="lazy" alt="Step stool" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/decorativestorageshelf.png" loading="lazy" alt="Decorative storage shelf" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/magazinerack.png" loading="lazy" alt="Magazine rack" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/chicchair.png" loading="lazy" alt="Chic chair" style="height:120px" /></td></tr>	<tr>
+		<td class="fooevo">Seedot lamp</td><td class="fooevo">Glossy awning</td><td class="fooevo">Antique chair</td><td class="fooevo">Stained-glass window (middle)</td><td class="fooevo">Stained-glass window (upper)</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/seedotlamp.png" loading="lazy" alt="Seedot lamp" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/glossyawning.png" loading="lazy" alt="Glossy awning" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/antiquechair.png" loading="lazy" alt="Antique chair" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/stained-glasswindow(middle).png" loading="lazy" alt="Stained-glass window (middle)" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/stained-glasswindow(upper).png" loading="lazy" alt="Stained-glass window (upper)" style="height:120px" /></td></tr>	<tr>
+		<td class="fooevo">Luxury lamp</td><td class="fooevo">Antique table</td><td class="fooevo">Antique sofa</td><td class="fooevo">Antique closet</td><td class="fooevo">Push cart</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/luxurylamp.png" loading="lazy" alt="Luxury lamp" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/antiquetable.png" loading="lazy" alt="Antique table" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/antiquesofa.png" loading="lazy" alt="Antique sofa" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/antiquecloset.png" loading="lazy" alt="Antique closet" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/pushcart.png" loading="lazy" alt="Push cart" style="height:120px" /></td></tr>	<tr>
+		<td class="fooevo">Mini bookcase</td><td class="fooevo">Stone fireplace</td><td class="fooevo">Shell lamp</td><td class="fooevo">Cleaning supplies</td><td class="fooevo">Toilet</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/minibookcase.png" loading="lazy" alt="Mini bookcase" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/stonefireplace.png" loading="lazy" alt="Stone fireplace" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/shelllamp.png" loading="lazy" alt="Shell lamp" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/cleaningsupplies.png" loading="lazy" alt="Cleaning supplies" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/toilet.png" loading="lazy" alt="Toilet" style="height:120px" /></td></tr>	<tr>
+		<td class="fooevo">Sink</td><td class="fooevo">Bathtub</td><td class="fooevo">Shower</td><td class="fooevo">Antique dresser</td><td class="fooevo">Fancy pen</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/sink.png" loading="lazy" alt="Sink" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/bathtub.png" loading="lazy" alt="Bathtub" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/shower.png" loading="lazy" alt="Shower" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/antiquedresser.png" loading="lazy" alt="Antique dresser" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/fancypen.png" loading="lazy" alt="Fancy pen" style="height:120px" /></td></tr>	<tr>
+		<td class="fooevo">Antique chest</td><td class="fooevo">Antique chandelier</td><td class="fooevo">Garden light</td><td class="fooevo">Garden bench</td><td class="fooevo">Large ventilation fan</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/antiquechest.png" loading="lazy" alt="Antique chest" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/antiquechandelier.png" loading="lazy" alt="Antique chandelier" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/gardenlight.png" loading="lazy" alt="Garden light" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/gardenbench.png" loading="lazy" alt="Garden bench" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/largeventilationfan.png" loading="lazy" alt="Large ventilation fan" style="height:120px" /></td></tr>	<tr>
+		<td class="fooevo">Naptime bed</td><td class="fooevo">Public chair</td><td class="fooevo">Pok&eacute;ball table</td><td class="fooevo">Counter</td><td class="fooevo">Wooden plate</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/naptimebed.png" loading="lazy" alt="Naptime bed" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/publicchair.png" loading="lazy" alt="Public chair" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/pokeballtable.png" loading="lazy" alt="Pok&eacute;ball table" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/counter.png" loading="lazy" alt="Counter" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/woodenplate.png" loading="lazy" alt="Wooden plate" style="height:120px" /></td></tr>	<tr>
+		<td class="fooevo">Broken streetlight</td><td class="fooevo">Mushroom streetlight</td><td class="fooevo">Construction supplies</td><td class="fooevo">Wall mirror</td><td class="fooevo">Torch</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/brokenstreetlight.png" loading="lazy" alt="Broken streetlight" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/mushroomstreetlight.png" loading="lazy" alt="Mushroom streetlight" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/constructionsupplies.png" loading="lazy" alt="Construction supplies" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/wallmirror.png" loading="lazy" alt="Wall mirror" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/torch.png" loading="lazy" alt="Torch" style="height:120px" /></td></tr>	<tr>
+		<td class="fooevo">Stepping stones</td><td class="fooevo">Arched barrier</td><td class="fooevo">Card reader</td><td class="fooevo">Shutter</td><td class="fooevo">Printer</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/steppingstones.png" loading="lazy" alt="Stepping stones" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/archedbarrier.png" loading="lazy" alt="Arched barrier" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/cardreader.png" loading="lazy" alt="Card reader" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/shutter.png" loading="lazy" alt="Shutter" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/printer.png" loading="lazy" alt="Printer" style="height:120px" /></td></tr>	<tr>
+		<td class="fooevo">Wall calendar</td><td class="fooevo">Clefairy doll</td><td class="fooevo">Iron pipe (downward T)</td><td class="fooevo">Iron pipe (downward curve)</td><td class="fooevo">Iron pipe (vertical)</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/wallcalendar.png" loading="lazy" alt="Wall calendar" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/clefairydoll.png" loading="lazy" alt="Clefairy doll" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/ironpipe(downwardt).png" loading="lazy" alt="Iron pipe (downward T)" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/ironpipe(downwardcurve).png" loading="lazy" alt="Iron pipe (downward curve)" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/ironpipe(vertical).png" loading="lazy" alt="Iron pipe (vertical)" style="height:120px" /></td></tr>	<tr>
+		<td class="fooevo">Iron pipe (horizontal)</td><td class="fooevo">Iron pipe (vertical T)</td><td class="fooevo">Iron pipe (upward curve)</td><td class="fooevo">Iron pipe (upward T)</td><td class="fooevo">Iron pipe (vertical cross)</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/ironpipe(horizontal).png" loading="lazy" alt="Iron pipe (horizontal)" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/ironpipe(verticalt).png" loading="lazy" alt="Iron pipe (vertical T)" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/ironpipe(upwardcurve).png" loading="lazy" alt="Iron pipe (upward curve)" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/ironpipe(upwardt).png" loading="lazy" alt="Iron pipe (upward T)" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/ironpipe(verticalcross).png" loading="lazy" alt="Iron pipe (vertical cross)" style="height:120px" /></td></tr>	<tr>
+		</tr><tr></tr></table><p><h2>Items Found in Pok&eacute;Balls in Area</h2></p>
+
+<table class="dextable" align="center">
+	<tr>
+		<td class="fooevo">Beautiful flower seeds </td><td class="fooevo">Cleaning supplies </td><td class="fooevo">Fluff </td><td class="fooevo">Gold ingot </td><td class="fooevo">Limestone </td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/beautifulflowerseeds.png" loading="lazy" alt="Beautiful flower seeds" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/cleaningsupplies.png" loading="lazy" alt="Cleaning supplies" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/fluff.png" loading="lazy" alt="Fluff" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/goldingot.png" loading="lazy" alt="Gold ingot" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/limestone.png" loading="lazy" alt="Limestone" style="height:120px" /></td></tr><tr><td class="cen">Quantity: 1 </td><td class="cen">Quantity: 1 </td><td class="cen">Quantity: 3 </td><td class="cen">Quantity: 1 </td><td class="cen">Quantity: 5 </td></tr>	<tr>
+		<td class="fooevo">Microscope </td><td class="fooevo">Office cabinet Recipe</td><td class="fooevo">Office chair Recipe</td><td class="fooevo">Office desk Recipe</td><td class="fooevo">Office table Recipe</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/microscope.png" loading="lazy" alt="Microscope" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/officecabinet.png" loading="lazy" alt="Office cabinet" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/officechair.png" loading="lazy" alt="Office chair" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/officedesk.png" loading="lazy" alt="Office desk" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/officetable.png" loading="lazy" alt="Office table" style="height:120px" /></td></tr><tr><td class="cen">Quantity: 1 </td><td class="cen">Quantity: 1 </td><td class="cen">Quantity: 1 </td><td class="cen">Quantity: 1 </td><td class="cen">Quantity: 1 </td></tr>	<tr>
+		<td class="fooevo">Pop art bed </td><td class="fooevo">Rare Pok&eacute;metal </td><td class="fooevo">Science experiment </td><td class="fooevo">Scrap cube Recipe</td><td class="fooevo">Sewer-hole cover </td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/popartbed.png" loading="lazy" alt="Pop art bed" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/rarepokemetal.png" loading="lazy" alt="Rare Pok&eacute;metal" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/scienceexperiment.png" loading="lazy" alt="Science experiment" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/scrapcube.png" loading="lazy" alt="Scrap cube" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/sewer-holecover.png" loading="lazy" alt="Sewer-hole cover" style="height:120px" /></td></tr><tr><td class="cen">Quantity: 1 </td><td class="cen">Quantity: 1 </td><td class="cen">Quantity: 1 </td><td class="cen">Quantity: 1 </td><td class="cen">Quantity: 3 </td></tr>	<tr>
+		<td class="fooevo">Smelting furnace </td><td class="fooevo">Stylish-hedge seeds </td><td class="fooevo">Wall switch </td><td class="fooevo">Wooden ladder </td><td class="fooevo">Yellow hut kit </td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/smeltingfurnace.png" loading="lazy" alt="Smelting furnace" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/stylish-hedgeseeds.png" loading="lazy" alt="Stylish-hedge seeds" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/wallswitch.png" loading="lazy" alt="Wall switch" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/woodenladder.png" loading="lazy" alt="Wooden ladder" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/yellowhutkit.png" loading="lazy" alt="Yellow hut kit" style="height:120px" /></td></tr><tr><td class="cen">Quantity: 1 </td><td class="cen">Quantity: 1 </td><td class="cen">Quantity: 1 </td><td class="cen">Quantity: 10 </td><td class="cen">Quantity: 1 </td></tr></table><p><h2>Treasure Found in Area</h2></p>
+
+<table class="dextable" align="center">
+	<tr>
+		<td class="fooevo">Large lost relic</td><td class="fooevo">Small lost relic</td><td class="fooevo">Dragonite doll</td><td class="fooevo">Ditto doll</td><td class="fooevo">Substitute doll</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/largelostrelic.png" loading="lazy" alt="Large lost relic" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/smalllostrelic.png" loading="lazy" alt="Small lost relic" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/dragonitedoll.png" loading="lazy" alt="Dragonite doll" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/dittodoll.png" loading="lazy" alt="Ditto doll" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/substitutedoll.png" loading="lazy" alt="Substitute doll" style="height:120px" /></td></tr>	<tr>
+		<td class="fooevo">Headbutt Fossil (head)</td><td class="fooevo">Headbutt Fossil (body)</td><td class="fooevo">Headbutt Fossil (tail)</td><td class="fooevo">Skull Fossil</td><td class="fooevo">Wing Fossil (head)</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/headbuttfossil(head).png" loading="lazy" alt="Headbutt Fossil (head)" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/headbuttfossil(body).png" loading="lazy" alt="Headbutt Fossil (body)" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/headbuttfossil(tail).png" loading="lazy" alt="Headbutt Fossil (tail)" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/skullfossil.png" loading="lazy" alt="Skull Fossil" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/wingfossil(head).png" loading="lazy" alt="Wing Fossil (head)" style="height:120px" /></td></tr>	<tr>
+		<td class="fooevo">Wing Fossil (right wing)</td><td class="fooevo">Wing Fossil (left wing)</td><td class="fooevo">Wing fossil (body)</td><td class="fooevo">Wing Fossil (tail)</td><td class="fooevo">Strange strings</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/wingfossil(rightwing).png" loading="lazy" alt="Wing Fossil (right wing)" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/wingfossil(leftwing).png" loading="lazy" alt="Wing Fossil (left wing)" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/wingfossil(body).png" loading="lazy" alt="Wing fossil (body)" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/wingfossil(tail).png" loading="lazy" alt="Wing Fossil (tail)" style="height:120px" /></td><td class="cen"><img src="/pokemonpokopia/items/strangestrings.png" loading="lazy" alt="Strange strings" style="height:120px" /></td></tr>	<tr>
+		<td class="fooevo">Armor fragment</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/armorfragment.png" loading="lazy" alt="Armor fragment" style="height:120px" /></td></tr></table><p><a name="shop"></a><h2>Exclusive Shop Items</h2></p>
+
+
+<table class="dextable" align="center">
+		<tr>
+		<td class="fooevo">Picture</td>
+		<td class="fooevo">Name</td>
+		<td class="fooevo">Level</td>
+		</tr>
+		<tr><td class="cen"><img src="/pokemonpokopia/items/mailbox.png" height="64" loading="lazy" alt="Mailbox" /></td><td class="cen">Mailbox </td><td class="fooinfo">Lv. 2</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/officechair.png" height="64" loading="lazy" alt="Office chair" /></td><td class="cen">Office chair </td><td class="fooinfo">Lv. 2</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/slide.png" height="64" loading="lazy" alt="Slide" /></td><td class="cen">Slide </td><td class="fooinfo">Lv. 2</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/asphaltroad.png" height="64" loading="lazy" alt="Asphalt road" /></td><td class="cen">Asphalt road Recipe</td><td class="fooinfo">Lv. 2</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/cdrack.png" height="64" loading="lazy" alt="CD rack" /></td><td class="cen">CD rack Recipe</td><td class="fooinfo">Lv. 2</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/concretesteps.png" height="64" loading="lazy" alt="Concrete steps" /></td><td class="cen">Concrete steps Recipe</td><td class="fooinfo">Lv. 2</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/metalfencing.png" height="64" loading="lazy" alt="Metal fencing" /></td><td class="cen">Metal fencing Recipe</td><td class="fooinfo">Lv. 2</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/mosaictiling.png" height="64" loading="lazy" alt="Mosaic tiling" /></td><td class="cen">Mosaic tiling Recipe</td><td class="fooinfo">Lv. 2</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/bathtub.png" height="64" loading="lazy" alt="Bathtub" /></td><td class="cen">Bathtub </td><td class="fooinfo">Lv. 3</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/magazinerack.png" height="64" loading="lazy" alt="Magazine rack" /></td><td class="cen">Magazine rack </td><td class="fooinfo">Lv. 3</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/officecabinet.png" height="64" loading="lazy" alt="Office cabinet" /></td><td class="cen">Office cabinet </td><td class="fooinfo">Lv. 3</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/pokemartkit.png" height="64" loading="lazy" alt="Pok&eacute;mart kit" /></td><td class="cen">Pok&eacute;mart kit </td><td class="fooinfo">Lv. 3</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/popartsofa.png" height="64" loading="lazy" alt="Pop art sofa" /></td><td class="cen">Pop art sofa </td><td class="fooinfo">Lv. 3</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/cdplayer.png" height="64" loading="lazy" alt="CD player" /></td><td class="cen">CD player Recipe</td><td class="fooinfo">Lv. 3</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/newspaper.png" height="64" loading="lazy" alt="Newspaper" /></td><td class="cen">Newspaper </td><td class="fooinfo">Lv. 4</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/officelocker.png" height="64" loading="lazy" alt="Office locker" /></td><td class="cen">Office locker </td><td class="fooinfo">Lv. 4</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/concreteslab.png" height="64" loading="lazy" alt="Concrete slab" /></td><td class="cen">Concrete slab Recipe</td><td class="fooinfo">Lv. 4</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/corrugatedmetal.png" height="64" loading="lazy" alt="Corrugated metal" /></td><td class="cen">Corrugated metal Recipe</td><td class="fooinfo">Lv. 4</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/metallicsmeltingfurnace.png" height="64" loading="lazy" alt="Metallic smelting furnace" /></td><td class="cen">Metallic smelting furnace Recipe</td><td class="fooinfo">Lv. 4</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/protrudingwall.png" height="64" loading="lazy" alt="Protruding wall" /></td><td class="cen">Protruding wall Recipe</td><td class="fooinfo">Lv. 4</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/stonefencing.png" height="64" loading="lazy" alt="Stone fencing" /></td><td class="cen">Stone fencing Recipe</td><td class="fooinfo">Lv. 4</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/windowpane.png" height="64" loading="lazy" alt="Window pane" /></td><td class="cen">Window pane Recipe</td><td class="fooinfo">Lv. 4</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/gameboysystem.png" height="64" loading="lazy" alt="Game Boy system" /></td><td class="cen">Game Boy system </td><td class="fooinfo">Lv. 5</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/stonefireplace.png" height="64" loading="lazy" alt="Stone fireplace" /></td><td class="cen">Stone fireplace </td><td class="fooinfo">Lv. 5</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/yellowhutkit.png" height="64" loading="lazy" alt="Yellow hut kit" /></td><td class="cen">Yellow hut kit </td><td class="fooinfo">Lv. 5</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/gameboysystem.png" height="64" loading="lazy" alt="Game Boy system" /></td><td class="cen">Game Boy system Recipe</td><td class="fooinfo">Lv. 5</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/glasswindow.png" height="64" loading="lazy" alt="Glass window" /></td><td class="cen">Glass window Recipe</td><td class="fooinfo">Lv. 5</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/simpledoor.png" height="64" loading="lazy" alt="Simple door" /></td><td class="cen">Simple door Recipe</td><td class="fooinfo">Lv. 5</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/pokemetal.png" height="64" loading="lazy" alt="Pok&eacute;metal" /></td><td class="cen">Pok&eacute;metal </td><td class="fooinfo">Lv. 6</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/concreteborder(corner).png" height="64" loading="lazy" alt="Concrete border (corner)" /></td><td class="cen">Concrete border (corner) Recipe</td><td class="fooinfo">Lv. 6</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/concreteborder(line).png" height="64" loading="lazy" alt="Concrete border (line)" /></td><td class="cen">Concrete border (line) Recipe</td><td class="fooinfo">Lv. 6</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/concreteborder(single).png" height="64" loading="lazy" alt="Concrete border (single)" /></td><td class="cen">Concrete border (single) Recipe</td><td class="fooinfo">Lv. 6</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/minigenerator.png" height="64" loading="lazy" alt="Mini generator" /></td><td class="cen">Mini generator Recipe</td><td class="fooinfo">Lv. 6</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/popartbed.png" height="64" loading="lazy" alt="Pop art bed" /></td><td class="cen">Pop art bed Recipe</td><td class="fooinfo">Lv. 6</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/popartchair.png" height="64" loading="lazy" alt="Pop art chair" /></td><td class="cen">Pop art chair Recipe</td><td class="fooinfo">Lv. 6</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/rarepokemetal.png" height="64" loading="lazy" alt="Rare Pok&eacute;metal" /></td><td class="cen">Rare Pok&eacute;metal </td><td class="fooinfo">Lv. 7</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/popartsofa.png" height="64" loading="lazy" alt="Pop art sofa" /></td><td class="cen">Pop art sofa Recipe</td><td class="fooinfo">Lv. 7</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/poparttable.png" height="64" loading="lazy" alt="Pop art table" /></td><td class="cen">Pop art table Recipe</td><td class="fooinfo">Lv. 7</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/roughwall.png" height="64" loading="lazy" alt="Rough wall" /></td><td class="cen">Rough wall Recipe</td><td class="fooinfo">Lv. 7</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/smallofficekit.png" height="64" loading="lazy" alt="Small office kit" /></td><td class="cen">Small office kit </td><td class="fooinfo">Lv. 8</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/popartlamp.png" height="64" loading="lazy" alt="Pop art lamp" /></td><td class="cen">Pop art lamp Recipe</td><td class="fooinfo">Lv. 8</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/shopflooring.png" height="64" loading="lazy" alt="Shop flooring" /></td><td class="cen">Shop flooring Recipe</td><td class="fooinfo">Lv. 8</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/bigdrum.png" height="64" loading="lazy" alt="Big drum" /></td><td class="cen">Big drum </td><td class="fooinfo">Lv. 9</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/gamingchair.png" height="64" loading="lazy" alt="Gaming chair" /></td><td class="cen">Gaming chair Recipe</td><td class="fooinfo">Lv. 9</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/gaminglight.png" height="64" loading="lazy" alt="Gaming light" /></td><td class="cen">Gaming light Recipe</td><td class="fooinfo">Lv. 9</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/pokemoncenterwall(lower).png" height="64" loading="lazy" alt="Pok&eacute;mon Center wall (lower)" /></td><td class="cen">Pok&eacute;mon Center wall (lower) Recipe</td><td class="fooinfo">Lv. 9</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/pokemoncenterwall(middle).png" height="64" loading="lazy" alt="Pok&eacute;mon Center wall (middle)" /></td><td class="cen">Pok&eacute;mon Center wall (middle) Recipe</td><td class="fooinfo">Lv. 9</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/pokemoncenterwall(trim).png" height="64" loading="lazy" alt="Pok&eacute;mon Center wall (trim)" /></td><td class="cen">Pok&eacute;mon Center wall (trim) Recipe</td><td class="fooinfo">Lv. 9</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/pokemoncenterwall(upper).png" height="64" loading="lazy" alt="Pok&eacute;mon Center wall (upper)" /></td><td class="cen">Pok&eacute;mon Center wall (upper) Recipe</td><td class="fooinfo">Lv. 9</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/skylandpokemoncenterkit.png" height="64" loading="lazy" alt="Skyland Pok&eacute;mon Center kit" /></td><td class="cen">Skyland Pok&eacute;mon Center kit </td><td class="fooinfo">Lv. 10</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/berryprint.png" height="64" loading="lazy" alt="Berry print" /></td><td class="cen">Berry print Recipe</td><td class="fooinfo">Lv. 10</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/gamingfridge.png" height="64" loading="lazy" alt="Gaming fridge" /></td><td class="cen">Gaming fridge Recipe</td><td class="fooinfo">Lv. 10</td></tr><tr><td class="cen"><img src="/pokemonpokopia/items/gamingpc.png" height="64" loading="lazy" alt="Gaming PC" /></td><td class="cen">Gaming PC Recipe</td><td class="fooinfo">Lv. 10</td></tr></table>
+
+</main></div><!-- END id="content" -->
+
+
+<aside id="rbar">
+	<div class="navheader">Game Names</div>
+<div><a href="#">Pok�mon Pokopia</div>
+	<div class="navheader">Console</div>
+<div
+<a href="/games/consoles/nintendoswitch2.shtml"><img src="/Toolbar/switch2.png" loading="lazy" alt="Nintendo Switch 2 Image"><br />Nintendo Switch 2</a><br /></div>
+	<div class="navheader">Game Sections</div>
+<div><ul><li><a href="/pokemonpokopia/">Information</a></li>
+<li><a href="/pokemonpokopia/pics.shtml">Pre-Release Screenshots</a></li>
+<li><a href="/pokemonpokopia/videos.shtml">Pre-Release Trailers</a></li>
+<li><b>Pok�mon</b></li>
+<li><a href="/pokemonpokopia/availablepokemon.shtml">Available Pok�mon Pok�dex</a></li>
+<li><a href="/pokemonpokopia/eventpokedex.shtml">Pok�dex (Event)</a></li>
+<li><a href="/pokemonpokopia/uniquepokemon.shtml">Unique Pok�mon</a></li>
+<li><a href="/pokemonpokopia/habitats.shtml">Habitats</a></li>
+<li><a href="/pokemonpokopia/specialty.shtml">Pok�mon Specialties</a></li>
+<li><a href="/pokemonpokopia/legendary.shtml">Legendary & Mythical Pok�mon</a></li>
+<li><b>Story</b></li>
+<li><a href="/pokemonpokopia/importantrequests.shtml">Important Requests</a></li>
+<li><a href="/pokemonpokopia/teaminitiationchallenge.shtml">Team Initiation Challenge</a></li>
+<li><b>Locations</b></li>
+<li><a href="/pokemonpokopia/locations.shtml">Location Details</a></li>
+<li><a href="/pokemonpokopia/locations/witheredwastelands.shtml">-Withered Wastelands</a></li>
+<li><a href="/pokemonpokopia/locations/bleakbeach.shtml">-Bleak Beach</a></li>
+<li><a href="/pokemonpokopia/locations/rockyridges.shtml">-Rocky Ridges</a></li>
+<li><a href="/pokemonpokopia/locations/sparklingskylands.shtml">-Sparkling Skylands</a></li>
+<li><a href="/pokemonpokopia/locations/palettetown.shtml">-Palette Town</a></li>
+<li><a href="/pokemonpokopia/dreamislands.shtml">Dream Islands</a></li>
+<li><a href="/pokemonpokopia/cloudislands.shtml">Cloud Islands</a></li>
+
+<li><b>Items & Decorations</b></li>
+<li><a href="/pokemonpokopia/items.shtml">Item Listings</a></li>
+<li><a href="/pokemonpokopia/favorites.shtml">Favorite Items</a></li>
+<li><a href="/pokemonpokopia/furniture.shtml">Furniture</a></li>
+<li><a href="/pokemonpokopia/flowers.shtml">Flowers & Plants</a></li>
+<li><a href="/pokemonpokopia/vegetables.shtml">Growing Vegetables</a></li>
+<li><a href="/pokemonpokopia/cooking.shtml">Cooking & Food Recipes</a></li>
+<li><a href="/pokemonpokopia/flavors.shtml">Food Flavors</a></li>
+<li><a href="/pokemonpokopia/crafting.shtml">Crafting & Recipes</a></li>
+<li><a href="/pokemonpokopia/cds.shtml">CDs & DJ Rotom</a></li>
+<li><a href="/pokemonpokopia/paint.shtml">Painting</a></li>
+<li><a href="/pokemonpokopia/building.shtml">Building Kits</a></li>
+<li><a href="/pokemonpokopia/lostrelics.shtml">Lost Relics</a></li>
+<li><a href="/pokemonpokopia/trade.shtml">Trade Stands</a></li>
+<li><a href="/pokemonpokopia/collect.shtml">Collect Trades</a></li>
+<li><a href="/pokemonpokopia/litter.shtml">Litter Rewards</a></li>
+<li><a href="/pokemonpokopia/water.shtml">Water Mechanics</a></li>
+<li><a href="/pokemonpokopia/electricity.shtml">Electricity Generation</a></li>
+<li><a href="/pokemonpokopia/humanrecords.shtml">Human Records</a></li>
+
+<li><b>Mechanics</b></li>
+<li><a href="/pokemonpokopia/gameplay.shtml">Gameplay Mechanics</a></li>
+<li><a href="/pokemonpokopia/abilities.shtml">Ditto's Abilities</a></li>
+<li><a href="/pokemonpokopia/magnetrise.shtml">Magnet Rise</a></li>
+<li><a href="/pokemonpokopia/environmentlevel.shtml">Environment & Comfy Level</a></li>
+<li><a href="/pokemonpokopia/mosslaxboosts.shtml">Mosslax Boosts</a></li>
+<li><a href="/pokemonpokopia/customisation.shtml">Ditto Customisation</a></li>
+<li><a href="/pokemonpokopia/friendship.shtml">Friendship</a></li>
+<li><a href="/pokemonpokopia/pokemoncenter.shtml">Pok�mon Center</a></li>
+<li><a href="/pokemonpokopia/pokedexcompletion.shtml">Pok�dex Completion</a></li>
+<li><a href="/pokemonpokopia/stampcard.shtml">Stamp Cards</a></li>
+<li><a href="/pokemonpokopia/emotes.shtml">Emotes</a></li>
+<li><a href="/pokemonpokopia/jumprope.shtml">Jump Rope</a></li>
+<li><a href="/pokemonpokopia/hideandsneak.shtml">Hide-and-Sneak</a></li>
+
+<li><b>Events & Downloads</b></li>
+<li><a href="/pokemonpokopia/events.shtml">Special Events</a></li>
+<li><a href="/pokemonpokopia/internetevents.shtml">Internet Events</a></li>
+<li><a href="/pokemonpokopia/serialcode.shtml">Serial Code Events</a></li>
+<li><a href="/pokemonpokopia/patch.shtml">Patches & Updates</a></li>
+
+</ul></div>
+	<div class="navheader">Details</div>
+<div><b>Developer:</b><div align="right"><a href="/pokemon/companies/gamefreak.shtml">GAME FREAK</a><br />
+<a href="/pokemon/companies/koeitecmo.shtml">Koei Tecmo</a></div>
+<b>Genre:</b><div align="right">Life Simulation</div>
+<b>Players:</b><div align="right">1-4</div>
+<b>eShop Download Size:</b><div align="right">10GB</div></div>
+
+	<div class="navheader">Release Date</div>
+<div><b>Global</b>: March 5th 2026</div>
+
+
+	</aside>
+
+</div><!-- END id="wrapper" -->
+<footer id="footer">
+	<div class="copyright">
+		<a href="#top" alt="Top of Page" title="Top of Page" class="totop"></a>
+
+		All Content is &copy; Copyright of Serebii.net 1999-2026. |
+		<a href="/privacy.shtml">Privacy Policy</a> |
+		<a class="nn-cmp-show" href="#">Manage Cookie Settings</a><br/>
+		Pok�mon and All Respective Names are Trademark &amp; &copy; of Nintendo 1996-2026<br /><br />
+<a href="https://www.patreon.com/serebiinet" target="blank" rel="nofollow"></u>Support us on Patreon</u></a>
+	</div>
+
+	<div style="height:102px">
+		<div id="nn_lb2"></div><div id="nn_mobile_lb2"></div>
+<div id="celtra-reveal-wrapper" style="position:fixed; height: auto; width: 100%">
+<div id="nn_1by1"></div>
+</div>
+	</div>
+<script data-cfasync="false" async src="//cdn.intergient.com/1025662/76683/ramp.js"></script>
+</footer>
+
+
+
+</body>
+</html>
