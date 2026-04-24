@@ -19,9 +19,11 @@ const CookingRoleEnum = z.enum(['main', 'sub']);
 
 /**
  * 공통 재료 힌트.
- * 파서는 재료 아이템의 영문명만 확보할 수 있으므로 item id 는 loader 단계에서 해소.
+ * 파서는 재료 아이템의 URL slug 와 영문명을 함께 제공한다. slug 는 loader 의
+ * item FK 해소에 1:1 natural key 로 쓰이고, nameEn 은 감사/번역 추적용.
  */
 const IngredientHintSchema = z.object({
+  itemSlug: z.string().min(1),
   itemNameEn: z.string().min(1),
   quantity: z.number().int().positive().default(1),
 });
@@ -54,6 +56,7 @@ const CookingIngredientHintSchema = IngredientHintSchema.extend({
  */
 export const CookingRecipeSchema = z
   .object({
+    resultItemSlug: z.string().min(1),
     resultItemNameEn: z.string().min(1),
     mealCategory: MealCategoryEnum,
     bonusSpecialtyNameEn: z.string().min(1).optional(),
@@ -83,6 +86,7 @@ export type CookingRecipeInput = z.infer<typeof CookingRecipeSchema>;
  */
 export const CraftingRecipeSchema = z
   .object({
+    resultItemSlug: z.string().min(1),
     resultItemNameEn: z.string().min(1),
     resultQuantity: z.number().int().positive().default(1),
     unlockMethod: z.string().min(1),
