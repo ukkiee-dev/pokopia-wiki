@@ -4,15 +4,16 @@
 > 새 세션을 시작할 때는 (1) 이 문서의 "다음에 할 일", (2) 로드맵 해당 Phase, (3) `_workspace/` 잔여물 순서로 읽는다.
 >
 > **최종 갱신:** 2026-04-24
-> **현재 Phase:** Phase 6 (세션/행동 루프) — 코드 완성, dry-run + 감사 대기
+> **현재 Phase:** Phase 6 (세션/행동 루프) ✅ **완료** (감사 PASS, Critical 0 / Warning 8 / Info 25)
 > **총 Phase 수:** 17개 (Phase 0 ~ Phase 16)
 
 ---
 
-## 이번 세션 요약 (2026-04-24, Phase 6 코드 완성)
+## 이번 세션 요약 (2026-04-24, Phase 6 코드 완성 + dry-run PASS)
 
 **시작 상태:** Phase 5 감사 PASS + 마감 4항목 보완 완료 (`323b60d`). Phase 6 시작 카드 발행 상태.
-**종료 상태:** Phase 6 (세션/행동 루프) 코드·테스트 전체 완성 + X-509 선결 7 항목 통합. 사용자 dry-run 실행 + Phase 6 감사 대기.
+**종료 상태:** Phase 6 (세션/행동 루프) 코드·테스트 전체 완성 + X-509 선결 7 항목 통합 + 사용자 dry-run 실측 PASS. Phase 6 감사만 대기.
+**세션 커밋 2건:** `59cb608` (feat, 12 모듈), `f3cf361` (docs 갱신).
 
 **핵심 성과:**
 
@@ -62,15 +63,54 @@
 - type-check: 3/3 PASS
 - lint (oxlint): 0 errors / 121 warnings (기존 baseline 패턴 유지)
 - 테스트: 172/172 pass
-- Phase 6 완료 조건 1 (드라이런 완주): 코드 준비 완료, 사용자 실행 대기
-- Phase 6 완료 조건 2 (403 cooldown 기록): session-manager.test.ts integration 시나리오 통과
-- Phase 6 완료 조건 3 (healthScore 감점): health-scorer.test.ts 4 시나리오 통과
+- Phase 6 완료 조건 1 (드라이런 완주): ✅ **PASS (2026-04-24 07:49 UTC, 실측)** — 하단 dry-run 로그 참조.
+- Phase 6 완료 조건 2 (403 cooldown 기록): ✅ session-manager.test.ts integration 시나리오 통과.
+- Phase 6 완료 조건 3 (healthScore 감점): ✅ health-scorer.test.ts 4 시나리오 통과.
 
-**미결(다음 세션):**
+**dry-run 실측 로그 (2026-04-24 07:49 UTC, Serebii availablepokemon):**
 
-1. **Phase 6 dry-run 사용자 실행** — `pnpm --filter @pokopia-wiki/scraper dry-session --source serebii --page availablepokemon` (실제 외부 호출 1회). 결과 OK 면 Phase 6 완료 조건 1 충족.
-2. **Phase 6 감사 (`pokopia-phase-review-harness`)** — 프로파일 `crawler` + style. 12 신규 모듈 + X-509 통합 검증. Critical 발견 시 루프백.
-3. **Phase 5 잔존 Warning 처리는 Phase 6 감사 후 재평가** — SEC-503/505, ARCH-505, PERF-501 등.
+```
+[dry-session] start source=serebii tier=0 page=availablepokemon url=https://www.serebii.net/pokemonpokopia/availablepokemon.shtml
+[notifier:fallback] {"event":"session.start","severity":"info","ts":"2026-04-24T07:49:01.353Z","meta":{"source":"serebii","persona":null}}
+[dry-session] fetcher ready, requesting...
+[dry-session] status=200 bytes=261717 fromCache=false
+[notifier:fallback] {"event":"session.end","severity":"info","ts":"2026-04-24T07:49:02.145Z","meta":{"source":"serebii"}}
+[dry-session] outcome.kind=completed
+```
+
+관찰:
+- 총 소요 792ms (세션 시작 → 종료), 외부 호출 1회.
+- `session.start` / `session.end` notifier 이벤트가 정상 발행 (Telegram 미구성으로 console fallback).
+- `fromCache=false` — 신규 fetch, 261,717 bytes HTML 수신.
+- Chrome bump 감지 없음 (`chrome.version_bump` 미발행) → X-509 #1 정책 정상 (bump 시만 알림).
+- `data/state/` 에 `active-sessions.json` / `chrome-version.json` / `crawl.json` 생성 확인.
+
+**Phase 6 감사 결과 (2026-04-24 08:43 UTC, PASS):**
+
+- **감사자 4명 병렬:** security / performance / architecture / style (crawler 프로파일 확장).
+- **Critical 0 / Warning 8 / Info 25** (총 33 findings).
+- **X-509 통합 매트릭스 #1~#7 모두 PASS**.
+- **산출물:** `_workspace/audit/phase-6/20260424-0843/REPORT.md` + 4 감사자 YAML.
+- **Phase 5 잔존 carryover:** SEC-501/502/STYLE-501/STYLE-502 ✅ resolved. PERF-501 🟡 partial (Phase 7 이월).
+
+**Phase 6 Warning 8건 후속 조치 계획:**
+
+| ID | 권고 시점 | 내용 |
+|---|---|---|
+| PERF-601 | Phase 7 dry-run 이전 | CrawlState in-memory 캐시 + debounced flush |
+| PERF-602 | Phase 7 dry-run 이전 | SessionManager finally 블록 `Promise.allSettled` 병렬화 |
+| PERF-603 | Phase 7 dry-run 이전 | ghost-cursor `WeakMap<DriverPage, CursorLike>` 캐시 |
+| PERF-604 | Phase 7 dry-run 이전 | DetectionMonitor content() 단일 regex + 1회 toLowerCase |
+| ARCH-602 / STYLE-603 | Phase 7 중 | driver-page.ts 에 `asGhostCursorPage`·`asBehaviorLocator` 헬퍼 추가 |
+| ARCH-607 / STYLE-606 | Phase 7 중 | `error/classify.ts` 신설 — fetcher 에러 → ErrorType 변환 계약 |
+| STYLE-601 | Phase 7 이후 | `__tests__/fixtures/` 디렉토리 추출 |
+| STYLE-602 | Phase 7 이후 | `.oxlintrc.jsonc` `max-lines-per-function: 60` + 테스트 override |
+
+**미결 (다음 세션으로 이월):**
+
+1. **Phase 7 착수** — Notifier worker 화 (PERF-001/002/003 해소), `pnpm run status` 대시보드, Task 7.1~7.6. 착수 전 PERF-601~604 해소 권고.
+2. **Phase 5/6 잔존 Warning 정리** — Phase 7 구현과 병행 처리.
+3. **공급망 점검** — SEC-603 `pnpm audit` 1회 실행 (ghost-cursor-playwright).
 
 ---
 
@@ -159,7 +199,7 @@
 | 3 — Preflight 하네스            | ✅ 완료    | 2026-04-19 | 2026-04-19 | 🟡   | Loop 0: LOOP_REQUIRED (SEC-001/OPS-001) → 번들 수정 완료. Loop 1 재감사는 Phase 4 감사에 병합(스킵 사유 하단 기록). |
 | 4 — Fetcher 인프라              | ✅ 완료    | 2026-04-19 | 2026-04-19 | ✅   | 감사 Loop 0 PASS (2026-04-24, Phase 3 Loop 1 merged). Critical 0, Warning 11, Info 19. 선결 5항목 보완 완료. |
 | 5 — 페르소나·워밍               | ✅ 완료    | 2026-04-24 | 2026-04-24 | ✅   | 감사 Loop 0 PASS. Critical 0, Warning 10, Info 19. TKTK #1~#4 resolved, #5/#6 Phase 6 이월. 마감 4항목 보완 완료. Task 5.7 (사용자 실제 워밍) 이월. |
-| 6 — 세션/행동 루프              | 🏗️ 진행   | 2026-04-24 | —    | —    | 코드 완성 (12 모듈 + X-509 #1~#7 통합). 145 tests pass / 0 lint errors / type-check OK. dry-run + 감사 대기. |
+| 6 — 세션/행동 루프              | ✅ 완료    | 2026-04-24 | 2026-04-24 | ✅   | 감사 Loop 0 PASS. Critical 0, Warning 8, Info 25. X-509 #1~#7 모두 확인. dry-run PASS (261,717 bytes). PERF-601~604 Phase 7 dry-run 전 해소 권고, 캐스트 단일 진입점 확장 (ARCH-602+STYLE-603) 후속. |
 | 7 — Notifier/CLI 대시보드       | ⏳ 대기    | —          | —    | —    | —                    |
 | 8 — Serebii T0 파서             | ⏳ 대기    | —          | —    | —    | 35+ 파서             |
 | 9 — Serebii 드라이런·크롤       | ⏳ 대기    | —          | —    | —    | —                    |
@@ -639,59 +679,59 @@
 
 ---
 
-## 다음 세션 바로 시작 카드 — Phase 6 검증·감사
+## 다음 세션 바로 시작 카드 — Phase 7 (Notifier worker + CLI 대시보드)
 
-Phase 6 코드 완성 + X-509 #1~#7 통합 완료. 남은 작업은 **dry-run 1회 + 감사**.
+Phase 6 ✅ 완료 (감사 PASS). Phase 7 착수 가능. 단 Phase 7 dry-run 이전 Phase 6 감사의 PERF-601~604 해소 권장.
 
 ### 첫 15분 체크리스트 (세션 재개 직후)
 
 ```bash
 # 1. 위치 + 환경 확인
 cd /Users/ukyi/workspace/pokopia-wiki
-git log --oneline -8                        # Phase 6 커밋 확인
+git log --oneline -8                        # Phase 6 감사 PASS 커밋 확인
 git status                                   # clean 확인
 pnpm -r --parallel test:run                  # 172/172 pass (api 4, shared 23, scraper 145)
 pnpm -r --parallel type-check                # 3/3 PASS
 docker compose -f docker-compose.local.yml ps postgres  # healthy
 ```
 
-### 2. Phase 6 완료 조건 검증 (최우선)
+### 2. Phase 6 감사 결과 리뷰 (참고)
 
-**드라이런 1회 (Phase 6 완료 조건 1번):**
+`_workspace/audit/phase-6/20260424-0843/REPORT.md` — Critical 0 / Warning 8 / Info 25, PASS.
 
-```bash
-pnpm --filter @pokopia-wiki/scraper dry-session --source serebii --page availablepokemon
-```
+### 3. Phase 7 착수 전 Phase 6 Warning 해소 (권장)
 
-기대 출력:
-```
-[dry-session] start source=serebii tier=0 page=availablepokemon url=https://www.serebii.net/pokemonpokopia/availablepokemon.shtml
-[dry-session] fetcher ready, requesting...
-[dry-session] status=200 bytes=NNNNN fromCache=false
-[dry-session] outcome.kind=completed
-```
+**dry-run 이전 성능 4건 (반복 호출 페이지에서 체감 큼):**
 
-`exit 0` 이면 Phase 6 완료 조건 1 충족. 실패 시 stderr 의 `[dry-session] outcome=...` 메시지로 분기.
+- PERF-601 CrawlState in-memory 캐시 + debounced flush
+- PERF-602 SessionManager finally `Promise.allSettled`
+- PERF-603 ghost-cursor `WeakMap<DriverPage, CursorLike>` 캐시
+- PERF-604 DetectionMonitor content() 단일 regex + 1회 toLowerCase
 
-**나머지 완료 조건은 단위 테스트로 이미 검증됨:**
+**Phase 7 중 병행:**
 
-- 조건 2 (403 cooldown 기록): `session-manager.test.ts > Phase 6 완료 조건 — reportError 403` 통과.
-- 조건 3 (healthScore 감점): `health-scorer.test.ts` 4 시나리오 통과.
+- ARCH-602 + STYLE-603: `driver-page.ts` 에 `asGhostCursorPage` / `asBehaviorLocator` 추가
+- ARCH-607 + STYLE-606: `error/classify.ts` 신설 (fetcher 에러 → ErrorType 변환)
 
-### 3. Phase 6 감사 실행
+### 4. Phase 7 본 작업 — 로드맵 §Phase 7 (라인 1007~)
 
-```
-스킬: /pokopia-phase-review-harness phase=6 type=crawler
-프로파일: crawler + style + architecture
-```
+**주 산출물:**
 
-감사 범위:
-- 12 신규 모듈의 SSoT (§6.1, §7, §8, §11, §12, §20.1) 정합성
-- X-509 #1~#7 통합 매트릭스 (이번 세션 요약 표 참조)
-- session-manager.runSession 의 catch/finally 경로 안전성
-- ConcurrencyGuard 싱글톤 사용 일관성
-- behavior 모듈의 ghost-cursor-playwright 캐스트 단일화 정책 준수
-- DriverPage 구조적 타입이 호출부에 잘 적용되는지
+- `services/scraper/src/notifier/worker.ts` — 백그라운드 dedup/queue/backpressure (PERF-001/002/003 해소)
+- `services/scraper/src/notifier/index.ts` 확장 — §13.3.5 immediateQueue 완성
+- `services/scraper/src/notifier/telegram.ts` 분리 — `getMe` 검증 (§13.3.6 B8)
+- `services/scraper/src/notifier/macos.ts` 분리 — AppleScript 인젝션 방어
+- `services/scraper/src/daily-summary.ts` — `node-cron` 23:55 트리거
+- `services/scraper/scripts/status.ts` — 터미널 대시보드
+- `services/scraper/src/notifier/index.test.ts` 확장
+
+**Phase 7 완료 조건 (로드맵):**
+
+- 같은 이벤트 5분 내 재발생 시 1회만 송신
+- Notifier 부팅 후 즉시 Telegram 으로 `scraper.start` 알림 도착
+- `pnpm run status` 가 현재 상태를 한 화면에 출력
+
+**감사 프로파일:** `ops` → `pokopia-ops-conductor` + `codereview-security-auditor` (AppleScript injection).
 
 ### 4. (선택) Phase 5 잔존 Warning 일부 처리
 
