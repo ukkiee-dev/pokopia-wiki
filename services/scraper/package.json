@@ -24,6 +24,7 @@
   },
   "dependencies": {
     "@pokopia-wiki/shared": "workspace:*",
+    "cheerio": "^1.2.0",
     "dotenv": "^17.4.2",
     "fingerprint-generator": "^2.1.82",
     "fingerprint-injector": "^2.1.82",
