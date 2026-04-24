@@ -36,6 +36,7 @@ import lockfile from 'proper-lockfile';
 import { RateLimitExceededError } from '../fetchers/errors.js';
 import type { Notifier } from '../notifier/index.js';
 import { repoPath } from '../paths.js';
+import type { ConcurrencyGuard } from '../scheduler/concurrency-guard.js';
 import { RATE_LIMITS, type RateBudget, type RateCounterKind } from './config.js';
 
 /** 저장 파일의 구조 — 카운터별 별도 파일. */
@@ -94,17 +95,26 @@ async function atomicWriteJson(filePath: string, data: unknown): Promise<void> {
   }
 }
 
+/** `isHigherTierActive` 결과 캐시 ttl — acquire 마다 파일 I/O 방지 (§6.4.1). */
+const HIGHER_TIER_CACHE_MS = 30_000;
+
 /**
  * RateLimiter.
  *
- * Notifier 는 선택적 — 테스트/CLI 에선 주입하지 않으면 알림 skip.
+ * Notifier / ConcurrencyGuard 모두 선택적 — 테스트/CLI 에선 주입하지 않으면
+ * 각각 알림 skip / 감속 비활성.
  *
- * Phase 5 연결점:
- *   - `isHigherTierActive()` 가 ConcurrencyGuard 와 연동 (현재는 false 고정).
- *   - T1+ 활성 시 T0 navigation 의 effective 한도를 50% 로 감속.
+ * Phase 5 연결 (TKTK #4 해소): `isHigherTierActive()` 가 `ConcurrencyGuard.
+ * listActive()` 결과로 T1+ 세션 존재 여부를 판단. 30s cache 로 acquire 빈도
+ * 대비 I/O 비용을 제한.
  */
 export class RateLimiter {
-  constructor(private readonly notifier?: Notifier) {}
+  private cachedHigherTier: { at: number; value: boolean } | null = null;
+
+  constructor(
+    private readonly notifier?: Notifier,
+    private readonly guard?: ConcurrencyGuard,
+  ) {}
 
   /**
    * 카운터 획득 — 한도 내면 증가, 초과면 throw.
@@ -169,8 +179,8 @@ export class RateLimiter {
       record.date === today ? record : { date: today, count: 0, approachingAlertSent: false };
 
     // T1+ 활성 시 T0 50% 감속 — effective 한도를 절반으로 (§6.4.1).
-    const effectiveDailyLimit =
-      source === 'serebii' && this.isHigherTierActive() ? Math.floor(baseDailyLimit / 2) : baseDailyLimit;
+    const higherTier = source === 'serebii' ? await this.isHigherTierActive() : false;
+    const effectiveDailyLimit = higherTier ? Math.floor(baseDailyLimit / 2) : baseDailyLimit;
 
     if (current.count + 1 > effectiveDailyLimit) {
       throw new RateLimitExceededError(source, kind, effectiveDailyLimit, current.count);
@@ -211,14 +221,28 @@ export class RateLimiter {
   }
 
   /**
-   * T1+ 활성 여부 — ConcurrencyGuard 연결 전까지 false 고정 (Phase 5 확장 예정).
+   * T1+ 활성 여부 — `ConcurrencyGuard.listActive()` 결과에서 tier ≥ 1 존재 확인.
    *
-   * TKTK Phase 5 연결점:
-   *   - `ConcurrencyGuard.listActive()` 결과에서 tier ≥ 1 세션이 있는지 확인.
-   *   - 결과를 캐시해 acquire 마다 파일 I/O 가 터지는 걸 막는다 (ttl ~30s 권장).
+   * 30s cache: acquire 당 파일 I/O + proper-lockfile lock 획득 비용이 누적되면
+   * 실시간 요청 처리 지연이 눈에 띄게 증가. T1+ 세션이 생기거나 종료되는 주기는
+   * 분 단위라 30s 해상도로 충분 (§6.4.1 stagger 5min 보다 훨씬 짧음).
+   *
+   * guard 미주입 시 false — RateLimiter 단독 사용(preflight·테스트) 경로 호환.
    */
-  private isHigherTierActive(): boolean {
-    return false;
+  private async isHigherTierActive(): Promise<boolean> {
+    if (!this.guard) return false;
+    const now = Date.now();
+    if (this.cachedHigherTier && now - this.cachedHigherTier.at < HIGHER_TIER_CACHE_MS) {
+      return this.cachedHigherTier.value;
+    }
+    try {
+      const active = await this.guard.listActive();
+      const value = active.some((s) => s.tier >= 1);
+      this.cachedHigherTier = { at: now, value };
+      return value;
+    } catch {
+      return false;
+    }
   }
 
   /** `<repoRoot>/data/state/rate/<source>/<kind>.json`. */

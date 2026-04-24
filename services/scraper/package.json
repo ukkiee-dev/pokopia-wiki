@@ -13,6 +13,7 @@
     "check:patchright": "tsx --env-file-if-exists=../../.env scripts/check-patchright.ts",
     "check:network": "tsx --env-file-if-exists=../../.env scripts/check-network.ts",
     "notifier:test": "tsx --env-file-if-exists=../../.env scripts/notifier-test.ts",
+    "warm:persona": "tsx --env-file-if-exists=../../.env scripts/warm-persona.ts",
     "status": "tsx --env-file-if-exists=../../.env scripts/status.ts",
     "validate": "tsx --env-file-if-exists=../../.env scripts/validate.ts",
     "test": "vitest",

@@ -29,6 +29,7 @@ import type { SourceSite } from '@pokopia-wiki/shared';
 import { chromium, type BrowserContext, type Page } from 'playwright';
 
 import { detectChromeVersion, getSystemChromeUserAgent } from '../browser/chrome-version.js';
+import { attachFingerprint } from '../fingerprint/inject.js';
 import type { BrowserPersona } from '../persona/types.js';
 import { PersonaRequiredError, SkippedByRobotsError } from './errors.js';
 import type { FetchOptions, FetchResult, Fetcher, FetcherHtmlCache, FetcherRobotsChecker } from './types.js';
@@ -47,26 +48,6 @@ const DEFAULT_VIEWPORT = { width: 1440, height: 900 };
  */
 function isHeadless(): boolean {
   return process.env['SCRAPER_HEADED'] === '0';
-}
-
-/**
- * Phase 5 fingerprint-injector 연결점 (attach 지점만).
- *
- * 실제 `newInjectedContext` 호출/FingerprintGenerator 통합은 Phase 5 에서 완성.
- * 지금은 signature 만 존재시켜 PlaywrightFetcher 가 미래 주입 경로를 예약한다.
- * async 를 유지해 Phase 5 에서 실제 await 가 들어갈 때 시그니처 변경이 없도록
- * 한다 (호출부는 여전히 `await` 로 사용). 현재 본문은 의도적 no-op.
- *
- * TKTK Phase 5 구현 항목:
- *  - FingerprintGenerator 로 페르소나 seed 기반 핑거프린트 생성
- *  - newInjectedContext 로 context 를 재생성하거나 addInitScript 로 주입
- *  - canvas/audio/fonts 일관성 유지 (§9.1.1)
- *
- * @see CRAWLING_STRATEGY §9.1.1 (T1 fingerprint-injector 적용)
- */
-// eslint-disable-next-line @typescript-eslint/require-await, require-await
-async function attachFingerprint(_context: BrowserContext, _persona: BrowserPersona): Promise<void> {
-  // Phase 5 구현 전까지 의도적 no-op.
 }
 
 /**

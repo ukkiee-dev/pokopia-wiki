@@ -19,13 +19,12 @@
  */
 
 import { createHash } from 'node:crypto';
-import { readFile } from 'node:fs/promises';
 
 import type { SourceSite } from '@pokopia-wiki/shared';
 import { chromium, type BrowserContext, type Page } from 'patchright';
 
 import { detectChromeVersion, getSystemChromeUserAgent } from '../browser/chrome-version.js';
-import { repoPath } from '../paths.js';
+import { maybeReinforceWebgl } from '../fingerprint/patchright-webgl.js';
 import type { BrowserPersona } from '../persona/types.js';
 import { PersonaRequiredError, SkippedByRobotsError } from './errors.js';
 import type { FetchOptions, FetchResult, Fetcher, FetcherHtmlCache, FetcherRobotsChecker } from './types.js';
@@ -39,52 +38,6 @@ const DEFAULT_VIEWPORT = { width: 1440, height: 900 };
  */
 function isHeadless(): boolean {
   return process.env['SCRAPER_HEADED'] === '0';
-}
-
-/**
- * `data/preflight/patchright-webgl.json` 프로브 결과.
- *
- * 파일이 없으면 보수적으로 `overridesWebgl: true` 로 간주 → 이중 패치 방지를
- * 위해 본 fetcher 는 WebGL 보강을 건너뛴다. Phase -1 `check:patchright` 가
- * 이 파일을 생성한다.
- */
-type PatchrightWebGLProbe = { overridesWebgl: boolean };
-
-async function readPatchrightProbe(): Promise<PatchrightWebGLProbe> {
-  try {
-    const raw = await readFile(repoPath('data', 'preflight', 'patchright-webgl.json'), 'utf8');
-    const parsed = JSON.parse(raw) as Partial<PatchrightWebGLProbe>;
-    return { overridesWebgl: parsed.overridesWebgl !== false };
-  } catch {
-    // 파일 없음/손상 → 보수적으로 override 가정. WebGL 보강 건너뜀.
-    return { overridesWebgl: true };
-  }
-}
-
-/**
- * WebGL 보강 (§9.1.2 B1) — 조건부 no-op.
- *
- * Phase 5 에서 페르소나의 `fingerprint.webgl` 값으로 실제 패치 적용 예정.
- * Phase 4 에선:
- *   - probe 가 `overridesWebgl: true` 면 아무 것도 하지 않음 (이중 패치 방지)
- *   - `overridesWebgl: false` 여도 Phase 4 범위에선 페르소나 WebGL 값이
- *     아직 정의되지 않았으므로 주석만 남기고 no-op.
- *
- * TKTK Phase 5 구현 항목:
- *  - persona.fingerprint.webgl.{vendor,renderer} 로 addInitScript 주입
- *  - WebGLRenderingContext + WebGL2RenderingContext 두 prototype 에
- *    getParameter 를 wrap 해 파라미터 37445/37446 응답 고정
- *  - §9.1.2 원문 블록 그대로 이식
- */
-async function maybeReinforceWebgl(_context: BrowserContext, _persona: BrowserPersona): Promise<void> {
-  // probe 결과에 따라 이중 패치 방지 또는 Phase 5 보강 분기.
-  // Phase 4 본 구현에서는 어느 경로든 no-op 으로 귀결되지만, probe 를 실제로
-  // 읽어 Phase 5 전환 시 코드 변경이 addInitScript 주입 한 줄로 국한되도록
-  // 구조만 잡아 둔다.
-  const probe = await readPatchrightProbe();
-  if (!probe.overridesWebgl) {
-    // Phase 5: persona.fingerprint.webgl 주입 호출 위치.
-  }
 }
 
 /**

@@ -25,6 +25,7 @@ import type { SourceSite } from '@pokopia-wiki/shared';
 import { chromium, type BrowserContext, type Page } from 'patchright';
 
 import { getSystemChromeUserAgent, detectChromeVersion } from '../browser/chrome-version.js';
+import { maybeReinforceWebgl } from '../fingerprint/patchright-webgl.js';
 import type { BrowserPersona } from '../persona/types.js';
 import { PersonaRequiredError, SessionAbortError, SkippedByRobotsError } from './errors.js';
 import type { FetchOptions, FetchResult, Fetcher, FetcherHtmlCache, FetcherRobotsChecker } from './types.js';
@@ -221,6 +222,8 @@ export class PatchrightCfFetcher implements Fetcher {
       storageState: this.persona.storageStatePath,
     });
 
+    // WebGL 조건부 보강 — probe.overridesWebgl 이 true 면 no-op (§9.1.2).
+    await maybeReinforceWebgl(context, this.persona);
     await injectUserAgentData(context);
 
     this.context = context;
