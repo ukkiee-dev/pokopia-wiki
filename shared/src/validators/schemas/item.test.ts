@@ -23,6 +23,7 @@ const SOURCE_META = {
 describe('ItemSchema.safeParse()', () => {
   it('accepts a valid Serebii parse result and preserves all 7 SourceMetadata fields', () => {
     const result = ItemSchema.safeParse({
+      slug: 'apple',
       nameEn: 'Apple',
       description: 'A sweet red fruit.',
       category: 'Food',
@@ -43,6 +44,7 @@ describe('ItemSchema.safeParse()', () => {
 
   it('fills `description` from `.default("")` when omitted', () => {
     const result = ItemSchema.safeParse({
+      slug: 'wood',
       nameEn: 'Wood',
       category: 'Materials',
       ...SOURCE_META,
@@ -57,6 +59,7 @@ describe('ItemSchema.safeParse()', () => {
 
   it('rejects an unknown ItemCategory literal', () => {
     const result = ItemSchema.safeParse({
+      slug: 'mystery',
       nameEn: 'Mystery',
       category: 'NotAnItemCategory',
       ...SOURCE_META,
@@ -69,6 +72,10 @@ describe('ItemSchema.safeParse()', () => {
 });
 
 describe('ItemInput — Prisma type compatibility', () => {
+  it('ItemInput.slug is assignable to Prisma.ItemCreateInput.sourceSlug', () => {
+    expectTypeOf<ItemInput['slug']>().toExtend<Prisma.ItemCreateInput['sourceSlug']>();
+  });
+
   it('ItemInput.category is assignable to Prisma.ItemCreateInput.category', () => {
     // Prisma `category: $Enums.ItemCategory` ⇐ 상수 문자열 유니언.
     // Zod `z.enum([...])` 출력도 동일 리터럴 유니언이므로 구조적으로 일치.

@@ -61,10 +61,16 @@ const ItemLocationHintSchema = z.object({
 /**
  * Item 파서 출력 스키마.
  *
+ * Phase 8 단계 4 에서 `slug` 필드가 추가되었다 — Specialty/Location 과 동일하게
+ * Serebii URL 의 아이템 토큰을 natural key 로 보존하고 loader 가 그대로
+ * `source_slug` 에 주입한다. nameEn 기반 derive 는 공백·대소문자·특수문자
+ * 정규화 취약성이 있어 URL slug 가 더 안전하다.
+ *
  * 사용 예 (§27.1):
  *
  * ```ts
  * const item = ItemSchema.parse({
+ *   slug: 'apple',
  *   nameEn: 'Apple',
  *   description: 'A sweet red fruit.',
  *   category: 'Food',
@@ -73,13 +79,14 @@ const ItemLocationHintSchema = z.object({
  *   imageUrl: 'https://www.serebii.net/pokemonpokopia/items/apple.png',
  *   ...buildSourceMetadata({
  *     sourceSite: 'serebii',
- *     sourceUrl: 'https://www.serebii.net/pokemonpokopia/items/',
+ *     sourceUrl: 'https://www.serebii.net/pokemonpokopia/items.shtml',
  *   }),
  * });
  * ```
  */
 export const ItemSchema = z
   .object({
+    slug: z.string().min(1),
     nameEn: z.string().min(1),
     description: z.string().default(''),
     category: ItemCategoryEnum,
