@@ -185,6 +185,27 @@ export class PersonaManager {
     return next;
   }
 
+  /**
+   * §12.3 — healthScore < 50 시 2 주 cooldown. retire 와 달리 시각 만료 후 자동
+   * 복귀하므로 일시 비활성에 적합. 호출자(HealthScorer) 가 정책 결정.
+   */
+  async cooldown(id: string, until: Date): Promise<PersonaRuntimeState> {
+    const state = await this.getState(id);
+    const next: PersonaRuntimeState = { ...state, cooldownUntil: until.toISOString() };
+    await this.saveState(next);
+    return next;
+  }
+
+  /**
+   * 현재 시각이 cooldownUntil 이전이면 true. SessionManager 가 pickActive 결과를
+   * 다시 거른다 (pickActive 자체는 동기 — file I/O 분리 유지).
+   */
+  async isCoolingDown(id: string, now: Date = new Date()): Promise<boolean> {
+    const state = await this.getState(id);
+    if (state.cooldownUntil === null) return false;
+    return now.getTime() < Date.parse(state.cooldownUntil);
+  }
+
   /** Asia/Seoul 기준 현재 시각의 hour (0~23). Intl 기반 — DST 없어서 안정. */
   private hourInSeoul(now: Date): number {
     const fmt = new Intl.DateTimeFormat('en-GB', {
@@ -209,6 +230,7 @@ export class PersonaManager {
       createdAt: new Date().toISOString(),
       lastUsed: null,
       retired: null,
+      cooldownUntil: null,
     };
   }
 
@@ -230,6 +252,7 @@ export class PersonaManager {
       createdAt: typeof obj['createdAt'] === 'string' ? obj['createdAt'] : base.createdAt,
       lastUsed: typeof obj['lastUsed'] === 'string' ? obj['lastUsed'] : obj['lastUsed'] === null ? null : null,
       retired: this.normalizeRetired(obj['retired']),
+      cooldownUntil: typeof obj['cooldownUntil'] === 'string' ? obj['cooldownUntil'] : null,
     };
   }
 

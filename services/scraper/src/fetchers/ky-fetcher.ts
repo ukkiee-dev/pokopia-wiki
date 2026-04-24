@@ -73,6 +73,19 @@ async function resolveUserAgent(): Promise<string> {
 }
 
 /**
+ * 캐시된 User-Agent 를 파기 (X-509 #3 — Phase 6 SessionManager).
+ *
+ * Chrome 메이저 버전 bump 가 감지되면(`chrome-version.onSessionStart()` 가
+ * `bumped: true` 반환), 다음 요청에서 새 버전 UA 를 다시 샘플링하기 위해 호출한다.
+ *
+ * SCRAPER_USER_AGENT env override 도 함께 무효화 — 운영자가 env 를 갱신했을 수
+ * 있으므로 다음 호출 시 환경변수 재평가.
+ */
+export function resetCachedUserAgent(): void {
+  cachedUserAgent = null;
+}
+
+/**
  * KyFetcher — Serebii 전용 T0 구현.
  *
  * 생성자 의존성:

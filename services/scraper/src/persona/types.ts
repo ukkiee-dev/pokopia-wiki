@@ -93,12 +93,14 @@ export type BrowserPersona = {
  * 런타임 상태 — `data/state/persona-<id>.json` 에 영속.
  *
  * PersonaManager 의 `getState` / `saveState` / `touch` / `penalize` / `retire` /
- * `markWarmed` 가 이 타입으로 I/O.
+ * `markWarmed` / `cooldown` 이 이 타입으로 I/O.
  *
  * - `healthScore`: 0~100. 탐지 신호 발생 시 감점 (§12.3). 0 이면 retire.
  * - `warmedUp`: §5.4 워밍 완료 여부. ProfileWarmer 가 세팅.
  * - `createdAt` / `lastUsed`: ISO 8601. `lastUsed` 가 null 이면 사용 전.
  * - `retired`: null 이 아니면 해당 페르소나는 활성 목록에서 제외.
+ * - `cooldownUntil`: null 이 아니면 그 시각까지 페르소나 사용 금지 (Phase 6 §12.3
+ *   healthScore < 50 → 2 주 cooldown). retire 와 달리 시각 만료 후 자동 복귀.
  */
 export type PersonaRuntimeState = {
   id: string;
@@ -107,4 +109,5 @@ export type PersonaRuntimeState = {
   createdAt: string;
   lastUsed: string | null;
   retired: { at: string; reason: string } | null;
+  cooldownUntil: string | null;
 };
