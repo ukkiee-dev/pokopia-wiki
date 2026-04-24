@@ -4,7 +4,8 @@
 > 새 세션을 시작할 때는 (1) 이 문서의 "다음에 할 일", (2) 로드맵 해당 Phase, (3) `_workspace/` 잔여물 순서로 읽는다.
 >
 > **최종 갱신:** 2026-04-24
-> **현재 Phase:** Phase 6 (세션/행동 루프) ✅ **완료** (감사 PASS, Critical 0 / Warning 8 / Info 25)
+> **현재 Phase:** Phase 7 (Notifier worker + CLI 대시보드) 🟡 **코드 완성, 감사 대기**
+> **직전 Phase:** Phase 6 ✅ 완료 (감사 PASS + Warning 6건 해소)
 > **총 Phase 수:** 17개 (Phase 0 ~ Phase 16)
 
 ---
@@ -199,8 +200,8 @@
 | 3 — Preflight 하네스            | ✅ 완료    | 2026-04-19 | 2026-04-19 | 🟡   | Loop 0: LOOP_REQUIRED (SEC-001/OPS-001) → 번들 수정 완료. Loop 1 재감사는 Phase 4 감사에 병합(스킵 사유 하단 기록). |
 | 4 — Fetcher 인프라              | ✅ 완료    | 2026-04-19 | 2026-04-19 | ✅   | 감사 Loop 0 PASS (2026-04-24, Phase 3 Loop 1 merged). Critical 0, Warning 11, Info 19. 선결 5항목 보완 완료. |
 | 5 — 페르소나·워밍               | ✅ 완료    | 2026-04-24 | 2026-04-24 | ✅   | 감사 Loop 0 PASS. Critical 0, Warning 10, Info 19. TKTK #1~#4 resolved, #5/#6 Phase 6 이월. 마감 4항목 보완 완료. Task 5.7 (사용자 실제 워밍) 이월. |
-| 6 — 세션/행동 루프              | ✅ 완료    | 2026-04-24 | 2026-04-24 | ✅   | 감사 Loop 0 PASS. Critical 0, Warning 8, Info 25. X-509 #1~#7 모두 확인. dry-run PASS (261,717 bytes). PERF-601~604 Phase 7 dry-run 전 해소 권고, 캐스트 단일 진입점 확장 (ARCH-602+STYLE-603) 후속. |
-| 7 — Notifier/CLI 대시보드       | ⏳ 대기    | —          | —    | —    | —                    |
+| 6 — 세션/행동 루프              | ✅ 완료    | 2026-04-24 | 2026-04-24 | ✅   | 감사 PASS + Warning 6건 해소 (PERF-601~604 / ARCH-602+STYLE-603 / ARCH-607+STYLE-606). 잔존 Warning 2건(STYLE-601 test fixtures / STYLE-602 oxlint 튜닝) Phase 8+ 이월. |
+| 7 — Notifier/CLI 대시보드       | 🟡 감사    | 2026-04-24 | —    | 🟡   | §13.3.5 Notifier 완성: queue/immediateQueue/worker/dedup 5m 영속/shutdown grace. telegram.ts + macos.ts 분리, daily-summary (node-cron 23:55 KST), `pnpm status` 대시보드. 172 tests / 0 lint errors / 3/3 type-check. 감사 대기 (ops 프로파일). |
 | 8 — Serebii T0 파서             | ⏳ 대기    | —          | —    | —    | 35+ 파서             |
 | 9 — Serebii 드라이런·크롤       | ⏳ 대기    | —          | —    | —    | —                    |
 | 10 — PokopiaGuide API Discovery | ⏳ 대기    | —          | —    | —    | —                    |
@@ -679,59 +680,57 @@
 
 ---
 
-## 다음 세션 바로 시작 카드 — Phase 7 (Notifier worker + CLI 대시보드)
+## 다음 세션 바로 시작 카드 — Phase 7 감사 + Phase 8 준비
 
-Phase 6 ✅ 완료 (감사 PASS). Phase 7 착수 가능. 단 Phase 7 dry-run 이전 Phase 6 감사의 PERF-601~604 해소 권장.
+Phase 7 코드 완성. 다음 단계는 **Phase 7 감사 (ops 프로파일)** → 감사 결과 반영 → **Phase 8 (Serebii T0 파서)** 착수.
 
 ### 첫 15분 체크리스트 (세션 재개 직후)
 
 ```bash
-# 1. 위치 + 환경 확인
 cd /Users/ukyi/workspace/pokopia-wiki
-git log --oneline -8                        # Phase 6 감사 PASS 커밋 확인
+git log --oneline -8                        # Phase 7 커밋 확인
 git status                                   # clean 확인
-pnpm -r --parallel test:run                  # 172/172 pass (api 4, shared 23, scraper 145)
+pnpm -r --parallel test:run                  # 172/172 pass
 pnpm -r --parallel type-check                # 3/3 PASS
-docker compose -f docker-compose.local.yml ps postgres  # healthy
+pnpm --filter @pokopia-wiki/scraper status   # 대시보드 실행 확인
 ```
 
-### 2. Phase 6 감사 결과 리뷰 (참고)
+### 2. Phase 7 감사 실행 (최우선)
 
-`_workspace/audit/phase-6/20260424-0843/REPORT.md` — Critical 0 / Warning 8 / Info 25, PASS.
+```
+스킬: /pokopia-phase-review-harness phase=7 type=crawler
+프로파일: ops + security (로드맵 §Phase 7 지정)
+```
 
-### 3. Phase 7 착수 전 Phase 6 Warning 해소 (권장)
+감사 범위:
+- §13.3.5 Notifier 구현 완성도 (queue/worker/dedup/shutdown)
+- AppleScript 인젝션 방어선 (macos.ts)
+- Telegram API `ok=false` 패턴 검증 (telegram.ts)
+- dedup 파일 경합 / 무한 성장 방지
+- daily-summary cron 복구 로직
+- status 대시보드 파일 I/O 안전성 (data/invalid 순회)
 
-**dry-run 이전 성능 4건 (반복 호출 페이지에서 체감 큼):**
+### 3. Phase 7 후속 TODO (감사 후 병행)
 
-- PERF-601 CrawlState in-memory 캐시 + debounced flush
-- PERF-602 SessionManager finally `Promise.allSettled`
-- PERF-603 ghost-cursor `WeakMap<DriverPage, CursorLike>` 캐시
-- PERF-604 DetectionMonitor content() 단일 regex + 1회 toLowerCase
+- notifier / telegram / macos / daily-summary 단위 테스트 보강 (HTTP/IO mock 주입)
+- Phase 6 잔존 Warning: STYLE-601 (test fixtures 추출), STYLE-602 (oxlint 튜닝)
 
-**Phase 7 중 병행:**
+### 4. Phase 8 착수 준비 — 로드맵 §Phase 8 (라인 1072~)
 
-- ARCH-602 + STYLE-603: `driver-page.ts` 에 `asGhostCursorPage` / `asBehaviorLocator` 추가
-- ARCH-607 + STYLE-606: `error/classify.ts` 신설 (fetcher 에러 → ErrorType 변환)
+**Goal:** Serebii T0 파서·매퍼·로더 구현. 35+ 페이지 (DATA_COLLECTION_PLAN §6 Phase 1~5).
 
-### 4. Phase 7 본 작업 — 로드맵 §Phase 7 (라인 1007~)
+**예상 기간:** 3~5일 (별도 세션 권장).
 
 **주 산출물:**
 
-- `services/scraper/src/notifier/worker.ts` — 백그라운드 dedup/queue/backpressure (PERF-001/002/003 해소)
-- `services/scraper/src/notifier/index.ts` 확장 — §13.3.5 immediateQueue 완성
-- `services/scraper/src/notifier/telegram.ts` 분리 — `getMe` 검증 (§13.3.6 B8)
-- `services/scraper/src/notifier/macos.ts` 분리 — AppleScript 인젝션 방어
-- `services/scraper/src/daily-summary.ts` — `node-cron` 23:55 트리거
-- `services/scraper/scripts/status.ts` — 터미널 대시보드
-- `services/scraper/src/notifier/index.test.ts` 확장
+- `services/scraper/src/parsers/serebii/` — 35+ 파서 모듈 (TDD 사이클)
+- `services/scraper/src/parsers/serebii/__fixtures__/` — HTML 고정화 (라이선스 메타 YAML 동반)
+- `services/scraper/src/loaders/upsert-loader.ts` — Prisma upsert (source_slug 기반)
+- `services/scraper/src/validators/run-validation.ts` — Zod safeParse + `data/invalid/` 격리
 
-**Phase 7 완료 조건 (로드맵):**
+**에이전트 팀:** 팀 B (구현) = `pokopia-code-builder` + `pokopia-schema-architect` + `pokopia-qa-analyst`.
 
-- 같은 이벤트 5분 내 재발생 시 1회만 송신
-- Notifier 부팅 후 즉시 Telegram 으로 `scraper.start` 알림 도착
-- `pnpm run status` 가 현재 상태를 한 화면에 출력
-
-**감사 프로파일:** `ops` → `pokopia-ops-conductor` + `codereview-security-auditor` (AppleScript injection).
+**감사 프로파일:** `parser` → `pokopia-quality-gate` + `pokopia-i18n-mapper` + `codereview-performance-auditor` + `codereview-style-auditor`.
 
 ### 4. (선택) Phase 5 잔존 Warning 일부 처리
 
