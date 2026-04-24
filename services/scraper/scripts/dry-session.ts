@@ -138,6 +138,10 @@ async function main(): Promise<void> {
   });
 
   console.log(`[dry-session] outcome.kind=${outcome.kind}`);
+
+  // Phase 7 — notifier worker 종료 대기 (immediateQueue flush 보장).
+  await notifier.shutdown();
+
   if (outcome.kind !== 'completed') {
     console.error(`[dry-session] outcome=${JSON.stringify(outcome)}`);
     process.exit(1);
