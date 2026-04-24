@@ -38,3 +38,11 @@ if (!existsSync(path.join(REPO_ROOT, 'pnpm-workspace.yaml'))) {
 export function repoPath(...segments: readonly string[]): string {
   return path.resolve(REPO_ROOT, ...segments);
 }
+
+/**
+ * `data/logs/events.jsonl` — Notifier 영구 이벤트 기록 경로 SSoT (Phase 7 ARCH-701).
+ *
+ * 이전: notifier/index.ts + daily-summary.ts 가 각자 `repoPath('data', 'logs', 'events.jsonl')`
+ * 를 선언 → 경로 변경 시 두 곳 동시 수정 필요. 공용 상수로 추출해 불일치 방어.
+ */
+export const EVENTS_LOG_PATH = repoPath('data', 'logs', 'events.jsonl');

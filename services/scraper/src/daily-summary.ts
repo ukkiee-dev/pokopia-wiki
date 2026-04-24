@@ -21,21 +21,19 @@
 
 import { readFile } from 'node:fs/promises';
 
-import { atomicWriteJson } from '@pokopia-wiki/shared';
+import { atomicWriteJson, KST_OFFSET_MS } from '@pokopia-wiki/shared';
 import cron, { type ScheduledTask } from 'node-cron';
 
 import type { Notifier } from './notifier/index.js';
-import { repoPath } from './paths.js';
+import { EVENTS_LOG_PATH, repoPath } from './paths.js';
 import { CrawlState } from './state/crawl-state.js';
 
 /** cron 크론 문자열 — KST 23:55. */
 const DAILY_CRON = '55 23 * * *';
 const TIMEZONE_KST = 'Asia/Seoul';
-const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
 
 /** 마지막 실행 날짜(KST YYYY-MM-DD) 영속 — 복구 여부 판단. */
 const LAST_RUN_PATH = repoPath('data', 'state', 'daily-summary-last.json');
-const EVENTS_LOG_PATH = repoPath('data', 'logs', 'events.jsonl');
 
 export type DailySummaryStats = {
   phase: number | null;
@@ -49,10 +47,19 @@ export type DailySummaryStats = {
   healthScores: Record<string, number>;
 };
 
-export type DailySummaryOptions = {
-  notifier: Notifier;
+/**
+ * collectStats 전용 옵션 — notifier 불필요 (ARCH-703).
+ */
+export type CollectStatsOptions = {
   crawlState?: CrawlState;
   now?: () => Date;
+};
+
+/**
+ * publishDailySummary / schedule 에 필요한 옵션 — notifier 필수.
+ */
+export type DailySummaryOptions = CollectStatsOptions & {
+  notifier: Notifier;
 };
 
 function todayKst(now: Date): string {
@@ -87,13 +94,12 @@ async function countTodayEvents(todayKstDate: string): Promise<{ blocks: number;
   return { blocks, captcha, sessions };
 }
 
-export async function collectStats(options: DailySummaryOptions): Promise<DailySummaryStats> {
+export async function collectStats(options: CollectStatsOptions): Promise<DailySummaryStats> {
   const crawlState = options.crawlState ?? new CrawlState();
   const now = options.now?.() ?? new Date();
   const today = todayKst(now);
 
-  const state = await crawlState.read();
-  const eventCounts = await countTodayEvents(today);
+  const [state, eventCounts] = await Promise.all([crawlState.read(), countTodayEvents(today)]);
 
   return {
     phase: state.phase,

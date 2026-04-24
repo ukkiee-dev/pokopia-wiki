@@ -22,3 +22,6 @@ export * from './logging/redact';
 
 // Phase 5 (STYLE-501): atomic write helper — tmp + rename POSIX 원자성 (OPS-403 공용화)
 export * from './fs/atomic-write';
+
+// Phase 7 (STYLE-701): 시간 단위 상수 SSoT (KST_OFFSET_MS / HOUR_MS / DAY_MS)
+export * from './time/constants';

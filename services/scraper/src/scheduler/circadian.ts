@@ -21,6 +21,8 @@
  *   - `config`: CIRCADIAN 상수. 정상 사용 시 기본값, 테스트는 짧은 간격 주입 가능.
  */
 
+import { DAY_MS, HOUR_MS, KST_OFFSET_MS } from '@pokopia-wiki/shared';
+
 import type { BrowserPersona } from '../persona/types.js';
 
 /**
@@ -39,14 +41,11 @@ export const CIRCADIAN = {
   },
 } as const;
 
-const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
-const DAY_MS = 24 * 60 * 60 * 1000;
-const HOUR_MS = 60 * 60 * 1000;
-
 /**
  * UTC Date → KST hour (0~23). PersonaManager.hourInSeoul 과 동일 의미.
  *
  * 직접 +9h 방식 — Asia/Seoul DST 미존재로 안전. Intl 호출 비용 회피.
+ * KST_OFFSET_MS / DAY_MS / HOUR_MS 는 shared/time/constants.ts SSoT (Phase 7 STYLE-701).
  */
 export function hourInSeoul(at: Date): number {
   const kstMs = at.getTime() + KST_OFFSET_MS;

@@ -1,4 +1,4 @@
-/* eslint-disable no-console, unicorn/prefer-top-level-await, max-lines-per-function, no-await-in-loop */
+/* eslint-disable no-console, unicorn/prefer-top-level-await, max-lines-per-function */
 /**
  * CLI 상태 대시보드 — Phase 7 Task 7.5.
  *
@@ -30,8 +30,6 @@ import { readdir, readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 
 import { collectStats } from '#daily-summary';
-import { loadNotifierConfig } from '#notifier/config';
-import { Notifier } from '#notifier/index';
 import { repoPath } from '#paths';
 import { CrawlState } from '#state/crawl-state';
 
@@ -40,53 +38,70 @@ const PERSONAS_DIR = repoPath('data', 'state');
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
 async function countRecentInvalid(baseDir: string, cutoffMs: number): Promise<number> {
+  // PERF-704: Promise.all 로 소스 × 날짜 디렉토리 순회를 병렬화.
   try {
-    const entries = await readdir(baseDir, { withFileTypes: true });
-    let count = 0;
-    for (const entry of entries) {
-      if (!entry.isDirectory()) continue;
-      // 소스별 디렉토리(serebii/pokopiaGuide/...) → 날짜 디렉토리 → 파일
-      const sourceDir = path.join(baseDir, entry.name);
-      const dateDirs = await readdir(sourceDir, { withFileTypes: true }).catch(() => []);
-      for (const dateDir of dateDirs) {
-        if (!dateDir.isDirectory()) continue;
-        const dirPath = path.join(sourceDir, dateDir.name);
-        const info = await stat(dirPath).catch(() => null);
-        if (info === null) continue;
-        if (info.mtimeMs < cutoffMs) continue;
-        const files = await readdir(dirPath).catch(() => []);
-        count += files.length;
-      }
-    }
-    return count;
+    const sources = await readdir(baseDir, { withFileTypes: true });
+    const sourceCounts = await Promise.all(
+      sources
+        .filter((entry) => entry.isDirectory())
+        .map(async (entry) => {
+          const sourceDir = path.join(baseDir, entry.name);
+          const dateDirs = await readdir(sourceDir, { withFileTypes: true }).catch(() => []);
+          const dateCounts = await Promise.all(
+            dateDirs
+              .filter((d) => d.isDirectory())
+              .map(async (d) => {
+                const dirPath = path.join(sourceDir, d.name);
+                const info = await stat(dirPath).catch(() => null);
+                if (info === null || info.mtimeMs < cutoffMs) return 0;
+                const files = await readdir(dirPath).catch(() => []);
+                return files.length;
+              }),
+          );
+          return dateCounts.reduce((a, b) => a + b, 0);
+        }),
+    );
+    return sourceCounts.reduce((a, b) => a + b, 0);
   } catch {
     return 0;
   }
 }
 
-async function collectPersonaHealth(): Promise<Record<string, { healthScore: number; cooldownUntil: string | null; retired: boolean }>> {
+type PersonaHealth = { healthScore: number; cooldownUntil: string | null; retired: boolean };
+
+async function collectPersonaHealth(): Promise<Record<string, PersonaHealth>> {
   try {
     const entries = await readdir(PERSONAS_DIR, { withFileTypes: true });
-    const result: Record<string, { healthScore: number; cooldownUntil: string | null; retired: boolean }> = {};
-    for (const entry of entries) {
-      if (!entry.isFile() || !entry.name.startsWith('persona-') || !entry.name.endsWith('.json')) continue;
-      const id = entry.name.slice('persona-'.length, -'.json'.length);
-      const raw = await readFile(path.join(PERSONAS_DIR, entry.name), 'utf8').catch(() => null);
-      if (raw === null) continue;
-      try {
-        const parsed = JSON.parse(raw) as {
-          healthScore?: number;
-          cooldownUntil?: string | null;
-          retired?: { at: string; reason: string } | null;
-        };
-        result[id] = {
-          healthScore: typeof parsed.healthScore === 'number' ? parsed.healthScore : 100,
-          cooldownUntil: typeof parsed.cooldownUntil === 'string' ? parsed.cooldownUntil : null,
-          retired: parsed.retired !== null && parsed.retired !== undefined,
-        };
-      } catch {
-        /* skip */
-      }
+    const personaFiles = entries.filter(
+      (e) => e.isFile() && e.name.startsWith('persona-') && e.name.endsWith('.json'),
+    );
+    const parsed = await Promise.all(
+      personaFiles.map(async (entry) => {
+        const id = entry.name.slice('persona-'.length, -'.json'.length);
+        const raw = await readFile(path.join(PERSONAS_DIR, entry.name), 'utf8').catch(() => null);
+        if (raw === null) return null;
+        try {
+          const obj = JSON.parse(raw) as {
+            healthScore?: number;
+            cooldownUntil?: string | null;
+            retired?: { at: string; reason: string } | null;
+          };
+          return [
+            id,
+            {
+              healthScore: typeof obj.healthScore === 'number' ? obj.healthScore : 100,
+              cooldownUntil: typeof obj.cooldownUntil === 'string' ? obj.cooldownUntil : null,
+              retired: obj.retired !== null && obj.retired !== undefined,
+            } satisfies PersonaHealth,
+          ] as const;
+        } catch {
+          return null;
+        }
+      }),
+    );
+    const result: Record<string, PersonaHealth> = {};
+    for (const pair of parsed) {
+      if (pair !== null) result[pair[0]] = pair[1];
     }
     return result;
   } catch {
@@ -106,12 +121,15 @@ function formatDuration(ms: number): string {
 async function main(): Promise<void> {
   const now = new Date();
   const crawlState = new CrawlState();
-  const notifier = new Notifier(loadNotifierConfig());
 
-  const state = await crawlState.read();
-  const stats = await collectStats({ notifier, crawlState, now: () => now });
-  const personas = await collectPersonaHealth();
-  const invalidCount = await countRecentInvalid(INVALID_DIR, now.getTime() - ONE_DAY_MS);
+  // ARCH-703 + PERF-704: collectStats 는 notifier 를 쓰지 않음 → 미전달.
+  // 3개 IO 를 Promise.all 로 병렬화.
+  const [state, stats, personas, invalidCount] = await Promise.all([
+    crawlState.read(),
+    collectStats({ crawlState, now: () => now }),
+    collectPersonaHealth(),
+    countRecentInvalid(INVALID_DIR, now.getTime() - ONE_DAY_MS),
+  ]);
 
   const lines: string[] = [];
   lines.push('=== Pokopia Scraper Status ===');

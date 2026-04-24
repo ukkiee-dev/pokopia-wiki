@@ -26,19 +26,16 @@
  * no-console: Notifier 자체가 로깅 시스템이라 console 은 정당한 fallback.
  */
 
-import { appendFile, mkdir, readFile, writeFile } from 'node:fs/promises';
+import { appendFile, mkdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 
-import { redact, redactObject } from '@pokopia-wiki/shared';
+import { atomicWriteJson, redact, redactObject } from '@pokopia-wiki/shared';
 
-import { repoPath } from '../paths.js';
+import { EVENTS_LOG_PATH, repoPath } from '../paths.js';
 import type { NotifierConfig } from './config.js';
 import { SEVERITY_MAP, type EventType, type NotifierEvent, type Severity } from './events.js';
 import { sendMacOSNotification } from './macos.js';
 import { sendTelegramMessage, verifyBotIdentity, type VerifyResult } from './telegram.js';
-
-/** `data/logs/events.jsonl` — 영구 이벤트 기록. config.enabled 와 무관하게 항상 append. */
-const EVENTS_LOG_PATH = repoPath('data', 'logs', 'events.jsonl');
 
 /** Dedup 영속 파일 — 프로세스 재시작 후에도 5 분 cooldown 이어짐. */
 const DEDUP_STATE_PATH = repoPath('data', 'state', 'notifier-dedup.json');
@@ -238,7 +235,8 @@ export class Notifier {
   private async persistDedup(): Promise<void> {
     try {
       await mkdir(path.dirname(DEDUP_STATE_PATH), { recursive: true });
-      await writeFile(DEDUP_STATE_PATH, JSON.stringify(this.lastSentAt), 'utf8');
+      // SEC-701: atomicWriteJson 으로 atomic + 기본 mode 0o600 보장.
+      await atomicWriteJson(DEDUP_STATE_PATH, this.lastSentAt);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       console.error(`[notifier] persistDedup 실패: ${redact(msg)}`);
