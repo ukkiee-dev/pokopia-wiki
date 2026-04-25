@@ -14,6 +14,7 @@
  * - `./social`     : FavoriteCategorySchema + FavoriteCategoryInput (Phase 8 단계 7)
  * - `./food`       : FoodSchema + FoodInput (Phase 8 단계 10)
  * - `./building`   : BuildingKitSchema + BuildingKitInput (Phase 8 단계 11)
+ * - `./ditto-ability` : DittoAbilitySchema + DittoAbilityInput (Phase 8 단계 12)
  */
 
 export * from './_base';
@@ -25,3 +26,4 @@ export * from './specialty';
 export * from './social';
 export * from './food';
 export * from './building';
+export * from './ditto-ability';
