@@ -39,6 +39,7 @@
  * - `./exchange`      : ExchangeRecipeSchema (Phase 8 단계 34, 스키마 only)
  * - `./litter`        : PokemonLitterRewardSchema (Phase 8 단계 35)
  * - `./event`         : EventSchema + EventPokemonSchema (Phase 8 단계 36)
+ *                       + EventHabitatSchema + EventItemSchema (Phase 8 단계 37/38, 스키마 only)
  */
 
 export * from './_base';
