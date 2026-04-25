@@ -16,6 +16,7 @@
  * - `./building`   : BuildingKitSchema + BuildingKitInput (Phase 8 단계 11)
  * - `./ditto-ability` : DittoAbilitySchema + DittoAbilityInput (Phase 8 단계 12)
  * - `./magnet-rise`   : MagnetRiseItemSchema + MagnetRiseItemInput (Phase 8 단계 13)
+ * - `./paint`         : PaintColorSchema + PaintPatternSchema (Phase 8 단계 14)
  */
 
 export * from './_base';
@@ -29,3 +30,4 @@ export * from './food';
 export * from './building';
 export * from './ditto-ability';
 export * from './magnet-rise';
+export * from './paint';
