@@ -4,18 +4,20 @@
  *
  * 사용법:
  *   pnpm --filter @pokopia-wiki/scraper scrape --source serebii \
- *     --page availablepokemon [--dry-run] [--use-fixture] [--limit N]
+ *     --page <pageId> [--dry-run] [--use-fixture] [--limit N]
+ *   pnpm --filter @pokopia-wiki/scraper scrape --list-pages
  *
  * 옵션:
  *   --source <site>      대상 소스 (serebii / pokopiaGuide / pokopoko / namuwiki).
  *                        현재 'serebii' 만 지원 (Phase 9).
- *   --page <pageId>      파싱 대상 페이지 ID (파서 pageId 와 일치).
- *                        예: 'availablepokemon', 'specialty', 'items'.
- *   --dry-run            DB upsert 를 건너뛰고 파싱 결과만 stdout 에 통계 출력.
+ *   --page <pageId>      파싱 대상 페이지 ID (PARSER 레지스트리 키와 일치).
+ *                        --list-pages 로 전체 목록 확인.
+ *   --dry-run            DB upsert 를 건너뛰고 파싱 결과만 stdout 통계 + JSON 출력.
  *                        Phase 9 Task 9.1 의 dryrun 검토용.
- *   --use-fixture        실제 네트워크 호출 대신 `__fixtures__/<pageId>.html` 사용.
+ *   --use-fixture        실제 네트워크 호출 대신 `__fixtures__/<page>.html` 사용.
  *                        개발/CI 모드.
  *   --limit <N>          파싱된 entity 중 첫 N 개만 처리 (오프셋 0).
+ *   --list-pages         등록된 page ID 목록 출력 후 즉시 종료.
  *
  * 종료 코드:
  *   0 — 모든 entity 정상 (failures 0).
@@ -28,9 +30,49 @@ import path from 'node:path';
 
 import { repoPath } from '#paths';
 
-import { AvailablePokemonParser } from './parsers/serebii/available-pokemon.js';
-import type { Parser, ParseResult } from './parsers/base.js';
 import { isolateInvalidEntries, type InvalidEntry } from './loaders/invalid-isolator.js';
+import type { Parser, ParseResult } from './parsers/base.js';
+import { AbilitiesParser } from './parsers/serebii/abilities.js';
+import { AvailablePokemonParser } from './parsers/serebii/available-pokemon.js';
+import { BuildingParser } from './parsers/serebii/building.js';
+import { CdsParser } from './parsers/serebii/cds.js';
+import { CloudIslandsParser } from './parsers/serebii/cloud-islands.js';
+import { CollectParser } from './parsers/serebii/collect.js';
+import { CookingParser } from './parsers/serebii/cooking.js';
+import { CraftingParser } from './parsers/serebii/crafting.js';
+import { CustomizationParser } from './parsers/serebii/customization.js';
+import { DreamIslandsParser } from './parsers/serebii/dream-islands.js';
+import { ElectricityParser } from './parsers/serebii/electricity.js';
+import { EnvironmentRewardParser } from './parsers/serebii/environment.js';
+import { EventPokedexParser } from './parsers/serebii/event-pokedex.js';
+import { FavoritesParser } from './parsers/serebii/favorites.js';
+import { FlavorsParser } from './parsers/serebii/flavors.js';
+import { FriendshipParser } from './parsers/serebii/friendship.js';
+import { FurnitureParser } from './parsers/serebii/furniture.js';
+import { GameplayParser } from './parsers/serebii/gameplay.js';
+import { HabitatsIndexParser } from './parsers/serebii/habitats-index.js';
+import { HideAndSneakParser } from './parsers/serebii/hide-and-sneak.js';
+import { HumanRecordsParser } from './parsers/serebii/human-records.js';
+import { ItemsParser } from './parsers/serebii/items.js';
+import { JumpropeParser } from './parsers/serebii/jumprope.js';
+import { LegendaryParser } from './parsers/serebii/legendary.js';
+import { LitterParser } from './parsers/serebii/litter.js';
+import { LocationDetailParser } from './parsers/serebii/location-detail.js';
+import { LocationsIndexParser } from './parsers/serebii/locations-index.js';
+import { LostRelicsParser } from './parsers/serebii/lost-relics.js';
+import { MagnetRiseParser } from './parsers/serebii/magnet-rise.js';
+import { MosslaxParser } from './parsers/serebii/mosslax.js';
+import { PaintColorParser, PaintPatternParser } from './parsers/serebii/paint.js';
+import { FlowersParser, VegetablesParser } from './parsers/serebii/plants.js';
+import { PokedexMilestoneParser } from './parsers/serebii/pokedex-milestone.js';
+import { PokemonCenterParser } from './parsers/serebii/pokemon-center.js';
+import { QuestsParser } from './parsers/serebii/quests.js';
+import { SpecialtyParser } from './parsers/serebii/specialty.js';
+import { StampCardParser, StampRewardParser } from './parsers/serebii/stamp-card.js';
+import { TeamChallengeParser } from './parsers/serebii/team-challenge.js';
+import { TradeParser } from './parsers/serebii/trade.js';
+import { UniquePokemonParser } from './parsers/serebii/unique-pokemon.js';
+import { WaterParser } from './parsers/serebii/water.js';
 
 // ─────────────────────────────────────────────────────────
 //  CLI 인자 파싱 (의존성 추가 회피 위해 minimal manual parser)
@@ -67,7 +109,7 @@ function parseArgs(argv: ReadonlyArray<string>): CliArgs | null {
         break;
       }
       default:
-        // 무시 (향후 확장 여지).
+        // 무시 (--list-pages 같은 일반 플래그 또는 향후 확장).
         break;
     }
   }
@@ -76,13 +118,67 @@ function parseArgs(argv: ReadonlyArray<string>): CliArgs | null {
 }
 
 // ─────────────────────────────────────────────────────────
-//  파서 레지스트리 — 페이지 ID → Parser 인스턴스
-//  (Phase 9 점진적으로 확장 — 본 단계는 첫 예시로 available-pokemon)
+//  파서 레지스트리 — CLI page ID → Parser 인스턴스 팩토리
+//
+//  대부분 1:1 매핑이지만 두 가지 특수 케이스:
+//    1. multi-parser 페이지 (paint, stampcard): default + suffix alias 모두 등록
+//       (예: 'paint' = color default, 'paint-color' / 'paint-pattern' alias)
+//    2. multi-fixture 페이지 (location-detail): 각 location 을 별도 alias 로 등록
+//       (예: 'location-witheredwastelands', 'location-bleakbeach' 등 5 개)
 // ─────────────────────────────────────────────────────────
 
 const SEREBII_PARSERS: Record<string, () => Parser<unknown>> = {
+  abilities: () => new AbilitiesParser() as Parser<unknown>,
+  'available-pokemon': () => new AvailablePokemonParser() as Parser<unknown>,
   availablepokemon: () => new AvailablePokemonParser() as Parser<unknown>,
-  // 추가 페이지: pageId → 새 Parser 인스턴스 매핑을 여기에 등록.
+  building: () => new BuildingParser() as Parser<unknown>,
+  cds: () => new CdsParser() as Parser<unknown>,
+  cloudislands: () => new CloudIslandsParser() as Parser<unknown>,
+  collect: () => new CollectParser() as Parser<unknown>,
+  cooking: () => new CookingParser() as Parser<unknown>,
+  crafting: () => new CraftingParser() as Parser<unknown>,
+  customisation: () => new CustomizationParser() as Parser<unknown>,
+  dreamislands: () => new DreamIslandsParser() as Parser<unknown>,
+  electricity: () => new ElectricityParser() as Parser<unknown>,
+  environmentlevel: () => new EnvironmentRewardParser() as Parser<unknown>,
+  eventpokedex: () => new EventPokedexParser() as Parser<unknown>,
+  favorites: () => new FavoritesParser() as Parser<unknown>,
+  flavors: () => new FlavorsParser() as Parser<unknown>,
+  flowers: () => new FlowersParser() as Parser<unknown>,
+  friendship: () => new FriendshipParser() as Parser<unknown>,
+  furniture: () => new FurnitureParser() as Parser<unknown>,
+  gameplay: () => new GameplayParser() as Parser<unknown>,
+  'habitats-index': () => new HabitatsIndexParser() as Parser<unknown>,
+  hideandsneak: () => new HideAndSneakParser() as Parser<unknown>,
+  humanrecords: () => new HumanRecordsParser() as Parser<unknown>,
+  importantrequests: () => new QuestsParser() as Parser<unknown>,
+  items: () => new ItemsParser() as Parser<unknown>,
+  jumprope: () => new JumpropeParser() as Parser<unknown>,
+  legendary: () => new LegendaryParser() as Parser<unknown>,
+  litter: () => new LitterParser() as Parser<unknown>,
+  'location-bleakbeach': () => new LocationDetailParser() as Parser<unknown>,
+  'location-palettetown': () => new LocationDetailParser() as Parser<unknown>,
+  'location-rockyridges': () => new LocationDetailParser() as Parser<unknown>,
+  'location-sparklingskylands': () => new LocationDetailParser() as Parser<unknown>,
+  'location-witheredwastelands': () => new LocationDetailParser() as Parser<unknown>,
+  'locations-index': () => new LocationsIndexParser() as Parser<unknown>,
+  lostrelics: () => new LostRelicsParser() as Parser<unknown>,
+  'magnet-rise': () => new MagnetRiseParser() as Parser<unknown>,
+  mosslaxboosts: () => new MosslaxParser() as Parser<unknown>,
+  paint: () => new PaintColorParser() as Parser<unknown>,
+  'paint-color': () => new PaintColorParser() as Parser<unknown>,
+  'paint-pattern': () => new PaintPatternParser() as Parser<unknown>,
+  pokedexcompletion: () => new PokedexMilestoneParser() as Parser<unknown>,
+  'pokemon-center': () => new PokemonCenterParser() as Parser<unknown>,
+  specialty: () => new SpecialtyParser() as Parser<unknown>,
+  stampcard: () => new StampCardParser() as Parser<unknown>,
+  'stampcard-card': () => new StampCardParser() as Parser<unknown>,
+  'stampcard-reward': () => new StampRewardParser() as Parser<unknown>,
+  teaminitiationchallenge: () => new TeamChallengeParser() as Parser<unknown>,
+  trade: () => new TradeParser() as Parser<unknown>,
+  uniquepokemon: () => new UniquePokemonParser() as Parser<unknown>,
+  vegetables: () => new VegetablesParser() as Parser<unknown>,
+  water: () => new WaterParser() as Parser<unknown>,
 };
 
 function pickParser(source: string, page: string): Parser<unknown> | null {
@@ -93,16 +189,28 @@ function pickParser(source: string, page: string): Parser<unknown> | null {
   return null;
 }
 
+export function listAvailablePages(): ReadonlyArray<string> {
+  return Object.keys(SEREBII_PARSERS).toSorted();
+}
+
 // ─────────────────────────────────────────────────────────
 //  Fixture 로딩 (--use-fixture 모드)
 // ─────────────────────────────────────────────────────────
 
 /**
- * 일부 fixture 파일명은 pageId 와 다른 형식을 사용 (예: 'availablepokemon' →
- * 'available-pokemon.html'). PARSER pageId 와 fixture 파일명 변형 매핑.
+ * CLI page ID → fixture 파일명 (확장자 제외) 변형 매핑.
+ *
+ * 대부분 page ID 가 fixture 파일명과 일치하지만 다음 케이스는 매핑 필요:
+ *   - alias: availablepokemon → available-pokemon
+ *   - multi-parser 공유 fixture: paint-color/paint-pattern → paint,
+ *     stampcard-card/stampcard-reward → stampcard
  */
 const FIXTURE_FILENAME_OVERRIDES: Record<string, string> = {
   availablepokemon: 'available-pokemon',
+  'paint-color': 'paint',
+  'paint-pattern': 'paint',
+  'stampcard-card': 'stampcard',
+  'stampcard-reward': 'stampcard',
 };
 
 function loadFixtureHtml(source: string, page: string): { html: string; sourceUrl: string } | null {
@@ -131,15 +239,24 @@ function loadFixtureHtml(source: string, page: string): { html: string; sourceUr
 // ─────────────────────────────────────────────────────────
 
 async function main(): Promise<void> {
+  // --list-pages 단독 처리 (인자 검증 우회).
+  if (process.argv.includes('--list-pages')) {
+    const pages = listAvailablePages();
+    console.log(pages.join('\n'));
+    process.exit(0);
+  }
+
   const args = parseArgs(process.argv.slice(2));
   if (args === null) {
     console.error('Usage: scrape --source <site> --page <pageId> [--dry-run] [--use-fixture] [--limit N]');
+    console.error('       scrape --list-pages   # registered page IDs 출력');
     process.exit(1);
   }
 
   const parser = pickParser(args.source, args.page);
   if (parser === null) {
     console.error(`No parser registered for source=${args.source} page=${args.page}`);
+    console.error('Run with --list-pages to see all available page IDs.');
     process.exit(1);
   }
 
