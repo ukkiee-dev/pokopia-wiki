@@ -26,6 +26,7 @@
  * - `./minigame`      : JumpropeTierSchema + HideAndSneakRewardSchema (Phase 8 단계 21)
  * - `./reference`     : GameplayReferenceSchema (Phase 8 단계 22, DB 비대상 reference)
  * - `./quest`         : QuestSchema + QuestRequirementSchema (Phase 8 단계 23)
+ * - `./team-challenge`: TeamChallengeSchema (Phase 8 단계 24)
  */
 
 export * from './_base';
@@ -49,3 +50,4 @@ export * from './stamp';
 export * from './minigame';
 export * from './reference';
 export * from './quest';
+export * from './team-challenge';
