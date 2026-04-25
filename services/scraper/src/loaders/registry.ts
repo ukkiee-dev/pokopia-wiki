@@ -31,8 +31,8 @@ import type { PrismaClient } from '@pokopia-wiki/shared';
 
 import { loadBuildingKit } from './building-loader.js';
 import { loadCd } from './cd-loader.js';
-import { loadItem } from './item-loader.js';
 import { loadFood, loadLostRelic, loadTradeValuation } from './item-extension-loaders.js';
+import { loadItem } from './item-loader.js';
 import { loadLocation } from './location-loader.js';
 import { loadHideAndSneakReward } from './minigame-reward-loader.js';
 import { loadPaintColor } from './paint-color-loader.js';
@@ -41,7 +41,7 @@ import { loadPokemon } from './pokemon-loader.js';
 import { loadCookingRecipe, loadCraftingRecipe } from './recipe-loader.js';
 import { loadDittoAbility } from './ditto-ability-loader.js';
 import { loadEnvironmentReward } from './environment-reward-loader.js';
-import { loadEvent, loadEventPokemon } from './event-loader.js';
+import { loadEventPokemon } from './event-loader.js';
 import { loadHabitat } from './habitat-loader.js';
 import { loadHumanRecord } from './human-record-loader.js';
 import { loadIslandVariant } from './island-variant-loader.js';
@@ -294,8 +294,6 @@ export async function dispatchLoader(
       return { invoked: true, result };
     }
     case 'furniture': {
-      // FurnitureParser 는 ItemInput 출력 → loadItem 재사용 (Item upsert).
-      const { loadItem } = await import('./item-loader.js');
       const result = await loadItem(prisma, entities as never);
       return { invoked: true, result };
     }

@@ -25,19 +25,9 @@ import type { ItemInput, PrismaClient } from '@pokopia-wiki/shared';
 import { lookupLocationIds } from './location-loader.js';
 import {
   upsertBySourceSlug,
-  type SourceSlugKeyedModel,
   type UpsertResult,
   type UpsertStats,
 } from './upsert-loader.js';
-
-type ItemPayload = {
-  category: ItemInput['category'];
-  isPaintable: boolean;
-  isPatternable: boolean;
-  isMagnetRiseOnly: boolean;
-  sourceUrl: string;
-  scrapedAt: Date;
-};
 
 type ItemLookupModel = {
   findMany: (args: {

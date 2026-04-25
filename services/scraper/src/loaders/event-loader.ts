@@ -36,14 +36,6 @@ type EventPokemonModel = {
   }) => Promise<{ count: number }>;
 };
 
-type EventPayload = {
-  startAt: Date | null;
-  endAt: Date | null;
-  isRecurring: boolean;
-  sourceUrl: string;
-  scrapedAt: Date;
-};
-
 /**
  * Event 본 entity upsert (placeholder). 실제 페이지가 entities 1 placeholder
  * (event-eventpokedex-default) 만 산출.

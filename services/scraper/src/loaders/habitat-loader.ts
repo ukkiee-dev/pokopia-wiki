@@ -39,13 +39,6 @@ type HabitatPokemonModel = {
   }) => Promise<{ count: number }>;
 };
 
-type HabitatPayload = {
-  habitatNo: number | null;
-  isEvent: boolean;
-  sourceUrl: string;
-  scrapedAt: Date;
-};
-
 export async function loadHabitat(
   prisma: Pick<PrismaClient, 'habitat' | 'habitatPokemon' | 'pokemon'>,
   inputs: ReadonlyArray<HabitatInput>,

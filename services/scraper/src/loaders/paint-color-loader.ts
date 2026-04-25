@@ -27,15 +27,9 @@ import type { PaintColorInput, PrismaClient } from '@pokopia-wiki/shared';
 
 import {
   upsertBySourceSlug,
-  type SourceSlugKeyedModel,
   type UpsertResult,
   type UpsertStats,
 } from './upsert-loader.js';
-
-type PaintColorPayload = {
-  sourceUrl: string;
-  scrapedAt: Date;
-};
 
 type PaintColorLookupModel = {
   findMany: (args: {

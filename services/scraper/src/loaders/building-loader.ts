@@ -21,16 +21,6 @@ import type { BuildingKitInput, PrismaClient } from '@pokopia-wiki/shared';
 
 import { upsertBySourceSlug, type UpsertResult } from './upsert-loader.js';
 
-type BuildingKitPayload = {
-  category: string;
-  pokemonCapacity: number;
-  buildingPoints: number;
-  width: number;
-  depth: number;
-  sourceUrl: string;
-  scrapedAt: Date;
-};
-
 /**
  * BuildingKit upsert (목록 페이지 데이터만). detail 페이지 데이터는 후속 단계에서
  * 별도 update.

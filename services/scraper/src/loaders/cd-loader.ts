@@ -38,12 +38,6 @@ type SourceGamePayload = {
   scrapedAt: Date;
 };
 
-type CdPayload = {
-  sourceGameId: number;
-  sourceUrl: string;
-  scrapedAt: Date;
-};
-
 /**
  * SourceGame 전용 upsert. SourceGameHint 만 받아 dedupe + upsert. 내부 사용
  * 위주이지만 CDS 페이지 외 entity (예: 향후 게임 메타 페이지) 에서도 재사용 가능.

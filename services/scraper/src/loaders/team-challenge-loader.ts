@@ -33,13 +33,6 @@ type TeamChallengeRequirementModel = {
   }) => Promise<{ count: number }>;
 };
 
-type TeamChallengePayload = {
-  stage: number;
-  badgeName: string;
-  sourceUrl: string;
-  scrapedAt: Date;
-};
-
 function normalizeItemSlug(raw: string): string {
   return raw.trim().toLowerCase().replace(/\s+/gu, '');
 }

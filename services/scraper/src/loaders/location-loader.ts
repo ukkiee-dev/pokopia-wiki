@@ -22,17 +22,9 @@ import type { LocationInput, PrismaClient } from '@pokopia-wiki/shared';
 
 import {
   upsertBySourceSlug,
-  type SourceSlugKeyedModel,
   type UpsertResult,
   type UpsertStats,
 } from './upsert-loader.js';
-
-type LocationPayload = {
-  type: LocationInput['type'];
-  parentId: number | null;
-  sourceUrl: string;
-  scrapedAt: Date;
-};
 
 type LocationLookupModel = {
   findMany: (args: {
