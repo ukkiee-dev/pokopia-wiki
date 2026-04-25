@@ -29,6 +29,7 @@
  * - `./team-challenge`: TeamChallengeSchema (Phase 8 단계 24)
  * - `./legendary`     : LegendaryAcquisitionSchema (Phase 8 단계 25)
  * - `./unique-pokemon`: UniquePokemonPatchSchema (Phase 8 단계 26 보강)
+ * - `./cd`            : CdSchema (Phase 8 단계 27, source_game/cd_location nested)
  */
 
 export * from './_base';
@@ -55,3 +56,4 @@ export * from './quest';
 export * from './team-challenge';
 export * from './legendary';
 export * from './unique-pokemon';
+export * from './cd';
