@@ -22,6 +22,7 @@
  * - `./pokemon-center`: PokemonCenterSchema (Phase 8 단계 17)
  * - `./friendship`    : FriendshipTierSchema (Phase 8 단계 18, 스키마 only)
  * - `./mosslax`       : MosslaxBoostSchema (Phase 8 단계 19)
+ * - `./stamp`         : StampCardSchema + StampRewardSchema (Phase 8 단계 20)
  */
 
 export * from './_base';
@@ -41,3 +42,4 @@ export * from './environment';
 export * from './pokemon-center';
 export * from './friendship';
 export * from './mosslax';
+export * from './stamp';
