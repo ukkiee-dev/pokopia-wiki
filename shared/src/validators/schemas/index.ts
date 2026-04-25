@@ -23,6 +23,7 @@
  * - `./friendship`    : FriendshipTierSchema (Phase 8 단계 18, 스키마 only)
  * - `./mosslax`       : MosslaxBoostSchema (Phase 8 단계 19)
  * - `./stamp`         : StampCardSchema + StampRewardSchema (Phase 8 단계 20)
+ * - `./minigame`      : JumpropeTierSchema + HideAndSneakRewardSchema (Phase 8 단계 21)
  */
 
 export * from './_base';
@@ -43,3 +44,4 @@ export * from './pokemon-center';
 export * from './friendship';
 export * from './mosslax';
 export * from './stamp';
+export * from './minigame';
