@@ -28,11 +28,14 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
+import { createPrismaClient } from '@pokopia-wiki/shared';
+
 import { repoPath } from '#paths';
 
 import { HtmlCache } from './cache/html-cache.js';
 import { createFetcher } from './fetchers/factory.js';
 import { isolateInvalidEntries, type InvalidEntry } from './loaders/invalid-isolator.js';
+import { dispatchLoader, listLoaderPages } from './loaders/registry.js';
 import type { Parser, ParseResult } from './parsers/base.js';
 import { RobotsChecker } from './robots/checker.js';
 import { AbilitiesParser } from './parsers/serebii/abilities.js';
@@ -290,17 +293,27 @@ function loadFixtureHtml(source: string, page: string): { html: string; sourceUr
 // ─────────────────────────────────────────────────────────
 
 async function main(): Promise<void> {
-  // --list-pages 단독 처리 (인자 검증 우회).
+  // --list-pages 단독 처리. loader 등록 여부를 [loader] 마커로 표시 (Phase 9).
   if (process.argv.includes('--list-pages')) {
+    const loaderPages = new Set(listLoaderPages());
     const pages = listAvailablePages();
-    console.log(pages.join('\n'));
+    console.log(
+      pages.map((page) => (loaderPages.has(page) ? `${page} [loader]` : page)).join('\n'),
+    );
+    process.exit(0);
+  }
+
+  // --list-loaders: loader 가 등록된 page ID 만 출력 (DB upsert 가능 페이지 확인용).
+  if (process.argv.includes('--list-loaders')) {
+    console.log([...listLoaderPages()].toSorted().join('\n'));
     process.exit(0);
   }
 
   const args = parseArgs(process.argv.slice(2));
   if (args === null) {
     console.error('Usage: scrape --source <site> --page <pageId> [--dry-run] [--use-fixture] [--limit N]');
-    console.error('       scrape --list-pages   # registered page IDs 출력');
+    console.error('       scrape --list-pages     # registered page IDs ([loader] = DB upsert 지원)');
+    console.error('       scrape --list-loaders   # DB upsert 지원 page ID 만');
     process.exit(1);
   }
 
@@ -379,14 +392,44 @@ async function main(): Promise<void> {
     writeFileSync(outPath, JSON.stringify(limited, null, 2), 'utf8');
     console.log(`[scrape] dry-run wrote ${String(limited.length)} entities → ${outPath}`);
   } else {
-    // DB upsert: page ID → entity loader 매핑이 필요하지만 본 단계는 PokemonLoader/
-    // SpecialtyLoader 만 구현됨. 나머지 entity loader 는 점진적 추가 (loaders/README.md
-    // 참고). 현 단계에서는 dry-run 강제.
-    console.error(
-      '[scrape] DB upsert: page → loader 레지스트리 미완 (loaders/README.md 의 TODO 참조).',
-    );
-    console.error('[scrape] 현재는 --dry-run 으로 JSON 저장만 가능합니다.');
-    process.exit(1);
+    // DB upsert mode: registry 에서 page → loader dispatch. 미등록 page 는 명시적
+    // 에러로 dry-run 사용을 안내. PrismaClient 는 본 함수 lifecycle 에 한정 —
+    // $disconnect() 로 pool 해제.
+    const prisma = createPrismaClient();
+    try {
+      const dispatch = await dispatchLoader(prisma, args.page, limited);
+      if (!dispatch.invoked) {
+        console.error(`[scrape] ${dispatch.message ?? 'loader dispatch failed'}`);
+        console.error('[scrape] --dry-run 으로 JSON 저장만 가능합니다 (loader 미등록).');
+        await prisma.$disconnect();
+        process.exit(1);
+      }
+      const stats = dispatch.result?.stats;
+      const failures = dispatch.result?.failures ?? [];
+      if (stats !== undefined) {
+        console.log(
+          `[scrape] upsert stats inserted=${String(stats.inserted)} updated=${String(stats.updated)} unchanged=${String(stats.unchanged)} failed=${String(stats.failed)}`,
+        );
+      }
+      if (failures.length > 0) {
+        const upsertInvalid: InvalidEntry[] = failures.map((failure, index) => ({
+          entity: args.page,
+          sourceSlug: failure.sourceSlug ?? `upsert-fail-${index}`,
+          parsedCandidate: { stage: 'upsert', error: failure.error },
+          errors: [failure.error],
+        }));
+        const isolation = await isolateInvalidEntries(args.source, upsertInvalid);
+        console.error(
+          `[scrape] upsert failures isolated → ${isolation.directory}`,
+        );
+      }
+      await prisma.$disconnect();
+      process.exit(invalid.length === 0 && failures.length === 0 ? 0 : 2);
+    } catch (error: unknown) {
+      console.error(`[scrape] upsert fatal: ${error instanceof Error ? error.message : String(error)}`);
+      await prisma.$disconnect();
+      process.exit(1);
+    }
   }
 
   process.exit(invalid.length === 0 ? 0 : 2);
