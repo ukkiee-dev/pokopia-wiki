@@ -39,6 +39,11 @@ import { loadPaintColor } from './paint-color-loader.js';
 import { loadPokedexMilestone } from './pokedex-milestone-loader.js';
 import { loadPokemon } from './pokemon-loader.js';
 import { loadCookingRecipe, loadCraftingRecipe } from './recipe-loader.js';
+import { loadEnvironmentReward } from './environment-reward-loader.js';
+import { loadHumanRecord } from './human-record-loader.js';
+import { loadIslandVariant } from './island-variant-loader.js';
+import { loadPokemonCenter } from './pokemon-center-loader.js';
+import { loadQuest } from './quest-loader.js';
 import { loadStampReward } from './stamp-reward-loader.js';
 import { loadTeamChallenge } from './team-challenge-loader.js';
 import {
@@ -229,6 +234,27 @@ export async function dispatchLoader(
       const result = await loadTeamChallenge(prisma, entities as never);
       return { invoked: true, result };
     }
+    case 'environmentlevel': {
+      const result = await loadEnvironmentReward(prisma, entities as never);
+      return { invoked: true, result };
+    }
+    case 'pokemon-center': {
+      const result = await loadPokemonCenter(prisma, entities as never);
+      return { invoked: true, result };
+    }
+    case 'importantrequests': {
+      const result = await loadQuest(prisma, entities as never);
+      return { invoked: true, result };
+    }
+    case 'humanrecords': {
+      const result = await loadHumanRecord(prisma, entities as never);
+      return { invoked: true, result };
+    }
+    case 'dreamislands':
+    case 'cloudislands': {
+      const result = await loadIslandVariant(prisma, entities as never);
+      return { invoked: true, result };
+    }
     default:
       return {
         invoked: false,
@@ -275,5 +301,11 @@ export function listLoaderPages(): ReadonlyArray<string> {
     'cooking',
     'crafting',
     'teaminitiationchallenge',
+    'environmentlevel',
+    'pokemon-center',
+    'importantrequests',
+    'humanrecords',
+    'dreamislands',
+    'cloudislands',
   ];
 }
