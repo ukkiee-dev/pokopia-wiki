@@ -40,6 +40,7 @@
  * - `./litter`        : PokemonLitterRewardSchema (Phase 8 단계 35)
  * - `./event`         : EventSchema + EventPokemonSchema (Phase 8 단계 36)
  *                       + EventHabitatSchema + EventItemSchema (Phase 8 단계 37/38, 스키마 only)
+ * - `./island`        : IslandVariantSchema (Phase 8 단계 39/40)
  */
 
 export * from './_base';
@@ -76,3 +77,4 @@ export * from './trade';
 export * from './exchange';
 export * from './litter';
 export * from './event';
+export * from './island';
