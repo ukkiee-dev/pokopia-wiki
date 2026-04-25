@@ -36,6 +36,7 @@
  * - `./plant`         : PlantSchema (Phase 8 단계 31, flowers + vegetables 통합)
  * - `./pokedex-milestone` : PokedexMilestoneSchema (Phase 8 단계 32)
  * - `./trade`         : TradeValuationSchema (Phase 8 단계 33, 스키마 only)
+ * - `./exchange`      : ExchangeRecipeSchema (Phase 8 단계 34, 스키마 only)
  */
 
 export * from './_base';
@@ -69,3 +70,4 @@ export * from './customization';
 export * from './plant';
 export * from './pokedex-milestone';
 export * from './trade';
+export * from './exchange';
