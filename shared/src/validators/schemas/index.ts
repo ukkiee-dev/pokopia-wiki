@@ -30,6 +30,7 @@
  * - `./legendary`     : LegendaryAcquisitionSchema (Phase 8 단계 25)
  * - `./unique-pokemon`: UniquePokemonPatchSchema (Phase 8 단계 26 보강)
  * - `./cd`            : CdSchema (Phase 8 단계 27, source_game/cd_location nested)
+ * - `./lost-relic`    : LostRelicSchema (Phase 8 단계 28)
  */
 
 export * from './_base';
@@ -57,3 +58,4 @@ export * from './team-challenge';
 export * from './legendary';
 export * from './unique-pokemon';
 export * from './cd';
+export * from './lost-relic';
