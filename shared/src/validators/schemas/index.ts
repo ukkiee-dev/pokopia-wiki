@@ -24,6 +24,7 @@
  * - `./mosslax`       : MosslaxBoostSchema (Phase 8 단계 19)
  * - `./stamp`         : StampCardSchema + StampRewardSchema (Phase 8 단계 20)
  * - `./minigame`      : JumpropeTierSchema + HideAndSneakRewardSchema (Phase 8 단계 21)
+ * - `./reference`     : GameplayReferenceSchema (Phase 8 단계 22, DB 비대상 reference)
  */
 
 export * from './_base';
@@ -45,3 +46,4 @@ export * from './friendship';
 export * from './mosslax';
 export * from './stamp';
 export * from './minigame';
+export * from './reference';
