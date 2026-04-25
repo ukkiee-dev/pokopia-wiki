@@ -27,6 +27,7 @@
  * - `./reference`     : GameplayReferenceSchema (Phase 8 단계 22, DB 비대상 reference)
  * - `./quest`         : QuestSchema + QuestRequirementSchema (Phase 8 단계 23)
  * - `./team-challenge`: TeamChallengeSchema (Phase 8 단계 24)
+ * - `./legendary`     : LegendaryAcquisitionSchema (Phase 8 단계 25)
  */
 
 export * from './_base';
@@ -51,3 +52,4 @@ export * from './minigame';
 export * from './reference';
 export * from './quest';
 export * from './team-challenge';
+export * from './legendary';
