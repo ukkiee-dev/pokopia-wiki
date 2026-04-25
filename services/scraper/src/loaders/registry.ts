@@ -38,7 +38,9 @@ import { loadHideAndSneakReward } from './minigame-reward-loader.js';
 import { loadPaintColor } from './paint-color-loader.js';
 import { loadPokedexMilestone } from './pokedex-milestone-loader.js';
 import { loadPokemon } from './pokemon-loader.js';
+import { loadCookingRecipe, loadCraftingRecipe } from './recipe-loader.js';
 import { loadStampReward } from './stamp-reward-loader.js';
+import { loadTeamChallenge } from './team-challenge-loader.js';
 import {
   loadCustomizationItem,
   loadFavoriteCategory,
@@ -215,6 +217,18 @@ export async function dispatchLoader(
       const result = await loadPokedexMilestone(prisma, entities as never);
       return { invoked: true, result };
     }
+    case 'cooking': {
+      const result = await loadCookingRecipe(prisma, entities as never);
+      return { invoked: true, result };
+    }
+    case 'crafting': {
+      const result = await loadCraftingRecipe(prisma, entities as never);
+      return { invoked: true, result };
+    }
+    case 'teaminitiationchallenge': {
+      const result = await loadTeamChallenge(prisma, entities as never);
+      return { invoked: true, result };
+    }
     default:
       return {
         invoked: false,
@@ -258,5 +272,8 @@ export function listLoaderPages(): ReadonlyArray<string> {
     'stampcard-reward',
     'hideandsneak',
     'pokedexcompletion',
+    'cooking',
+    'crafting',
+    'teaminitiationchallenge',
   ];
 }
