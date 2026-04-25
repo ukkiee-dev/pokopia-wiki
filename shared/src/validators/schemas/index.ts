@@ -20,6 +20,7 @@
  * - `./utility`       : GeneratorSchema + WaterTypeSchema (Phase 8 단계 15)
  * - `./environment`   : EnvironmentRewardSchema + ShopItemSchema + CurrencySchema (Phase 8 단계 16)
  * - `./pokemon-center`: PokemonCenterSchema (Phase 8 단계 17)
+ * - `./friendship`    : FriendshipTierSchema (Phase 8 단계 18, 스키마 only)
  */
 
 export * from './_base';
@@ -37,3 +38,4 @@ export * from './paint';
 export * from './utility';
 export * from './environment';
 export * from './pokemon-center';
+export * from './friendship';
