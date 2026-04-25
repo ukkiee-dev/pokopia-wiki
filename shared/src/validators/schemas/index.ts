@@ -38,6 +38,7 @@
  * - `./trade`         : TradeValuationSchema (Phase 8 단계 33, 스키마 only)
  * - `./exchange`      : ExchangeRecipeSchema (Phase 8 단계 34, 스키마 only)
  * - `./litter`        : PokemonLitterRewardSchema (Phase 8 단계 35)
+ * - `./event`         : EventSchema + EventPokemonSchema (Phase 8 단계 36)
  */
 
 export * from './_base';
@@ -73,3 +74,4 @@ export * from './pokedex-milestone';
 export * from './trade';
 export * from './exchange';
 export * from './litter';
+export * from './event';
