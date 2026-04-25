@@ -33,6 +33,7 @@
  * - `./lost-relic`    : LostRelicSchema (Phase 8 단계 28)
  * - `./human-record`  : HumanRecordSchema (Phase 8 단계 29)
  * - `./customization` : CustomizationItemSchema (Phase 8 단계 30)
+ * - `./plant`         : PlantSchema (Phase 8 단계 31, flowers + vegetables 통합)
  */
 
 export * from './_base';
@@ -63,3 +64,4 @@ export * from './cd';
 export * from './lost-relic';
 export * from './human-record';
 export * from './customization';
+export * from './plant';
