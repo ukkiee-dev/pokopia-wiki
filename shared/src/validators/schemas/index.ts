@@ -17,6 +17,7 @@
  * - `./ditto-ability` : DittoAbilitySchema + DittoAbilityInput (Phase 8 단계 12)
  * - `./magnet-rise`   : MagnetRiseItemSchema + MagnetRiseItemInput (Phase 8 단계 13)
  * - `./paint`         : PaintColorSchema + PaintPatternSchema (Phase 8 단계 14)
+ * - `./utility`       : GeneratorSchema + WaterTypeSchema (Phase 8 단계 15)
  */
 
 export * from './_base';
@@ -31,3 +32,4 @@ export * from './building';
 export * from './ditto-ability';
 export * from './magnet-rise';
 export * from './paint';
+export * from './utility';
