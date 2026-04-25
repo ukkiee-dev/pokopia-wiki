@@ -30,8 +30,11 @@ import path from 'node:path';
 
 import { repoPath } from '#paths';
 
+import { HtmlCache } from './cache/html-cache.js';
+import { createFetcher } from './fetchers/factory.js';
 import { isolateInvalidEntries, type InvalidEntry } from './loaders/invalid-isolator.js';
 import type { Parser, ParseResult } from './parsers/base.js';
+import { RobotsChecker } from './robots/checker.js';
 import { AbilitiesParser } from './parsers/serebii/abilities.js';
 import { AvailablePokemonParser } from './parsers/serebii/available-pokemon.js';
 import { BuildingParser } from './parsers/serebii/building.js';
@@ -213,6 +216,54 @@ const FIXTURE_FILENAME_OVERRIDES: Record<string, string> = {
   'stampcard-reward': 'stampcard',
 };
 
+/**
+ * page ID → 실제 Serebii URL 매핑. Fixture override 와 별개로 live fetch 시 사용.
+ *
+ * 대부분 page ID 가 그대로 URL path 와 일치하지만 일부는 매핑 필요:
+ *   - availablepokemon → availablepokemon.shtml (alias 흡수)
+ *   - paint-color/paint-pattern → paint.shtml (multi-parser 공유)
+ *   - location-* → locations/<location>.shtml (sub-path)
+ *   - flowers/vegetables → flowers.shtml/vegetables.shtml (별도)
+ */
+function pageToSerebiiUrl(page: string): string {
+  // location-* 변형: locations/<slug>.shtml
+  if (page.startsWith('location-') && page !== 'locations-index') {
+    const locationSlug = page.replace(/^location-/, '');
+    return `https://www.serebii.net/pokemonpokopia/locations/${locationSlug}.shtml`;
+  }
+  // multi-parser 공유 fixture 의 page ID → 실제 URL 매핑
+  const URL_OVERRIDES: Record<string, string> = {
+    'paint-color': 'paint',
+    'paint-pattern': 'paint',
+    'stampcard-card': 'stampcard',
+    'stampcard-reward': 'stampcard',
+    'available-pokemon': 'availablepokemon',
+    'habitats-index': 'habitats',
+    'locations-index': 'locations',
+  };
+  const urlPage = URL_OVERRIDES[page] ?? page;
+  return `https://www.serebii.net/pokemonpokopia/${urlPage}.shtml`;
+}
+
+/**
+ * 실제 네트워크 호출 (RobotsChecker + HtmlCache + KyFetcher 조립). Serebii (T0)
+ * 만 지원. 다른 소스는 persona 필요 — Phase 11+ 에서 확장.
+ */
+async function liveFetch(source: 'serebii', sourceUrl: string): Promise<{
+  html: string;
+  resolvedUrl: string;
+}> {
+  const robots = new RobotsChecker();
+  const cache = new HtmlCache();
+  const fetcher = createFetcher(source, { robots, cache });
+  try {
+    const result = await fetcher.fetch(sourceUrl);
+    return { html: result.html, resolvedUrl: result.url };
+  } finally {
+    if (fetcher.close !== undefined) await fetcher.close();
+  }
+}
+
 function loadFixtureHtml(source: string, page: string): { html: string; sourceUrl: string } | null {
   if (source !== 'serebii') return null;
   const filename = FIXTURE_FILENAME_OVERRIDES[page] ?? page;
@@ -264,22 +315,36 @@ async function main(): Promise<void> {
     `[scrape] source=${args.source} page=${args.page} dryRun=${args.dryRun} useFixture=${args.useFixture}`,
   );
 
-  // Fixture 모드만 본 단계에서 지원 (실제 fetcher 통합은 후속 작업).
-  if (!args.useFixture) {
-    console.error(
-      '[scrape] live fetching not yet wired in CLI — re-run with --use-fixture (Phase 9 후속 작업).',
-    );
-    process.exit(1);
+  // Fixture 또는 live fetch 로 HTML 확보.
+  let html: string;
+  let resolvedSourceUrl: string;
+  if (args.useFixture) {
+    const fixture = loadFixtureHtml(args.source, args.page);
+    if (fixture === null) {
+      console.error(`[scrape] no fixture found for ${args.source}/${args.page}`);
+      process.exit(1);
+    }
+    html = fixture.html;
+    resolvedSourceUrl = fixture.sourceUrl;
+  } else {
+    if (args.source !== 'serebii') {
+      console.error(`[scrape] live fetch supported only for serebii (Phase 9). source=${args.source}`);
+      process.exit(1);
+    }
+    const liveUrl = pageToSerebiiUrl(args.page);
+    console.log(`[scrape] live fetching ${liveUrl}`);
+    try {
+      const fetched = await liveFetch('serebii', liveUrl);
+      html = fetched.html;
+      resolvedSourceUrl = fetched.resolvedUrl;
+    } catch (error: unknown) {
+      console.error(`[scrape] live fetch failed: ${error instanceof Error ? error.message : String(error)}`);
+      process.exit(1);
+    }
   }
 
-  const fixture = loadFixtureHtml(args.source, args.page);
-  if (fixture === null) {
-    console.error(`[scrape] no fixture found for ${args.source}/${args.page}`);
-    process.exit(1);
-  }
-
-  const result: ParseResult<unknown> = parser.parse(fixture.html, {
-    sourceUrl: fixture.sourceUrl,
+  const result: ParseResult<unknown> = parser.parse(html, {
+    sourceUrl: resolvedSourceUrl,
     scrapedAt: new Date().toISOString(),
   });
 
@@ -314,9 +379,13 @@ async function main(): Promise<void> {
     writeFileSync(outPath, JSON.stringify(limited, null, 2), 'utf8');
     console.log(`[scrape] dry-run wrote ${String(limited.length)} entities → ${outPath}`);
   } else {
+    // DB upsert: page ID → entity loader 매핑이 필요하지만 본 단계는 PokemonLoader/
+    // SpecialtyLoader 만 구현됨. 나머지 entity loader 는 점진적 추가 (loaders/README.md
+    // 참고). 현 단계에서는 dry-run 강제.
     console.error(
-      '[scrape] DB upsert path not yet wired — re-run with --dry-run (loader integration is Phase 9 후속).',
+      '[scrape] DB upsert: page → loader 레지스트리 미완 (loaders/README.md 의 TODO 참조).',
     );
+    console.error('[scrape] 현재는 --dry-run 으로 JSON 저장만 가능합니다.');
     process.exit(1);
   }
 
