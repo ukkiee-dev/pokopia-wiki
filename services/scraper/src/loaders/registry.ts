@@ -39,13 +39,20 @@ import { loadPaintColor } from './paint-color-loader.js';
 import { loadPokedexMilestone } from './pokedex-milestone-loader.js';
 import { loadPokemon } from './pokemon-loader.js';
 import { loadCookingRecipe, loadCraftingRecipe } from './recipe-loader.js';
+import { loadDittoAbility } from './ditto-ability-loader.js';
 import { loadEnvironmentReward } from './environment-reward-loader.js';
+import { loadEvent, loadEventPokemon } from './event-loader.js';
+import { loadHabitat } from './habitat-loader.js';
 import { loadHumanRecord } from './human-record-loader.js';
 import { loadIslandVariant } from './island-variant-loader.js';
+import { loadLegendaryAcquisition } from './legendary-loader.js';
+import { loadPokemonLitterReward } from './litter-loader.js';
+import { loadMagnetRise } from './magnet-rise-loader.js';
 import { loadPokemonCenter } from './pokemon-center-loader.js';
 import { loadQuest } from './quest-loader.js';
 import { loadStampReward } from './stamp-reward-loader.js';
 import { loadTeamChallenge } from './team-challenge-loader.js';
+import { loadUniquePokemonPatch } from './unique-pokemon-loader.js';
 import {
   loadCustomizationItem,
   loadFavoriteCategory,
@@ -255,6 +262,43 @@ export async function dispatchLoader(
       const result = await loadIslandVariant(prisma, entities as never);
       return { invoked: true, result };
     }
+    case 'habitats-index': {
+      const result = await loadHabitat(prisma, entities as never);
+      return { invoked: true, result };
+    }
+    case 'legendary': {
+      const result = await loadLegendaryAcquisition(prisma, entities as never);
+      return { invoked: true, result };
+    }
+    case 'uniquepokemon': {
+      const result = await loadUniquePokemonPatch(prisma, entities as never);
+      return { invoked: true, result };
+    }
+    case 'magnet-rise': {
+      const result = await loadMagnetRise(prisma, entities as never);
+      return { invoked: true, result };
+    }
+    case 'eventpokedex': {
+      // 본 page parser 는 EventPokemonInput 만 출력 — Event placeholder 는 별도
+      // upsert 가 필요하지만 현재는 단일 page 단위 dispatch 라 EventPokemon 만
+      // 처리. Event 자체 placeholder upsert 는 향후 별도 단계.
+      const result = await loadEventPokemon(prisma, entities as never);
+      return { invoked: true, result };
+    }
+    case 'abilities': {
+      const result = await loadDittoAbility(prisma, entities as never);
+      return { invoked: true, result };
+    }
+    case 'litter': {
+      const result = await loadPokemonLitterReward(prisma, entities as never);
+      return { invoked: true, result };
+    }
+    case 'furniture': {
+      // FurnitureParser 는 ItemInput 출력 → loadItem 재사용 (Item upsert).
+      const { loadItem } = await import('./item-loader.js');
+      const result = await loadItem(prisma, entities as never);
+      return { invoked: true, result };
+    }
     default:
       return {
         invoked: false,
@@ -307,5 +351,13 @@ export function listLoaderPages(): ReadonlyArray<string> {
     'humanrecords',
     'dreamislands',
     'cloudislands',
+    'habitats-index',
+    'legendary',
+    'uniquepokemon',
+    'magnet-rise',
+    'eventpokedex',
+    'abilities',
+    'litter',
+    'furniture',
   ];
 }

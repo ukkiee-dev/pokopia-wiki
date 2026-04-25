@@ -101,3 +101,29 @@ function extractSlugFromUrl(sourceUrl: string): string {
     return sourceUrl.toLowerCase().replace(/[^a-z0-9-]/g, '-');
   }
 }
+
+type PokemonLookupModel = {
+  findMany: (args: {
+    where: { sourceSlug: { in: string[] } };
+    select: { id: true; sourceSlug: true };
+  }) => Promise<ReadonlyArray<{ id: number; sourceSlug: string }>>;
+};
+
+/**
+ * Slug → Pokemon ID 룩업 helper (다른 loader 가 pokemon FK 해소 시 재사용).
+ *
+ * 매핑 가정: Pokemon.sourceSlug 는 영문명 lowercase + hyphen 패턴 (예: "pikachu",
+ * "ho-oh", "mewtwo"). 호출자 (LegendaryAcquisition, Habitat 등) 의 pokemonSlug 도
+ * 동일 패턴이라 단순 매칭 가능. 매핑 실패 slug 는 Map 에 부재.
+ */
+export async function lookupPokemonIds(
+  prisma: { pokemon: unknown },
+  slugs: ReadonlyArray<string>,
+): Promise<Map<string, number>> {
+  if (slugs.length === 0) return new Map();
+  const rows = await (prisma.pokemon as PokemonLookupModel).findMany({
+    where: { sourceSlug: { in: [...new Set(slugs)] } },
+    select: { id: true, sourceSlug: true },
+  });
+  return new Map(rows.map((row) => [row.sourceSlug, row.id]));
+}
