@@ -34,6 +34,7 @@
  * - `./human-record`  : HumanRecordSchema (Phase 8 단계 29)
  * - `./customization` : CustomizationItemSchema (Phase 8 단계 30)
  * - `./plant`         : PlantSchema (Phase 8 단계 31, flowers + vegetables 통합)
+ * - `./pokedex-milestone` : PokedexMilestoneSchema (Phase 8 단계 32)
  */
 
 export * from './_base';
@@ -65,3 +66,4 @@ export * from './lost-relic';
 export * from './human-record';
 export * from './customization';
 export * from './plant';
+export * from './pokedex-milestone';
