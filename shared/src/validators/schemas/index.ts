@@ -28,6 +28,7 @@
  * - `./quest`         : QuestSchema + QuestRequirementSchema (Phase 8 단계 23)
  * - `./team-challenge`: TeamChallengeSchema (Phase 8 단계 24)
  * - `./legendary`     : LegendaryAcquisitionSchema (Phase 8 단계 25)
+ * - `./unique-pokemon`: UniquePokemonPatchSchema (Phase 8 단계 26 보강)
  */
 
 export * from './_base';
@@ -53,3 +54,4 @@ export * from './reference';
 export * from './quest';
 export * from './team-challenge';
 export * from './legendary';
+export * from './unique-pokemon';
