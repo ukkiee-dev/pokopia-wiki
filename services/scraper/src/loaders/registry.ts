@@ -29,6 +29,8 @@
 
 import type { PrismaClient } from '@pokopia-wiki/shared';
 
+import { loadCd } from './cd-loader.js';
+import { loadPaintColor } from './paint-color-loader.js';
 import { loadPokemon } from './pokemon-loader.js';
 import {
   loadCustomizationItem,
@@ -156,6 +158,15 @@ export async function dispatchLoader(
       );
       return { invoked: true, result };
     }
+    case 'cds': {
+      const result = await loadCd(prisma, entities as never);
+      return { invoked: true, result };
+    }
+    case 'paint':
+    case 'paint-color': {
+      const result = await loadPaintColor(prisma, entities as never);
+      return { invoked: true, result };
+    }
     default:
       return {
         invoked: false,
@@ -182,5 +193,8 @@ export function listLoaderPages(): ReadonlyArray<string> {
     'flowers',
     'vegetables',
     'jumprope',
+    'cds',
+    'paint',
+    'paint-color',
   ];
 }
