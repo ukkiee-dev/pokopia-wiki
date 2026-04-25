@@ -19,6 +19,7 @@
  * - `./paint`         : PaintColorSchema + PaintPatternSchema (Phase 8 단계 14)
  * - `./utility`       : GeneratorSchema + WaterTypeSchema (Phase 8 단계 15)
  * - `./environment`   : EnvironmentRewardSchema + ShopItemSchema + CurrencySchema (Phase 8 단계 16)
+ * - `./pokemon-center`: PokemonCenterSchema (Phase 8 단계 17)
  */
 
 export * from './_base';
@@ -35,3 +36,4 @@ export * from './magnet-rise';
 export * from './paint';
 export * from './utility';
 export * from './environment';
+export * from './pokemon-center';
