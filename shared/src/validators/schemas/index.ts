@@ -18,6 +18,7 @@
  * - `./magnet-rise`   : MagnetRiseItemSchema + MagnetRiseItemInput (Phase 8 단계 13)
  * - `./paint`         : PaintColorSchema + PaintPatternSchema (Phase 8 단계 14)
  * - `./utility`       : GeneratorSchema + WaterTypeSchema (Phase 8 단계 15)
+ * - `./environment`   : EnvironmentRewardSchema + ShopItemSchema + CurrencySchema (Phase 8 단계 16)
  */
 
 export * from './_base';
@@ -33,3 +34,4 @@ export * from './ditto-ability';
 export * from './magnet-rise';
 export * from './paint';
 export * from './utility';
+export * from './environment';
