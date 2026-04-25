@@ -1,0 +1,19 @@
+# Phase 8 fixture 라이선스 메타 (CRAWLING_STRATEGY §5.3 / §27.4)
+#
+# 이 파일은 동일 디렉토리 `importantrequests.html` 원본에 대한 attribution 기록.
+# fixture 갱신(재수집) 시 fetched_at / content_hash / status 를 함께 갱신.
+# 수집 스크립트: services/scraper/scripts/capture-fixture.ts
+
+page: importantrequests
+source_site: serebii
+source_url: https://www.serebii.net/pokemonpokopia/importantrequests.shtml
+fetched_at: 2026-04-25T04:19:01.103Z
+content_hash: 076de46068f23ca5a3f3bc12765d3eb3770d8f5baa098ca12b257806270dc64a
+status: 200
+content_type: text/html; charset=ISO-8859-1
+license: "Fan-use (non-commercial). Per Serebii.net content guidelines."
+copyright_holder: "Game content © The Pokémon Company / Nintendo / GAME FREAK. Original writings © Serebii.net."
+attribution: "Data from Serebii.net — https://www.serebii.net/pokemonpokopia/"
+note: |
+  scripts/capture-fixture.ts 로 수집. 재수집 시
+  pnpm --filter @pokopia-wiki/scraper capture-fixture importantrequests https://www.serebii.net/pokemonpokopia/importantrequests.shtml
