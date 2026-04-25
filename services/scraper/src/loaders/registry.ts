@@ -30,6 +30,8 @@
 import type { PrismaClient } from '@pokopia-wiki/shared';
 
 import { loadCd } from './cd-loader.js';
+import { loadItem } from './item-loader.js';
+import { loadLocation } from './location-loader.js';
 import { loadPaintColor } from './paint-color-loader.js';
 import { loadPokemon } from './pokemon-loader.js';
 import {
@@ -167,6 +169,19 @@ export async function dispatchLoader(
       const result = await loadPaintColor(prisma, entities as never);
       return { invoked: true, result };
     }
+    case 'items': {
+      const result = await loadItem(prisma, entities as never);
+      return { invoked: true, result };
+    }
+    case 'locations-index':
+    case 'location-bleakbeach':
+    case 'location-palettetown':
+    case 'location-rockyridges':
+    case 'location-sparklingskylands':
+    case 'location-witheredwastelands': {
+      const result = await loadLocation(prisma, entities as never);
+      return { invoked: true, result };
+    }
     default:
       return {
         invoked: false,
@@ -196,5 +211,12 @@ export function listLoaderPages(): ReadonlyArray<string> {
     'cds',
     'paint',
     'paint-color',
+    'items',
+    'locations-index',
+    'location-bleakbeach',
+    'location-palettetown',
+    'location-rockyridges',
+    'location-sparklingskylands',
+    'location-witheredwastelands',
   ];
 }
