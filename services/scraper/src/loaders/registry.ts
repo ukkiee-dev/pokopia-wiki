@@ -29,11 +29,16 @@
 
 import type { PrismaClient } from '@pokopia-wiki/shared';
 
+import { loadBuildingKit } from './building-loader.js';
 import { loadCd } from './cd-loader.js';
 import { loadItem } from './item-loader.js';
+import { loadFood, loadLostRelic, loadTradeValuation } from './item-extension-loaders.js';
 import { loadLocation } from './location-loader.js';
+import { loadHideAndSneakReward } from './minigame-reward-loader.js';
 import { loadPaintColor } from './paint-color-loader.js';
+import { loadPokedexMilestone } from './pokedex-milestone-loader.js';
 import { loadPokemon } from './pokemon-loader.js';
+import { loadStampReward } from './stamp-reward-loader.js';
 import {
   loadCustomizationItem,
   loadFavoriteCategory,
@@ -182,6 +187,34 @@ export async function dispatchLoader(
       const result = await loadLocation(prisma, entities as never);
       return { invoked: true, result };
     }
+    case 'flavors': {
+      const result = await loadFood(prisma, entities as never);
+      return { invoked: true, result };
+    }
+    case 'lostrelics': {
+      const result = await loadLostRelic(prisma, entities as never);
+      return { invoked: true, result };
+    }
+    case 'trade': {
+      const result = await loadTradeValuation(prisma, entities as never);
+      return { invoked: true, result };
+    }
+    case 'building': {
+      const result = await loadBuildingKit(prisma, entities as never);
+      return { invoked: true, result };
+    }
+    case 'stampcard-reward': {
+      const result = await loadStampReward(prisma, entities as never);
+      return { invoked: true, result };
+    }
+    case 'hideandsneak': {
+      const result = await loadHideAndSneakReward(prisma, entities as never);
+      return { invoked: true, result };
+    }
+    case 'pokedexcompletion': {
+      const result = await loadPokedexMilestone(prisma, entities as never);
+      return { invoked: true, result };
+    }
     default:
       return {
         invoked: false,
@@ -218,5 +251,12 @@ export function listLoaderPages(): ReadonlyArray<string> {
     'location-rockyridges',
     'location-sparklingskylands',
     'location-witheredwastelands',
+    'flavors',
+    'lostrelics',
+    'trade',
+    'building',
+    'stampcard-reward',
+    'hideandsneak',
+    'pokedexcompletion',
   ];
 }
