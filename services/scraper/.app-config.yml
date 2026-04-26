@@ -1,0 +1,11 @@
+# Scraper service — Serebii/PokopiaGuide 정기 크롤러 (worker, HTTP 노출 없음)
+# 변경 후 push 하면 _sync-app-config.yml 이 homelab 에 자동 반영.
+
+type: worker
+
+# api 의 DB 공유 (CNPG reference)
+# _add-database.yml 이 owner 의 role-secret (pokopia-wiki-pg-api-credentials) 을 재사용해
+# Deployment env 5개를 자동 주입: PGHOST / PGPORT / PGDATABASE / PGUSER / PGPASSWORD.
+# Prisma Client 는 entrypoint 에서 DATABASE_URL 을 PG* 로부터 조립.
+database:
+  ref: api

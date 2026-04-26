@@ -1,5 +1,14 @@
-# 앱 설정 — 변경 후 push하면 자동 반영
-health: /health        # 헬스체크 경로
-icon: mdi-application  # Homepage 아이콘 (gethomepage.dev 참조)
-                       # mdi-*: materialdesignicons.com | si-*: simpleicons.org | *.png: github.com/walkxcode/dashboard-icons
-description: ""        # Homepage 설명 (비워두면 create-app이 설정한 값 유지)
+# 앱 설정 — 변경 후 push 하면 _sync-app-config.yml 이 homelab 에 자동 반영
+# (database 블록은 immutable — 이름 변경은 ::error::)
+
+health: /health
+icon: mdi-database          # mdi-*: materialdesignicons.com | si-*: simpleicons.org | *.png: github.com/walkxcode/dashboard-icons
+description: "Pokopia Wiki — Serebii/PokopiaGuide 기반 도감 API + DB owner"
+
+# CNPG 자동 프로비저닝 (owner — 신규 DB 생성)
+# 첫 push 시 _create-app.yml 또는 _add-database.yml 이
+#   manifests/apps/pokopia-wiki/common/{cluster,database-shared,objectstore,scheduled-backup,...}.yaml
+# 자동 생성 + role SealedSecret + R2 backup 셋업.
+database:
+  name: pokopia_wiki         # immutable. 변경 시 CNPG rename 불가 → 마이그레이션 가이드 참조
+  storage: 10Gi              # local-path 는 resize 미지원. 처음 잡은 크기가 평생.

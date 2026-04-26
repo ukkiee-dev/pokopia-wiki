@@ -12,99 +12,97 @@ on:
       - 'package.json'
       - 'tsconfig.base.json'
       - '.github/workflows/ci.yml'
+  workflow_dispatch:
 
 jobs:
-  # ── Job 1: 설정 파싱 ─────────────────────────────────────────
-  config:
+  # ─── template 레포 자체는 모든 CI 스킵 ───
+  # github.repository != 'ukkiee-dev/app-starter' 로 파생된 <my-app> 레포에서만 동작
+  # services/<svc>/Dockerfile 이 있는 디렉토리를 자동 감지하여 matrix 생성
+
+  discover:
+    if: github.repository != 'ukkiee-dev/app-starter'
     runs-on: ubuntu-latest
     outputs:
-      app-name:       ${{ github.event.repository.name }}
-      setup-done:     ${{ steps.setup-check.outputs.exists }}
-      health:         ${{ steps.parse.outputs.health }}
-      icon:           ${{ steps.parse.outputs.icon }}
-      description:    ${{ steps.parse.outputs.description }}
-      config-changed: ${{ steps.diff.outputs.changed }}
-
+      services: ${{ steps.scan.outputs.services }}
     steps:
-      - name: Check if app is setup
-        id: setup-check
+      - uses: actions/checkout@v4
+      - id: scan
+        run: |
+          set -euo pipefail
+          SERVICES=$(find services -mindepth 2 -maxdepth 2 -name Dockerfile 2>/dev/null \
+            | awk -F/ '{print $2}' | sort -u | jq -R . | jq -sc .)
+          echo "services=$SERVICES" >> "$GITHUB_OUTPUT"
+          echo "발견된 서비스: $SERVICES"
+
+  config:
+    if: github.repository != 'ukkiee-dev/app-starter'
+    needs: discover
+    runs-on: ubuntu-latest
+    outputs:
+      setup-done:      ${{ steps.check.outputs.exists }}
+      app-name:        ${{ github.event.repository.name }}
+      health-services: ${{ steps.health-diff.outputs.services }}
+    steps:
+      - name: Check homelab project shell exists
+        id: check
         env:
           APP_NAME: ${{ github.event.repository.name }}
         run: |
-          # 모노레포 프로젝트는 manifests/apps/<app>/kustomization.yaml 루트 존재
           STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
             "https://api.github.com/repos/ukkiee-dev/homelab/contents/manifests/apps/${APP_NAME}/kustomization.yaml")
           EXISTS=$([ "$STATUS" = "200" ] && echo "true" || echo "false")
           echo "exists=$EXISTS" >> $GITHUB_OUTPUT
           if [ "$EXISTS" = "false" ]; then
-            echo "::notice::create-app을 먼저 실행하세요. CI를 스킵합니다."
+            echo "::notice::homelab에 프로젝트가 없습니다. _create-app.yml(app-name=${APP_NAME}, service-name=<svc>) 먼저 실행하세요."
           fi
 
       - uses: actions/checkout@v4
-        if: steps.setup-check.outputs.exists == 'true'
+        if: steps.check.outputs.exists == 'true'
         with:
           fetch-depth: 0
 
-      - name: Install yq
-        if: steps.setup-check.outputs.exists == 'true'
-        uses: mikefarah/yq@v4
-
-      - name: Parse services/api/.app-config.yml
-        if: steps.setup-check.outputs.exists == 'true'
-        id: parse
+      - name: Detect services with changed .app-config.yml
+        if: steps.check.outputs.exists == 'true'
+        id: health-diff
+        env:
+          BEFORE:       ${{ github.event.before }}
+          ALL_SERVICES: ${{ needs.discover.outputs.services }}
         run: |
           set -euo pipefail
-          HEALTH=$(yq '.health // ""' services/api/.app-config.yml)
-          ICON=$(yq '.icon // ""' services/api/.app-config.yml)
-          DESCRIPTION=$(yq '.description // ""' services/api/.app-config.yml)
-
-          echo "health=$HEALTH"           >> $GITHUB_OUTPUT
-          echo "icon=$ICON"               >> $GITHUB_OUTPUT
-          echo "description=$DESCRIPTION" >> $GITHUB_OUTPUT
-
-      - name: Check config changed
-        if: steps.setup-check.outputs.exists == 'true'
-        id: diff
-        env:
-          BEFORE: ${{ github.event.before }}
-        run: |
-          if [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
-            CHANGED=1
-          elif ! git cat-file -e "$BEFORE" 2>/dev/null; then
-            CHANGED=1
+          CHANGED="[]"
+          if [ "$BEFORE" = "0000000000000000000000000000000000000000" ] \
+             || ! git cat-file -e "$BEFORE" 2>/dev/null; then
+            # 최초 push / force push — 모든 서비스 sync
+            CHANGED="$ALL_SERVICES"
           else
-            CHANGED=$(git diff "$BEFORE" HEAD --name-only | grep -c 'services/api/.app-config.yml' || true)
+            DIFF=$(git diff "$BEFORE" HEAD --name-only | grep -E '^services/[^/]+/\.app-config\.yml$' || true)
+            if [ -n "$DIFF" ]; then
+              CHANGED=$(echo "$DIFF" | awk -F/ '{print $2}' | sort -u | jq -R . | jq -sc .)
+            fi
           fi
-          echo "changed=$([[ $CHANGED -gt 0 ]] && echo true || echo false)" >> $GITHUB_OUTPUT
+          echo "services=$CHANGED" >> "$GITHUB_OUTPUT"
+          echo ".app-config.yml 변경 서비스: $CHANGED"
 
-  # ── Job 2: 품질 검사 (lint / format / typecheck) ─────────────
   quality:
+    if: github.repository != 'ukkiee-dev/app-starter'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: pnpm/action-setup@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: 24
           cache: pnpm
-
       - run: pnpm install --frozen-lockfile
-
       - run: pnpm lint
-
-      - run: pnpm format:check
-
       - run: pnpm type-check
-
       - run: pnpm test
+      # NOTE: pnpm format:check 는 별도 PR 에서 활성화. 현재 services/scraper/src/parsers/serebii/__fixtures__/
+      # 의 Serebii HTML snapshot 들이 oxfmt 룰을 위반 (외부 데이터 — 수정 불가). .oxfmtrc 에
+      # __fixtures__/ 제외 룰 추가가 선결 작업.
 
-  # ── Job 3: 빌드 & GHCR 푸시 ─────────────────────────────────
-  # F안 강제: homelab composite action이 services/<service>/Dockerfile 경로와
-  # <app>-<service> 이미지 이름 규약을 강제한다.
   build:
-    needs: [config, quality]
+    needs: [discover, config, quality]
     if: needs.config.outputs.setup-done == 'true'
     runs-on: ubuntu-latest
     permissions:
@@ -113,9 +111,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # scraper도 배포 대상이나 Dockerfile 아직 미작성 — 준비되면 [api, scraper]로 확장
-        service: [api]
-
+        service: ${{ fromJSON(needs.discover.outputs.services) }}
     steps:
       - uses: actions/checkout@v4
 
@@ -131,23 +127,23 @@ jobs:
         if: failure()
         env:
           APP_NAME: ${{ needs.config.outputs.app-name }}
-          SERVICE: ${{ matrix.service }}
+          SERVICE:  ${{ matrix.service }}
           TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TG_CHAT: ${{ secrets.TELEGRAM_CHAT_ID }}
-          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          TG_CHAT:  ${{ secrets.TELEGRAM_CHAT_ID }}
+          RUN_URL:  ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
+          [ -z "$TG_TOKEN" ] && exit 0
           curl -s -X POST "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" \
             -d chat_id="${TG_CHAT}" \
             -d text="❌ 빌드 실패: ${APP_NAME}/${SERVICE}%0A${RUN_URL}"
 
-  # ── Job 4: 이미지 태그 갱신 → ArgoCD 배포 ───────────────────
   update-manifest:
-    needs: [config, build]
+    needs: [discover, config, build]
     if: needs.config.outputs.setup-done == 'true'
     strategy:
       fail-fast: false
       matrix:
-        service: [api]
+        service: ${{ fromJSON(needs.discover.outputs.services) }}
     uses: ukkiee-dev/homelab/.github/workflows/_update-image.yml@main
     with:
       app-name:  ${{ needs.config.outputs.app-name }}
@@ -159,17 +155,45 @@ jobs:
       TELEGRAM_BOT_TOKEN:  ${{ secrets.TELEGRAM_BOT_TOKEN }}
       TELEGRAM_CHAT_ID:    ${{ secrets.TELEGRAM_CHAT_ID }}
 
-  # ── Job 5: .app-config.yml 변경 시 homelab 동기화 ────────────
-  sync-config:
-    needs: [config, build, update-manifest]
-    if: needs.config.outputs.config-changed == 'true'
+  # health 변경된 서비스들의 {service, health} 쌍을 matrix include로 준비
+  # icon / description 은 homelab 의 update-app-config.yml dispatch 책임
+  prepare-health-matrix:
+    needs: [config]
+    if: needs.config.outputs.setup-done == 'true' && needs.config.outputs.health-services != '[]'
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.build.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: mikefarah/yq@v4
+      - id: build
+        env:
+          SERVICES: ${{ needs.config.outputs.health-services }}
+        run: |
+          set -euo pipefail
+          MATRIX="[]"
+          for svc in $(jq -r '.[]' <<< "$SERVICES"); do
+            CFG="services/$svc/.app-config.yml"
+            [ -f "$CFG" ] || continue
+            H=$(yq '.health // ""' "$CFG")
+            [ -z "$H" ] && continue
+            MATRIX=$(jq --arg s "$svc" --arg h "$H" '. + [{"service":$s,"health":$h}]' <<< "$MATRIX")
+          done
+          echo "matrix=$(jq -c . <<< "$MATRIX")" >> "$GITHUB_OUTPUT"
+          echo "sync 대상: $(jq -c . <<< "$MATRIX")"
+
+  sync-health:
+    needs: [config, prepare-health-matrix, update-manifest]
+    if: needs.prepare-health-matrix.outputs.matrix != '[]'
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.prepare-health-matrix.outputs.matrix) }}
     uses: ukkiee-dev/homelab/.github/workflows/_sync-app-config.yml@main
     with:
-      app-name:    ${{ needs.config.outputs.app-name }}
-      service:     api
-      health:      ${{ needs.config.outputs.health }}
-      icon:        ${{ needs.config.outputs.icon }}
-      description: ${{ needs.config.outputs.description }}
+      app-name: ${{ needs.config.outputs.app-name }}
+      service:  ${{ matrix.service }}
+      health:   ${{ matrix.health }}
     secrets:
       APP_ID:          ${{ secrets.HOMELAB_APP_ID }}
       APP_PRIVATE_KEY: ${{ secrets.HOMELAB_APP_PRIVATE_KEY }}

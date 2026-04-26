@@ -7,6 +7,8 @@
     "#*": "./src/*.ts"
   },
   "scripts": {
+    "build": "tsdown",
+    "start": "node --env-file-if-exists=../../.env dist/index.js",
     "scrape": "tsx --env-file-if-exists=../../.env src/index.ts",
     "check:robots": "tsx --env-file-if-exists=../../.env scripts/check-robots.ts",
     "check:access": "tsx --env-file-if-exists=../../.env scripts/check-access.ts",
@@ -44,6 +46,7 @@
     "@types/node": "^24.12.2",
     "@types/node-cron": "^3.0.11",
     "@types/proper-lockfile": "^4.1.4",
+    "tsdown": "^0.21.9",
     "tsx": "^4.21.0",
     "typescript": "^6.0.3",
     "vitest": "^4.1.4"
