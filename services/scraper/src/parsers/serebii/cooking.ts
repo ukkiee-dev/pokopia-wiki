@@ -164,7 +164,9 @@ function processRow(
 
   const $picTd = $tds.eq(0);
   const $nameTd = $tds.eq(1);
-  const $descTd = $tds.eq(2);
+  // $tds.eq(2) 는 description 셀 — 본 파서는 사용 안 함 (description 은 cooking 페이지의
+  // 별도 단락에서 추출). 인덱스 일관성 위해 변수명만 유지하되 underscore prefix.
+  const _$descTd = $tds.eq(2);
   const $mainTd = $tds.eq(3);
   const $sub1Td = $tds.eq(4);
   const $sub2Td = $tds.eq(5);
