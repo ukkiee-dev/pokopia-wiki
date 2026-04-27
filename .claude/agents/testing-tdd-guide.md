@@ -73,7 +73,7 @@ test('extracts pokedex_no from serebii html', () => {
 
 - **입력 (오케스트레이터로부터):**
   - 시나리오: A 또는 E
-  - 모노레포 패키지 (`packages/scraper` / `packages/api` / `packages/shared`)
+  - 모노레포 패키지 (`services/scraper` / `services/api` / `shared`)
   - 작성 대상 모듈 경로 + spec 텍스트
   - 산출물 디렉토리: `_workspace/testing/{timestamp}/`
 - **출력:**

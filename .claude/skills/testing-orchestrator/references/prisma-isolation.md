@@ -1,6 +1,6 @@
 # Prisma 격리 패턴
 
-`packages/shared`의 Prisma + Postgres 환경에서 테스트 격리를 위한 패턴. 테스트 간 상태 누수 방지가 핵심.
+`shared`의 Prisma + Postgres 환경에서 테스트 격리를 위한 패턴. 테스트 간 상태 누수 방지가 핵심.
 
 ## 목차
 1. [전략 비교](#전략-비교)
@@ -32,7 +32,7 @@
 ### 기본 셋업
 
 ```ts
-// packages/shared/test/setup.ts
+// shared/test/setup.ts
 import { PrismaClient } from '@prisma/client'
 
 export const prisma = new PrismaClient()

@@ -65,7 +65,7 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../../packages/shared/src/prisma-client"
+  output   = "../../shared/src/prisma-client"
 }
 
 // Prisma 7: `url`은 prisma.config.ts의 `datasource.url`에서 관리.

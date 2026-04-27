@@ -1,0 +1,22 @@
+# Phase 8 fixture 라이선스 메타 (CRAWLING_STRATEGY §5.3 / §27.4)
+#
+# 이 파일은 동일 디렉토리 `available-pokemon.html` 원본에 대한 attribution 기록.
+# fixture 갱신(재수집) 시 fetched_at / content_hash / status 를 함께 갱신.
+# 테스트 실행에는 이 파일이 필요하지 않지만, 라이선스 추적·감사 재현성을 위해
+# HTML 과 쌍으로 보존한다.
+
+page: available-pokemon
+source_site: serebii
+source_url: https://www.serebii.net/pokemonpokopia/availablepokemon.shtml
+fetched_at: 2026-04-24T07:49:02.136Z
+content_hash: 9e47db68f7da90b436957d4b8068e513154c68cdf7deaaf657daec05f0454cac
+status: 200
+content_type: text/html; charset=ISO-8859-1
+license: "Fan-use (non-commercial). Per Serebii.net content guidelines."
+copyright_holder: "Game content © The Pokémon Company / Nintendo / GAME FREAK. Original writings © Serebii.net."
+attribution: "Data from Serebii.net — https://www.serebii.net/pokemonpokopia/"
+note: |
+  Phase 4 HtmlCache 자동 저장본을 Phase 8 테스트 fixture 로 복사.
+  원본 해시 파일: data/cache/serebii/1fa5a5261d36c44f.html
+  재수집 시 `pnpm --filter @pokopia-wiki/scraper check:access` 로 캐시 갱신 후
+  이 파일 필드를 갱신하고 fixture 를 재복사할 것.

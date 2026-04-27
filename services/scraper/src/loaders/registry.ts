@@ -1,0 +1,361 @@
+/**
+ * Loader Registry — page ID → entity loader 매핑.
+ *
+ * CLI (`src/index.ts`) 가 dryRun=false 모드에서 본 레지스트리를 조회해 적절한
+ * loader 를 dispatch. Phase 9 선결 코드의 마지막 piece.
+ *
+ * 본 commit 시점 등록된 loader (Batch A 단순 + Pokemon/Specialty + Stamp/Mosslax):
+ *   - available-pokemon / availablepokemon → loadPokemon
+ *   - specialty                            → loadSpecialty
+ *   - mosslaxboosts                        → loadMosslaxBoost
+ *   - stampcard / stampcard-card           → loadStampCard
+ *   - favorites                            → loadFavoriteCategory
+ *   - friendship                           → loadFriendshipTier (Serebii row 없음)
+ *   - electricity                          → loadGenerator
+ *   - water                                → loadWaterType
+ *   - paint-pattern                        → loadPaintPattern
+ *   - customisation                        → loadCustomizationItem
+ *   - flowers / vegetables                 → loadPlant (둘 다 동일 모델)
+ *   - jumprope                             → loadJumpropeTier
+ *
+ * 미등록 page 는 dispatch 시 "loader not implemented" 명시 + dry-run 으로 fallback
+ * 권장. loaders/README.md 의 우선순위 표 참고.
+ *
+ * 새 loader 추가 절차:
+ *   1. loaders/<name>-loader.ts 또는 simple-loaders.ts 에 함수 추가
+ *   2. 본 모듈의 dispatchLoader switch + listLoaderPages 에 page ID 매핑 등록
+ *   3. CLI 가 자동으로 dispatch 사용
+ */
+
+import type { PrismaClient } from '@pokopia-wiki/shared';
+
+import { loadBuildingKit } from './building-loader.js';
+import { loadCd } from './cd-loader.js';
+import { loadFood, loadLostRelic, loadTradeValuation } from './item-extension-loaders.js';
+import { loadItem } from './item-loader.js';
+import { loadLocation } from './location-loader.js';
+import { loadHideAndSneakReward } from './minigame-reward-loader.js';
+import { loadPaintColor } from './paint-color-loader.js';
+import { loadPokedexMilestone } from './pokedex-milestone-loader.js';
+import { loadPokemon } from './pokemon-loader.js';
+import { loadCookingRecipe, loadCraftingRecipe } from './recipe-loader.js';
+import { loadDittoAbility } from './ditto-ability-loader.js';
+import { loadEnvironmentReward } from './environment-reward-loader.js';
+import { loadEventPokemon } from './event-loader.js';
+import { loadHabitat } from './habitat-loader.js';
+import { loadHumanRecord } from './human-record-loader.js';
+import { loadIslandVariant } from './island-variant-loader.js';
+import { loadLegendaryAcquisition } from './legendary-loader.js';
+import { loadPokemonLitterReward } from './litter-loader.js';
+import { loadMagnetRise } from './magnet-rise-loader.js';
+import { loadPokemonCenter } from './pokemon-center-loader.js';
+import { loadQuest } from './quest-loader.js';
+import { loadStampReward } from './stamp-reward-loader.js';
+import { loadTeamChallenge } from './team-challenge-loader.js';
+import { loadUniquePokemonPatch } from './unique-pokemon-loader.js';
+import {
+  loadCustomizationItem,
+  loadFavoriteCategory,
+  loadFriendshipTier,
+  loadGenerator,
+  loadJumpropeTier,
+  loadMosslaxBoost,
+  loadPaintPattern,
+  loadPlant,
+  loadStampCard,
+  loadWaterType,
+} from './simple-loaders.js';
+import { loadSpecialty } from './specialty-loader.js';
+import type { UpsertResult } from './upsert-loader.js';
+
+/**
+ * Loader dispatch 결과 통합. CLI 가 표시할 통계 + 격리 실패 정보.
+ */
+export type LoaderDispatchResult = {
+  /** 등록된 loader 가 호출되어 결과를 반환했는지. false 면 미구현. */
+  invoked: boolean;
+  /** loader 호출 결과 (invoked=false 면 undefined). */
+  result?: UpsertResult;
+  /** 미구현 또는 dispatch 실패 시 명시 메시지. */
+  message?: string;
+};
+
+/**
+ * Page ID → loader 디스패치. parser 출력(`unknown` typed)을 수신해 적절한 loader
+ * 호출 + UpsertResult 반환. 본 함수는 type narrowing 을 통과하지 않은 entity 를
+ * `as unknown as ...` 캐스팅으로 받는다 — CLI 레벨에서 page ID 가 parser 와
+ * loader 페어링을 보장한다고 가정.
+ */
+export async function dispatchLoader(
+  prisma: PrismaClient,
+  page: string,
+  entities: ReadonlyArray<unknown>,
+): Promise<LoaderDispatchResult> {
+  switch (page) {
+    case 'available-pokemon':
+    case 'availablepokemon': {
+      const result = await loadPokemon(
+        prisma.pokemon as never,
+        entities as never,
+      );
+      return { invoked: true, result };
+    }
+    case 'specialty': {
+      const result = await loadSpecialty(
+        prisma.specialty as never,
+        entities as never,
+      );
+      return { invoked: true, result };
+    }
+    case 'mosslaxboosts': {
+      const result = await loadMosslaxBoost(
+        prisma.mosslaxBoost as never,
+        entities as never,
+      );
+      return { invoked: true, result };
+    }
+    case 'stampcard':
+    case 'stampcard-card': {
+      const result = await loadStampCard(
+        prisma.stampCard as never,
+        entities as never,
+      );
+      return { invoked: true, result };
+    }
+    case 'favorites': {
+      const result = await loadFavoriteCategory(
+        prisma.favoriteCategory as never,
+        entities as never,
+      );
+      return { invoked: true, result };
+    }
+    case 'friendship': {
+      const result = await loadFriendshipTier(
+        prisma.friendshipTier as never,
+        entities as never,
+      );
+      return { invoked: true, result };
+    }
+    case 'electricity': {
+      const result = await loadGenerator(
+        prisma.generator as never,
+        entities as never,
+      );
+      return { invoked: true, result };
+    }
+    case 'water': {
+      const result = await loadWaterType(
+        prisma.waterType as never,
+        entities as never,
+      );
+      return { invoked: true, result };
+    }
+    case 'paint-pattern': {
+      const result = await loadPaintPattern(
+        prisma.paintPattern as never,
+        entities as never,
+      );
+      return { invoked: true, result };
+    }
+    case 'customisation': {
+      const result = await loadCustomizationItem(
+        prisma.customizationItem as never,
+        entities as never,
+      );
+      return { invoked: true, result };
+    }
+    case 'flowers':
+    case 'vegetables': {
+      const result = await loadPlant(
+        prisma.plant as never,
+        entities as never,
+      );
+      return { invoked: true, result };
+    }
+    case 'jumprope': {
+      const result = await loadJumpropeTier(
+        prisma.jumpropeTier as never,
+        entities as never,
+      );
+      return { invoked: true, result };
+    }
+    case 'cds': {
+      const result = await loadCd(prisma, entities as never);
+      return { invoked: true, result };
+    }
+    case 'paint':
+    case 'paint-color': {
+      const result = await loadPaintColor(prisma, entities as never);
+      return { invoked: true, result };
+    }
+    case 'items': {
+      const result = await loadItem(prisma, entities as never);
+      return { invoked: true, result };
+    }
+    case 'locations-index':
+    case 'location-bleakbeach':
+    case 'location-palettetown':
+    case 'location-rockyridges':
+    case 'location-sparklingskylands':
+    case 'location-witheredwastelands': {
+      const result = await loadLocation(prisma, entities as never);
+      return { invoked: true, result };
+    }
+    case 'flavors': {
+      const result = await loadFood(prisma, entities as never);
+      return { invoked: true, result };
+    }
+    case 'lostrelics': {
+      const result = await loadLostRelic(prisma, entities as never);
+      return { invoked: true, result };
+    }
+    case 'trade': {
+      const result = await loadTradeValuation(prisma, entities as never);
+      return { invoked: true, result };
+    }
+    case 'building': {
+      const result = await loadBuildingKit(prisma, entities as never);
+      return { invoked: true, result };
+    }
+    case 'stampcard-reward': {
+      const result = await loadStampReward(prisma, entities as never);
+      return { invoked: true, result };
+    }
+    case 'hideandsneak': {
+      const result = await loadHideAndSneakReward(prisma, entities as never);
+      return { invoked: true, result };
+    }
+    case 'pokedexcompletion': {
+      const result = await loadPokedexMilestone(prisma, entities as never);
+      return { invoked: true, result };
+    }
+    case 'cooking': {
+      const result = await loadCookingRecipe(prisma, entities as never);
+      return { invoked: true, result };
+    }
+    case 'crafting': {
+      const result = await loadCraftingRecipe(prisma, entities as never);
+      return { invoked: true, result };
+    }
+    case 'teaminitiationchallenge': {
+      const result = await loadTeamChallenge(prisma, entities as never);
+      return { invoked: true, result };
+    }
+    case 'environmentlevel': {
+      const result = await loadEnvironmentReward(prisma, entities as never);
+      return { invoked: true, result };
+    }
+    case 'pokemon-center': {
+      const result = await loadPokemonCenter(prisma, entities as never);
+      return { invoked: true, result };
+    }
+    case 'importantrequests': {
+      const result = await loadQuest(prisma, entities as never);
+      return { invoked: true, result };
+    }
+    case 'humanrecords': {
+      const result = await loadHumanRecord(prisma, entities as never);
+      return { invoked: true, result };
+    }
+    case 'dreamislands':
+    case 'cloudislands': {
+      const result = await loadIslandVariant(prisma, entities as never);
+      return { invoked: true, result };
+    }
+    case 'habitats-index': {
+      const result = await loadHabitat(prisma, entities as never);
+      return { invoked: true, result };
+    }
+    case 'legendary': {
+      const result = await loadLegendaryAcquisition(prisma, entities as never);
+      return { invoked: true, result };
+    }
+    case 'uniquepokemon': {
+      const result = await loadUniquePokemonPatch(prisma, entities as never);
+      return { invoked: true, result };
+    }
+    case 'magnet-rise': {
+      const result = await loadMagnetRise(prisma, entities as never);
+      return { invoked: true, result };
+    }
+    case 'eventpokedex': {
+      // 본 page parser 는 EventPokemonInput 만 출력 — Event placeholder 는 별도
+      // upsert 가 필요하지만 현재는 단일 page 단위 dispatch 라 EventPokemon 만
+      // 처리. Event 자체 placeholder upsert 는 향후 별도 단계.
+      const result = await loadEventPokemon(prisma, entities as never);
+      return { invoked: true, result };
+    }
+    case 'abilities': {
+      const result = await loadDittoAbility(prisma, entities as never);
+      return { invoked: true, result };
+    }
+    case 'litter': {
+      const result = await loadPokemonLitterReward(prisma, entities as never);
+      return { invoked: true, result };
+    }
+    case 'furniture': {
+      const result = await loadItem(prisma, entities as never);
+      return { invoked: true, result };
+    }
+    default:
+      return {
+        invoked: false,
+        message: `loader not implemented for page=${page}; see services/scraper/src/loaders/README.md (TODO list).`,
+      };
+  }
+}
+
+/** 등록된 page ID 목록 — CLI `--list-pages` 에서 loader 지원 여부 표시용. */
+export function listLoaderPages(): ReadonlyArray<string> {
+  return [
+    'available-pokemon',
+    'availablepokemon',
+    'specialty',
+    'mosslaxboosts',
+    'stampcard',
+    'stampcard-card',
+    'favorites',
+    'friendship',
+    'electricity',
+    'water',
+    'paint-pattern',
+    'customisation',
+    'flowers',
+    'vegetables',
+    'jumprope',
+    'cds',
+    'paint',
+    'paint-color',
+    'items',
+    'locations-index',
+    'location-bleakbeach',
+    'location-palettetown',
+    'location-rockyridges',
+    'location-sparklingskylands',
+    'location-witheredwastelands',
+    'flavors',
+    'lostrelics',
+    'trade',
+    'building',
+    'stampcard-reward',
+    'hideandsneak',
+    'pokedexcompletion',
+    'cooking',
+    'crafting',
+    'teaminitiationchallenge',
+    'environmentlevel',
+    'pokemon-center',
+    'importantrequests',
+    'humanrecords',
+    'dreamislands',
+    'cloudislands',
+    'habitats-index',
+    'legendary',
+    'uniquepokemon',
+    'magnet-rise',
+    'eventpokedex',
+    'abilities',
+    'litter',
+    'furniture',
+  ];
+}

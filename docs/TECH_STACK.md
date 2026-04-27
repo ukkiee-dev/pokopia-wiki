@@ -10,9 +10,9 @@
 
 ```
 [pokopia-wiki (monorepo)]                             [pokopia-web]
-  packages/scraper   데이터 수집 앱 (로컬 Mac)           프론트엔드
-  packages/api       GraphQL API 서버 (homelab K8s)     homelab K8s 배포
-  packages/shared    Prisma 클라이언트·Zod 타입 공유
+  services/scraper   데이터 수집 앱 (로컬 Mac)           프론트엔드
+  services/api       GraphQL API 서버 (homelab K8s)     homelab K8s 배포
+  shared    Prisma 클라이언트·Zod 타입 공유
   prisma/            DB 스키마 단일 관리
        │                                                     │
        └──── PostgreSQL (pokopia) ──── GraphQL ──────────────┘
@@ -22,9 +22,9 @@
 | 레포/패키지 | 역할 | 실행 환경 |
 |------------|------|----------|
 | `pokopia-wiki` (monorepo root) | pnpm workspace, Prisma 스키마 단일 관리 | — |
-| └ `packages/scraper` | Serebii 등 4개 소스에서 데이터 수집·파싱·DB 적재 | 로컬 Mac |
-| └ `packages/api` | GraphQL API 서버 (위키 데이터 제공) | homelab K8s (ArgoCD) |
-| └ `packages/shared` | Prisma 클라이언트 re-export, Zod·i18n 공통 타입 | 워크스페이스 의존성 |
+| └ `services/scraper` | Serebii 등 4개 소스에서 데이터 수집·파싱·DB 적재 | 로컬 Mac |
+| └ `services/api` | GraphQL API 서버 (위키 데이터 제공) | homelab K8s (ArgoCD) |
+| └ `shared` | Prisma 클라이언트 re-export, Zod·i18n 공통 타입 | 워크스페이스 의존성 |
 | `pokopia-web` | 위키 프론트엔드 | homelab K8s (ArgoCD) |
 
 **모노레포 채택 근거:**
@@ -38,7 +38,7 @@
 
 ---
 
-## 2. packages/scraper (`@pokopia-wiki/scraper`)
+## 2. services/scraper (`@pokopia-wiki/scraper`)
 
 데이터 수집 전용 패키지. 4개 소스 사이트에서 데이터를 스크래핑하여 PostgreSQL에 적재한다.
 
@@ -114,7 +114,7 @@ fetch(url)
 ### 2.6 Package Structure
 
 ```
-packages/scraper/
+services/scraper/
 ├── src/
 │   ├── fetchers/               # 소스별 HTTP fetcher
 │   │   ├── ky-fetcher.ts       # ky 기반 (정적 HTML)
@@ -154,10 +154,10 @@ packages/scraper/
 pokopia-wiki/
 ├── prisma/
 │   └── schema.prisma           # DB 스키마 단일 관리 (§5.2)
-├── packages/
+├── services/
 │   ├── scraper/                # 위 구조
-│   ├── api/                    # §3
-│   └── shared/                 # §5.2 (Prisma 클라이언트, Zod 공용 타입)
+│   └── api/                    # §3
+├── shared/                     # §5.2 (Prisma 클라이언트, Zod 공용 타입)
 ├── data/                       # scraper 런타임 데이터 (.gitignore)
 │   ├── cache/
 │   └── parsed/
@@ -174,7 +174,7 @@ pokopia-wiki/
 
 ---
 
-## 3. packages/api (`@pokopia-wiki/api`)
+## 3. services/api (`@pokopia-wiki/api`)
 
 위키 데이터를 GraphQL API로 제공하는 백엔드 서버.
 
@@ -216,7 +216,7 @@ const PokemonType = builder.prismaObject('Pokemon', {
 | 항목 | 설정 |
 |------|------|
 | 배포 방식 | homelab K8s (ArgoCD GitOps) |
-| 빌드 격리 | `packages/scraper`는 배포 이미지에서 제외 (§5.3) |
+| 빌드 격리 | `services/scraper`는 배포 이미지에서 제외 (§5.3) |
 | 접근 | Tailscale (internal) 또는 Cloudflare Tunnel (public) |
 | 도메인 | `pokopia-api.ukkiee.dev` (예정) |
 
@@ -239,7 +239,7 @@ const PokemonType = builder.prismaObject('Pokemon', {
 별도 레포 간 타입 안전한 통신을 GraphQL 스키마 계약으로 보장한다.
 
 ```
-packages/api (Pothos + Prisma)
+services/api (Pothos + Prisma)
   → SDL 내보내기 (schema.graphql)
 
 pokopia-web
@@ -281,12 +281,12 @@ kubectl exec -it postgresql-0 -n apps -- \
 
 ### 5.2 Prisma Schema Sharing
 
-모노레포 루트의 `prisma/schema.prisma`를 단일 소스로 두고, `packages/shared`가 생성된 Prisma Client를 re-export하여 scraper·api가 공유한다.
+모노레포 루트의 `prisma/schema.prisma`를 단일 소스로 두고, `shared`가 생성된 Prisma Client를 re-export하여 scraper·api가 공유한다.
 
 | 항목 | 설정 |
 |------|------|
 | 스키마 위치 | `prisma/schema.prisma` (모노레포 루트) |
-| 생성 출력 | `packages/shared/src/prisma-client/` (Prisma generator `output`) |
+| 생성 출력 | `shared/src/prisma-client/` (Prisma generator `output`) |
 | 소비 방식 | scraper·api 모두 `@pokopia-wiki/shared`에서 `PrismaClient` import |
 | 마이그레이션 | 루트에서 `pnpm prisma migrate dev` 단일 관리 |
 | workspace 의존성 | 각 패키지 `package.json`에 `"@pokopia-wiki/shared": "workspace:*"` |
@@ -299,9 +299,9 @@ scraper는 로컬 Mac에서만 실행되므로 API 배포 이미지에 포함하
 
 | 전략 | 방법 |
 |------|------|
-| Docker 복사 범위 제한 | Dockerfile에서 `packages/api`, `packages/shared`, `prisma`, 루트 `package.json`·`pnpm-lock.yaml`·`pnpm-workspace.yaml`만 `COPY`. `packages/scraper`는 제외 |
+| Docker 복사 범위 제한 | Dockerfile에서 `services/api`, `shared`, `prisma`, 루트 `package.json`·`pnpm-lock.yaml`·`pnpm-workspace.yaml`만 `COPY`. `services/scraper`는 제외 |
 | pnpm deploy | `pnpm deploy --filter=@pokopia-wiki/api --prod ./out` 로 api 전용 번들 생성 (scraper·devDeps 포함되지 않음) |
-| ArgoCD 경로 감시 | `packages/api/**`, `packages/shared/**`, `prisma/**` 변경 시에만 재빌드 트리거 |
+| ArgoCD 경로 감시 | `services/api/**`, `shared/**`, `prisma/**` 변경 시에만 재빌드 트리거 |
 
 이 격리로 Playwright·patchright 같은 scraper 전용 체인이 API 이미지에 흘러 들어가지 않는다. scraper는 로컬 Mac에서 직접 실행하므로 컨테이너 이미지 자체가 필요하지 않다.
 
@@ -341,9 +341,9 @@ scraper는 로컬 Mac에서만 실행되므로 API 배포 이미지에 포함하
 ```
 1. prisma/schema.prisma 수정 (모노레포 루트)
 2. pnpm prisma migrate dev            # 루트에서 실행
-3. Pothos 타입 정의 추가 (packages/api)
+3. Pothos 타입 정의 추가 (services/api)
 4. resolver 구현
-5. git push → ArgoCD가 packages/api 변경 감지 → 재빌드 (§5.3)
+5. git push → ArgoCD가 services/api 변경 감지 → 재빌드 (§5.3)
 ```
 
 ### 6.3 Frontend 개발 흐름

@@ -1307,6 +1307,25 @@ async function reactToError(page: Page, type: ErrorType, session: Session) {
 3. 모든 에러 시 `notifyUser`가 Telegram/macOS로 알림 송신 (§13.3 참조)
 4. 페이지별 재시도는 세션 내에서 1회로 제한 (`alreadyRetriedThisPage`)
 
+### 11.1.1 Fetcher 계층 커스텀 에러 클래스 (★ v3.5 — Phase 4 SSoT)
+
+위 `ErrorType` 이 "페이지에서 **관찰된 시그널**" 의 분류라면, 아래 5종은 `services/scraper/src/fetchers/errors.ts` 에서 `throw` 되는 **호출부 커스텀 에러** 다. 상위 `SessionManager` (Phase 5) 가 `instanceof` 로 분기해 cooldown/재시도 전략을 결정한다.
+
+| 클래스 | 언제 throw | 호출부 권장 반응 |
+|---|---|---|
+| `SkippedByRobotsError` | `robots.txt` 가 URL 을 차단 (isAllowed=false 또는 undefined 는 보수적으로 false 취급) | 경고 로그 + 스킵, **재시도 금지** (§26.1 D4) |
+| `SessionAbortError` | Cloudflare 60s 타임아웃 / 403 차단 감지 / patchright launch 실패 | 세션 즉시 종료 + cooldown (상단 `reactToError` 참조) |
+| `RateLimitExceededError` | RateLimiter 일 한도 초과 (§14.3) — `kind: navigation \| direct` | 다음 회계일(UTC+9 자정) 까지 해당 소스 큐잉 해제 |
+| `PersonaRequiredError` | T1~T3 생성 시 persona 주입 누락 (FetcherFactory 방어선) | **프로그래밍 오류** — 개발 단계 fail-fast (재시도 금지) |
+| `CachePathTraversalError` | HtmlCache 경로 해시 결과가 `data/cache/<source>/` 외부로 해석 (§10.3 D1) | 보안 사고 — 로그 + Notifier high + 세션 종료 |
+
+**설계 원칙:**
+
+- `name` 을 문자열 리터럴로 `override` — `tsc verbatimModuleSyntax` + `isolatedModules` 환경에서 `instanceof` + `name` 양쪽 모두 신뢰.
+- 에러 **코드** 와 §13.3.2 `EventType` 은 **분리**. Notifier 이벤트명은 여기 에러 클래스와 1:1 매핑되지 않으며, SessionManager 가 에러 종류를 관찰해 적절한 `EventType` 으로 변환해 `notify()` 한다.
+- 위 5종은 `CacheStaleError` / `ChromeVersionUnavailable` 등 "가벼운 fallback 으로 처리 가능" 한 상황을 **에러로 모델링하지 않는 정책**. HtmlCache 는 손상 시 silent null, Chrome 버전은 `FALLBACK_VERSION` 으로 자동 복구한다.
+- Fetcher 계층에서 throw 되는 에러는 전부 이 목록에 있어야 한다 — 이 목록에 없는 새 에러 클래스를 추가하면 본 §11.1.1 을 함께 갱신해 SSoT 드리프트를 막는다.
+
 ### 11.2 에러 에스컬레이션
 
 ```
@@ -2404,7 +2423,7 @@ async function runPreflight(persona: BrowserPersona) {
 `data/logs/`는 외장 SSD 로 백업되므로 토큰/쿠키/PII 가 그대로 넘어가면 백업 미디어 유출 시 위험. 모든 로그 기록은 아래 마스킹을 거친다.
 
 ```typescript
-// packages/shared/src/logging/redact.ts
+// shared/src/logging/redact.ts
 const TOKEN_PATTERNS: Array<[RegExp, string]> = [
   // Telegram API URL — `https://api.telegram.org/bot<TOKEN>/...` 경로 토큰 마스킹.
   // URL 안의 `bot1234567:ABC...` 는 `bot` 과 digit 사이에 \b 가 없어 아래
@@ -2683,7 +2702,7 @@ export class RobotsChecker {
 > IDE 의 strikethrough 로 노출된다. 신규 스키마는 반드시 4 API 로 작성.
 
 ```typescript
-// packages/shared/src/validators/schemas/_base.ts
+// shared/src/validators/schemas/_base.ts
 import { z } from 'zod'
 
 // ── 공통: 출처 메타데이터 ─────────────────────────
@@ -2708,7 +2727,7 @@ export const SourceMetadataSchema = z.object({
 export type SourceMetadata = z.infer<typeof SourceMetadataSchema>
 
 // ── 엔티티 스키마는 공통 메타데이터를 extend(shape) ──────
-// packages/shared/src/validators/schemas/pokemon.ts
+// shared/src/validators/schemas/pokemon.ts
 export const PokemonSchema = z
   .object({
     pokedexNo: z.number().int().positive(),
@@ -2718,7 +2737,7 @@ export const PokemonSchema = z
   })
   .extend(SourceMetadataSchema.shape)
 
-// packages/shared/src/validators/schemas/item.ts
+// shared/src/validators/schemas/item.ts
 export const ItemSchema = z
   .object({
     nameEn: z.string().min(1),
@@ -2789,7 +2808,7 @@ export const SOURCE_DEFAULTS: Record<
 **주입 헬퍼 (v3.3: `scrapedAt` 옵셔널):**
 
 ```typescript
-// packages/shared/src/validators/metadata.ts
+// shared/src/validators/metadata.ts
 import { SOURCE_DEFAULTS } from '../config/source-metadata'
 import type { SourceMetadata, SourceSite } from './schemas/_base'
 
