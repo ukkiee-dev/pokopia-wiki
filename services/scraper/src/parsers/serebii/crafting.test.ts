@@ -63,13 +63,13 @@ describe('CraftingParser — 대표 엔티티 필드', () => {
   it('Plain chest — 2 재료 조합', () => {
     const chest = entities.find((e) => e.resultItemSlug === 'plainchest');
     expect(chest?.ingredients.length).toBe(2);
-    expect(chest?.ingredients.map((i) => i.itemSlug).sort()).toEqual(['lumber', 'twine']);
+    expect(chest?.ingredients.map((i) => i.itemSlug).toSorted()).toEqual(['lumber', 'twine']);
   });
 
   it('Gaming fridge — 3 재료 조합 (pokemetal + goldingot + glass)', () => {
     const fridge = entities.find((e) => e.resultItemSlug === 'gamingfridge');
     expect(fridge?.ingredients.length).toBe(3);
-    const slugs = fridge?.ingredients.map((i) => i.itemSlug).sort();
+    const slugs = fridge?.ingredients.map((i) => i.itemSlug).toSorted();
     expect(slugs).toEqual(['glass', 'goldingot', 'pokemetal']);
   });
 });
