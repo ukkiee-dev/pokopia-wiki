@@ -86,6 +86,12 @@ jobs:
   quality:
     if: github.repository != 'ukkiee-dev/app-starter'
     runs-on: ubuntu-latest
+    # Prisma 7 의 prisma.config.ts 가 env('DATABASE_URL') eager evaluate — pnpm install
+    # 의 postinstall (prisma generate) 시점에 placeholder 가 필요하다. 런타임에는 K8s
+    # Secret 으로 오버라이드. type-check / test 에서도 shared 가 prisma client import 시
+    # config 가 다시 평가될 수 있어 job 레벨 env 로 모든 step 상속.
+    env:
+      DATABASE_URL: postgres://placeholder@127.0.0.1:5432/x
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
