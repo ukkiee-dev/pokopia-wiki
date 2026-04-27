@@ -1,0 +1,169 @@
+name: Update App (reconcile)
+
+# services/<svc>/.app-config.yml 변경 푸시 시 자동 reconcile.
+# 필요 시 workflow_dispatch 로 특정 서비스 재실행 가능.
+#
+# 현재 처리되는 변경:
+#   - database 블록 추가 (owner 또는 reference)
+#   - 같은 config 재푸시 (homelab composite 가 멱등 skip, notice)
+#
+# destructive 케이스는 homelab 의 setup-app/database composite 가 이미 warn/error 처리:
+#   - database.name 변경        → ::error:: (CNPG rename 불가, 마이그레이션 가이드)
+#   - database 블록 삭제        → teardown.yml 명시 호출 요구 (이 워크플로우 범위 밖)
+#   - ref 변경                  → ::error:: (reference 서비스는 owner 변경 불가)
+#
+# 향후 확장 (새 update action 추가 시):
+#   - reconcile-storage / reconcile-replicas / reconcile-subdomain 등 후속 job 추가
+#
+# Trigger:
+#   - push: services/<svc>/.app-config.yml 변경 시 자동 reconcile
+#   - workflow_dispatch: 특정 서비스의 현재 .app-config.yml 을 수동 재적용
+#
+# health/icon/description 같은 안전 필드는 _sync-app-config.yml 이 별도 처리
+# (역할 분리). 두 워크플로우는 같은 concurrency group 으로 직렬화되어 homelab 에
+# 대한 동시 git push 경합 방지.
+#
+# 첫 push (homelab shell 미존재) 는 discover 에서 setup-done=false 로 skip + notice.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'services/*/.app-config.yml'
+  workflow_dispatch:
+    inputs:
+      service-name:
+        description: "재실행할 서비스 이름 (services/<name>)"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: homelab-terraform
+  cancel-in-progress: false
+
+jobs:
+  # ─── 템플릿 레포 자체에서는 skip ───
+  discover:
+    if: github.repository != 'ukkiee-dev/app-starter'
+    runs-on: ubuntu-latest
+    outputs:
+      service: ${{ steps.target.outputs.service }}
+      config: ${{ steps.target.outputs.config }}
+      setup-done: ${{ steps.shell.outputs.exists }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2   # diff BEFORE..AFTER 위해 이전 커밋 필요
+
+      - name: Resolve reconcile target
+        id: target
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.event.after }}
+          MANUAL_SERVICE: ${{ github.event.inputs.service-name || '' }}
+        run: |
+          set -euo pipefail
+
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            SERVICE="$MANUAL_SERVICE"
+            if [ -z "$SERVICE" ]; then
+              echo "::error::workflow_dispatch 는 service-name 입력이 필요합니다."
+              exit 1
+            fi
+            CONFIG_PATH="services/${SERVICE}/.app-config.yml"
+            if [ ! -f "$CONFIG_PATH" ]; then
+              echo "::error::${CONFIG_PATH} not found."
+              exit 1
+            fi
+            echo "수동 reconcile 대상: $SERVICE"
+          else
+            # push event 의 before/after 로 변경 파일 수집.
+            # forced push / amend 등 BEFORE 가 커밋 해시가 아닌 경우는 HEAD^ 로 fallback.
+            if ! git cat-file -e "$BEFORE" 2>/dev/null; then
+              echo "::warning::before commit ($BEFORE) 없음 — HEAD^ 로 fallback"
+              BEFORE="HEAD^"
+            fi
+
+            CHANGED=$(git diff --name-only "$BEFORE" "$AFTER" -- 'services/*/.app-config.yml' || true)
+            if [ -z "$CHANGED" ]; then
+              echo "::notice::변경된 services/*/.app-config.yml 없음 — skip"
+              echo "service=" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+
+            # 경로 → 서비스명 추출 (unique)
+            SERVICES=$(echo "$CHANGED" | awk -F/ '{print $2}' | sort -u)
+            COUNT=$(echo "$SERVICES" | wc -l | tr -d ' ')
+
+            # 다중 서비스 변경은 현재 단일 매트릭스로 처리하지 않음. 첫 번째만 처리하고
+            # 사용자에게 나머지는 개별 push 하도록 안내 (일반적으로 drift 한 서비스씩 수정).
+            if [ "$COUNT" -gt 1 ]; then
+              echo "::warning::여러 서비스의 .app-config.yml 이 동시 변경됨 ($COUNT 개). 첫 번째 서비스만 이번 reconcile 대상."
+              echo "  다른 서비스는 별도 push 로 수정하는 것을 권장합니다."
+              echo "  대상 목록:"
+              while IFS= read -r svc; do
+                echo "    - $svc"
+              done <<< "$SERVICES"
+            fi
+
+            SERVICE=$(echo "$SERVICES" | head -1)
+            CONFIG_PATH="services/${SERVICE}/.app-config.yml"
+
+            if [ ! -f "$CONFIG_PATH" ]; then
+              echo "::notice::${CONFIG_PATH} 가 현재 tree 에 없음 (삭제된 서비스?) — skip"
+              echo "service=" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+
+            echo "자동 reconcile 대상: $SERVICE"
+          fi
+
+          echo "service=$SERVICE" >> "$GITHUB_OUTPUT"
+          {
+            echo "config<<__EOF__"
+            cat "$CONFIG_PATH"
+            echo "__EOF__"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Check homelab project shell exists
+        id: shell
+        if: steps.target.outputs.service != ''
+        env:
+          APP_NAME: ${{ github.event.repository.name }}
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            "https://api.github.com/repos/ukkiee-dev/homelab/contents/manifests/apps/${APP_NAME}/kustomization.yaml")
+          EXISTS=$([ "$STATUS" = "200" ] && echo "true" || echo "false")
+          echo "exists=$EXISTS" >> "$GITHUB_OUTPUT"
+          if [ "$EXISTS" = "false" ]; then
+            echo "::notice::homelab 에 ${APP_NAME} 프로젝트 shell 이 없습니다. create-app.yml 을 먼저 dispatch 하세요. reconcile skip."
+          fi
+
+  # ─── reconcile: database 블록 변경 대응 ────────────────────
+  reconcile-database:
+    needs: discover
+    if: needs.discover.outputs.setup-done == 'true' && needs.discover.outputs.service != ''
+    uses: ukkiee-dev/homelab/.github/workflows/_add-database.yml@main
+    with:
+      app-name: ${{ github.event.repository.name }}
+      service-name: ${{ needs.discover.outputs.service }}
+      config-yaml: ${{ needs.discover.outputs.config }}
+    secrets:
+      APP_ID:               ${{ secrets.HOMELAB_APP_ID }}
+      APP_PRIVATE_KEY:      ${{ secrets.HOMELAB_APP_PRIVATE_KEY }}
+      TF_ACCOUNT_ID:        ${{ secrets.TF_ACCOUNT_ID }}
+      R2_ACCESS_KEY_ID:     ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      TELEGRAM_BOT_TOKEN:   ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID:     ${{ secrets.TELEGRAM_CHAT_ID }}
+
+  # 향후 reconcile action 추가 시 여기에 job 추가:
+  # reconcile-storage:
+  #   needs: discover
+  #   if: ... && <storage field changed>
+  #   uses: ukkiee-dev/homelab/.github/workflows/_update-storage.yml@main
+  #   with: ...
